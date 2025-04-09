@@ -1,0 +1,77 @@
+{
+  "name": "react-widget-template",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/modifiers": "^9.0.0",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@reduxjs/toolkit": "^2.5.0",
+    "@tanstack/react-table": "^8.20.6",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.7.9",
+    "bootstrap": "^5.3.3",
+    "file-saver": "^2.0.5",
+    "papaparse": "^5.4.1",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.6",
+    "react-dnd": "^16.0.1",
+    "react-dom": "^18.3.1",
+    "react-drag-drop-files": "^2.4.0",
+    "react-icons": "^5.4.0",
+    "react-redux": "^9.2.0",
+    "react-toastify": "^11.0.2",
+    "react-virtualized": "^9.22.6",
+    "redux-logger": "^3.0.6",
+    "requirejs": "^2.3.7",
+    "socket.io-client": "^4.8.1",
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "build:revision-float": "cross-env  WIDGET_ENTRY=revisionFloat react-app-rewired build",
+    "build:plant-assignment": "cross-env WIDGET_ENTRY=plantAssignment react-app-rewired build",
+    "build:mass-upload": "cross-env WIDGET_ENTRY=massUpload react-app-rewired build",
+    "build:bos-attribute": "cross-env WIDGET_ENTRY=bosAttribute react-app-rewired build",
+    "test": "react-app-rewired test"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
+    "globals": {
+      "__webpack_public_path__": "writable",
+      "widget": "readonly",
+      "define": "readonly"
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "cross-env": "^7.0.3",
+    "customize-cra": "^1.0.0",
+    "env-cmd": "^10.1.0",
+    "react-app-rewired": "^2.2.1",
+    "react-scripts": "5.0.1"
+  }
+}

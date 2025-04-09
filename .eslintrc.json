@@ -1,0 +1,27 @@
+{
+  "root": true,
+  "extends": [
+    "react-app",
+    "react-app/jest"
+  ],
+  "globals": {
+    "define": "readonly",
+    "__webpack_public_path__": "writable",
+    "widget": "readonly",
+     "requirejs": "readonly"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "commonjs": true,
+    "es6": true,
+    "amd": true,
+    "jest": true
+  },
+  "rules": {
+    "no-template-curly-in-string": "off"  // ✅ Disable this rule
+  }
+}
+
+
+
