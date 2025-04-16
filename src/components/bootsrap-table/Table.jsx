@@ -1,7 +1,7 @@
 import React from "react";
 import Table from "react-bootstrap/Table";
 import CustomSelect from "../Select/customSelect";
-import "./staticTable.css"; // Ensure updated styles are applied
+import "./StaticTable.css"; // Ensure updated styles are applied
 
 const StaticTable = ({
   columnHeaders,

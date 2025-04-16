@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { droppedSlice } from "src/slices/apis/dropped.api";
 const initialState = {
   droppedObjectData: {
     initialDraggedData: [],
@@ -20,6 +21,8 @@ const initialState = {
     specDocument: [],
     childData: [],
   },
+  objectData: null,
+  objectDetails: null,
   loadingParentDetails: false, // Loading state for parent metadata
   isDropped: false, // Indicates whether an object has been dropped
   loading: false,
@@ -30,6 +33,12 @@ const droppedObjectSlice = createSlice({
   name: "droppedObject",
   initialState,
   reducers: {
+    setObjectData: (state, action) => {
+      state.objectData = action.payload;
+    },
+    setObjectDetails: (state, action) => {
+      state.objectDetails = action.payload;
+    },
     setInitialDroppedObjectData: (state, action) => {
       state.droppedObjectData.initialDraggedData =
         action.payload.initialDraggedData;
@@ -78,6 +87,16 @@ const droppedObjectSlice = createSlice({
       state.selectedTableRows = action.payload;
     },
   },
+
+  extraReducers: (builder) => {
+    builder.addMatcher(
+      droppedSlice.endpoints.getObjectDetails.matchFulfilled,
+      (state, action) => {
+        state.isDropped = true;
+        state.objectDetails = action.payload;
+      }
+    );
+  },
 });
 
 export const {
@@ -94,5 +113,7 @@ export const {
   setChildData,
   setSelectedTableRows,
   setProposedChanges,
+  setObjectData,
+  setObjectDetails,
 } = droppedObjectSlice.actions;
 export default droppedObjectSlice.reducer;
