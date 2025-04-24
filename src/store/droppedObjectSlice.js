@@ -1,5 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
-const initialState = {
+import { droppedSlice } from "src/slices/apis/dropped.api";
+
+export const initialState = {
   droppedObjectData: {
     initialDraggedData: [],
     cardData: {}, // Dragged object details
@@ -20,6 +22,31 @@ const initialState = {
     specDocument: [],
     childData: [],
   },
+  objectIds: {
+    objectType: "",
+    objectId: "",
+  },
+  objectDetails: {
+    Title: "",
+    Type: "",
+    "Maturity State": "",
+    Owner: "",
+    "Collaborative Space": "",
+    "Collaborative Space Title": "",
+    Description: "",
+    "Dropped Revision": "",
+    "Dropped Revision ID": "",
+    "Latest Released Revision": "",
+    "Latest Released Revision ID": "",
+    EIN: "",
+    "CAD Format": "",
+    imageURL: "",
+    relativePath: "",
+    Name: "",
+    organization: "",
+    "Latest Revision": "",
+    MFGCA: "",
+  },
   loadingParentDetails: false, // Loading state for parent metadata
   isDropped: false, // Indicates whether an object has been dropped
   loading: false,
@@ -30,6 +57,12 @@ const droppedObjectSlice = createSlice({
   name: "droppedObject",
   initialState,
   reducers: {
+    setObjectIds: (state, action) => {
+      state.objectIds = action.payload;
+    },
+    setObjectDetails: (state, action) => {
+      state.objectDetails = action.payload;
+    },
     setInitialDroppedObjectData: (state, action) => {
       state.droppedObjectData.initialDraggedData =
         action.payload.initialDraggedData;
@@ -78,6 +111,16 @@ const droppedObjectSlice = createSlice({
       state.selectedTableRows = action.payload;
     },
   },
+
+  extraReducers: (builder) => {
+    builder.addMatcher(
+      droppedSlice.endpoints.getObjectDetails.matchFulfilled,
+      (state, action) => {
+        state.isDropped = true;
+        state.objectDetails = action.payload;
+      }
+    );
+  },
 });
 
 export const {
@@ -94,5 +137,8 @@ export const {
   setChildData,
   setSelectedTableRows,
   setProposedChanges,
+  setObjectIds,
+  setObjectDetails,
 } = droppedObjectSlice.actions;
+
 export default droppedObjectSlice.reducer;

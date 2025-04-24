@@ -1,0 +1,16 @@
+services:
+  app:
+    container_name: jdi-bom
+    build: .
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          ignore:
+            - node_modules/
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    command: ["npm", "run", "serve"]
+    restart: always
