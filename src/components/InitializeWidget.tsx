@@ -1,7 +1,6 @@
 import { JSX } from "react";
 import { createRoot } from "react-dom/client";
 import { Providers } from "src/providers";
-import WidgetLifecycle from "src/WidgetLifecycle-munish";
 
 // Global React root reference
 let root: any = null;
@@ -30,13 +29,7 @@ function start(AppComponent: JSX.Element): JSX.Element {
   }
 
   root = root || createRoot(rootElement);
-  root.render(
-    <Providers>
-      <WidgetLifecycle />
-
-      {AppComponent}
-    </Providers>
-  );
+  root.render(<Providers>{AppComponent}</Providers>);
 
   return AppComponent;
 }

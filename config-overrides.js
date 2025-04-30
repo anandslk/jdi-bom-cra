@@ -24,12 +24,7 @@ module.exports = override((config, env) => {
     })
   );
 
-  config.resolve = {
-    ...config.resolve,
-    alias: {
-      src: path.resolve(__dirname, "src/"),
-    },
-  };
+  config.resolve.alias.src = path.resolve(__dirname, "src/");
 
   // Define externals for the 3DEXPERIENCE modules
   config.externals = {

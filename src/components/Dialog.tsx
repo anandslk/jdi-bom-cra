@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { LoadingScreen } from "./LoadingScreen";
@@ -37,15 +37,37 @@ export function Dialog({
     <div className="flex justify-center items-center">
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            className="fixed inset-0 flex items-center justify-center backdrop-blur-xs bg-black/30 z-10"
+          <Typography
+            component={motion.div}
+            sx={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backdropFilter: "blur(2px)",
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+              zIndex: 100,
+              width: "100%",
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div
+            <Box
+              component={motion.div}
               ref={dialogRef}
-              className="bg-white rounded-2xl !p-6 shadow-xl min-w-[70%] md:min-w-[40%] max-w-[60%]"
+              sx={{
+                background: "white",
+                borderRadius: 4,
+                padding: 2,
+                minWidth: { sm: "70%", md: "40%" },
+                maxWidth: "60%",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              }}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
@@ -58,9 +80,16 @@ export function Dialog({
               </Typography>
 
               {disabled && (
-                <div className="w-full flex justify-center py-4">
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    paddingY: 3,
+                  }}
+                >
                   <LoadingScreen message="Searching for parts..." />
-                </div>
+                </Box>
               )}
 
               {children}
@@ -89,8 +118,8 @@ export function Dialog({
                   Cancel
                 </Button>
               </Stack>
-            </motion.div>
-          </motion.div>
+            </Box>
+          </Typography>
         )}
       </AnimatePresence>
     </div>

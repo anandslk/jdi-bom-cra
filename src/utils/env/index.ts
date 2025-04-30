@@ -5,6 +5,13 @@ export const env = Object.freeze({
   ENOVIA_BASE_URL: process.env.REACT_APP_ENOVIA_BASE_URL,
   NODE_ENV: process.env.NODE_ENV,
   WIDGET_ENTRY: process.env.WIDGET_ENTRY,
+
+  OKTA_CLIENT_ID: process.env.REACT_APP_OKTA_CLIENT_ID,
+  OKTA_ISSUER: process.env.REACT_APP_OKTA_ISSUER,
+  OKTA_DOMAIN: process.env.OKTA_DOMAIN,
+  OKTA_CLIENT_SECRET: process.env.OKTA_CLIENT_SECRET,
+  OKTA_APP_BASE_URL: process.env.OKTA_APP_BASE_URL,
+  OKTA_REDIRECT_URI: process.env.OKTA_REDIRECT_URI,
 });
 
 const missingVars = Object.entries(env)

@@ -9,15 +9,26 @@ export const useFetchWithAuth = () => {
     queryFn: fetchCsrfToken,
   });
 
-  const fetchWithAuth = async (url: string) => {
+  type Imethod = "POST" | "PUT" | "GET";
+
+  const fetchWithAuth = async (url: string, method?: Imethod, body?: any) => {
     const WAFData = await loadWAFData();
+
+    const requestMethod = method ?? "GET";
+
+    const isWriteMethod = requestMethod === "POST" || requestMethod === "PUT";
 
     return new Promise((resolve, reject) => {
       WAFData.authenticatedRequest(
         `${env.ENOVIA_BASE_URL}/resources/v1${url}`,
         {
-          method: "GET",
-          headers: headers?.data,
+          method: method ?? "GET",
+          headers: {
+            ...headers?.data,
+            ...(isWriteMethod ? { "Content-Type": "application/json" } : {}),
+          },
+
+          ...(isWriteMethod ? { data: JSON.stringify(body) } : {}),
           type: "json",
           onComplete: resolve,
           onFailure: reject,

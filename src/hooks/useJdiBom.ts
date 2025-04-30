@@ -1,17 +1,21 @@
-import { useAppSelector } from "src/store";
+import { useAppDispatch, useAppSelector } from "src/store";
 import { useFetchWithAuth } from "./useFetchWithAuth";
 import { useQuery } from "@tanstack/react-query";
+import { IDetail, IEnrichedMember, IMfg } from "src/pages/jdiBom/types";
+import { removeProduct } from "src/store/droppedObjectSlice";
+import { toast } from "react-toastify";
 
 export const useJdiBom = () => {
-  const { objectDetails, objectIds } = useAppSelector(
+  const { objectDetails, objectIds, isDropped } = useAppSelector(
     (state) => state.droppedObject
   );
 
+  const dispatch = useAppDispatch();
   const { fetchWithAuth, headers } = useFetchWithAuth();
 
   // Fetch collaborative space ID
   const collabSpaceId = useQuery({
-    queryKey: ["collabSpace", objectDetails, objectDetails?.Title],
+    queryKey: ["collabSpace", objectDetails, objectDetails?.Title, isDropped],
     queryFn: async () => {
       const url = `/modeler/dslib/dslib:Library/search?$searchStr=${objectDetails?.["Collaborative Space"]}`;
       const response = (await fetchWithAuth(url)) as any;
@@ -19,17 +23,18 @@ export const useJdiBom = () => {
         (item: any) => item?.title === objectDetails?.["Collaborative Space"]
       )?.id;
     },
-    enabled: !!objectDetails?.["Collaborative Space"] && !!headers?.data,
+
+    enabled:
+      !!objectDetails?.["Collaborative Space"] && !!headers?.data && isDropped,
   });
 
   // Fetch library data
-  const libraryData = useQuery({
-    queryKey: ["libraryData", collabSpaceId?.data],
+  const plants = useQuery({
+    queryKey: ["plants", collabSpaceId?.data, isDropped],
     queryFn: async () => {
       const url = `/modeler/dslib/dslib:Library/${collabSpaceId?.data}?$mask=dslib:ExpandClassifiableClassesMask`;
       return await fetchWithAuth(url);
     },
-    enabled: !!collabSpaceId?.data,
     select: (data: any) => {
       const lib = data?.member?.find(
         (l: any) => l?.collabspace === objectDetails?.["Collaborative Space"]
@@ -49,16 +54,17 @@ export const useJdiBom = () => {
 
       return result;
     },
+
+    enabled: !!collabSpaceId?.data && isDropped,
   });
 
   // Fetch classified item data
-  const classifiedItem = useQuery({
-    queryKey: ["classifiedItem", objectIds?.objectId, libraryData?.data],
+  const associatedPlants = useQuery({
+    queryKey: ["classifiedItem", objectIds?.objectId, plants?.data, isDropped],
     queryFn: async () => {
       const url = `/modeler/dslib/dslib:ClassifiedItem/${objectIds?.objectId}?$mask=dslib:ClassificationAttributesMask`;
       return await fetchWithAuth(url);
     },
-    enabled: !!objectIds?.objectId && !!libraryData?.data,
 
     select: (data: any) => {
       const lib = data?.member?.find(
@@ -71,7 +77,7 @@ export const useJdiBom = () => {
         ) ?? [];
 
       const matchedValues = allValues.filter((v: any) =>
-        libraryData?.data?.includes(v)
+        plants?.data?.includes(v)
       );
 
       // 6. (Optional) Deduplicate if you only want unique entries
@@ -79,11 +85,48 @@ export const useJdiBom = () => {
 
       return uniqueMatches as string[];
     },
+
+    enabled: !!objectIds?.objectId && !!plants?.data && isDropped,
+  });
+
+  useQuery({
+    queryKey: ["getMfgItem", objectIds?.objectId, isDropped],
+    queryFn: async () => {
+      const url = `/modeler/dsmfg/invoke/dsmfg:getMfgItemsFromEngItem`;
+
+      const res = (await fetchWithAuth(url, "POST", [
+        objectIds?.objectId,
+      ])) as IMfg;
+
+      const results: IEnrichedMember[] = await Promise.all(
+        res.member.map(async (m) => {
+          const refactoredPath = m?.relativePath?.replace("/resources/v1", "");
+
+          const detail = (await fetchWithAuth(
+            refactoredPath,
+            "GET"
+          )) as IDetail["detail"];
+
+          return { ...m, detail };
+        })
+      );
+
+      const hasUnreleased = results?.some((m) =>
+        m?.detail?.member?.some((item) => item?.state !== "RELEASED")
+      );
+
+      if (hasUnreleased) {
+        toast.error("Plant engineering items are not in released state");
+        dispatch(removeProduct());
+      }
+
+      return results;
+    },
+
+    enabled: !!headers?.data && !!objectIds?.objectId && isDropped,
   });
 
   return {
-    collabSpaceId,
-    libraryData,
-    classifiedItem,
+    associatedPlants,
   };
 };

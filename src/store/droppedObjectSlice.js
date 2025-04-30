@@ -1,9 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 import { droppedSlice } from "src/slices/apis/dropped.api";
 
 export const initialState = {
   droppedObjectData: {
-    initialDraggedData: [],
+    initialDraggedData: {
+      protocol: "",
+      version: "",
+      source: "",
+      widgetId: "",
+      data: { items: [] },
+    },
+
     cardData: {}, // Dragged object details
     versions: [], // Object versions (revisions)
     parentDetails: [], // Parent metadata
@@ -22,10 +30,12 @@ export const initialState = {
     specDocument: [],
     childData: [],
   },
+
   objectIds: {
     objectType: "",
     objectId: "",
   },
+
   objectDetails: {
     Title: "",
     Type: "",
@@ -62,6 +72,13 @@ const droppedObjectSlice = createSlice({
     },
     setObjectDetails: (state, action) => {
       state.objectDetails = action.payload;
+    },
+    removeProduct: (state) => {
+      state.isDropped = initialState.isDropped;
+      state.objectIds = initialState.objectIds;
+      state.objectDetails = initialState.objectDetails;
+      state.droppedObjectData.initialDraggedData =
+        initialState.droppedObjectData.initialDraggedData;
     },
     setInitialDroppedObjectData: (state, action) => {
       state.droppedObjectData.initialDraggedData =
@@ -116,8 +133,14 @@ const droppedObjectSlice = createSlice({
     builder.addMatcher(
       droppedSlice.endpoints.getObjectDetails.matchFulfilled,
       (state, action) => {
-        state.isDropped = true;
-        state.objectDetails = action.payload;
+        if (action.payload?.["Maturity State"] !== "Released") {
+          toast.error(
+            "Part is not in Released state. Please select another part"
+          );
+        } else {
+          state.isDropped = true;
+          state.objectDetails = action.payload;
+        }
       }
     );
   },
@@ -139,6 +162,7 @@ export const {
   setProposedChanges,
   setObjectIds,
   setObjectDetails,
+  removeProduct,
 } = droppedObjectSlice.actions;
 
 export default droppedObjectSlice.reducer;

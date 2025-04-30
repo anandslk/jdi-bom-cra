@@ -7,23 +7,18 @@ import { useBomMutation } from "src/slices/apis/jdiBom.api";
 import { getErrorMessage } from "src/slices/apis/types";
 import { DropdownMultiSelect } from "src/components/DropdownSelect";
 import { toast } from "react-toastify";
-import {
-  initialState,
-  setIsDropped,
-  setObjectDetails,
-  setObjectIds,
-} from "src/store/droppedObjectSlice";
+import { removeProduct } from "src/store/droppedObjectSlice";
 import { useAppDispatch, useAppSelector } from "src/store";
 import { useJdiBom } from "src/hooks/useJdiBom";
 import { orgList } from "src/utils";
-import { InjectedDroppableProps } from "src/components/WithDroppable";
+import { InjectedDroppableProps } from "src/hoc/withDroppable";
 
-export const JdiBomPage: React.FC<JdiBomPageProps> = () => {
+const JdiBomPage: React.FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
 
   const { objectDetails } = useAppSelector((state) => state.droppedObject);
 
-  const { classifiedItem } = useJdiBom();
+  const { associatedPlants } = useJdiBom();
   // const { data: orgList } = useOrgListQuery({});
 
   // Form fields and error state
@@ -118,12 +113,7 @@ export const JdiBomPage: React.FC<JdiBomPageProps> = () => {
   };
 
   // --- Cancel Handler ---
-  const handleCancel = () => {
-    dispatch(setObjectIds(initialState.objectIds));
-    dispatch(setObjectDetails(initialState.objectDetails));
-
-    dispatch(setIsDropped(false));
-  };
+  const handleCancel = () => dispatch(removeProduct());
 
   const [bomMutation, { isLoading }] = useBomMutation();
 
@@ -144,10 +134,7 @@ export const JdiBomPage: React.FC<JdiBomPageProps> = () => {
 
   return (
     <>
-      <Box
-        sx={{ minHeight: "calc(100vh - 65px)", backgroundColor: "#eef2f6" }}
-        className="h-screen"
-      >
+      <Box sx={{ minHeight: "calc(100vh - 65px)" }} className="h-screen">
         <Dialog
           isOpen={isOpen}
           title="Confirm Your Submission"
@@ -214,7 +201,7 @@ export const JdiBomPage: React.FC<JdiBomPageProps> = () => {
                   }
                   handleChange={handleChange}
                   disabled={false}
-                  rdoList={classifiedItem?.data!}
+                  rdoList={associatedPlants?.data!}
                   // jdiList={orgList?.data!}
                   jdiList={orgList!}
                   errors={errors}

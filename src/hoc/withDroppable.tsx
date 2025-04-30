@@ -1,17 +1,20 @@
 import { ComponentType, useCallback, useEffect } from "react";
-import Loader from "../Loader/Loader";
+import Loader from "../components/Loader/Loader";
 import { toast } from "react-toastify";
 import { setObjectIds } from "src/store/droppedObjectSlice";
 import { initializeDroppableArea } from "src/services/api/droppableService";
 
 import useToast from "src/hooks/useToast";
-import { MSG_INVALID_OBJECT_TYPE } from "src/utils/toastMessages";
-import { DragAndDropComponent } from "./DragAndDrop";
+import {
+  MSG_INVALID_OBJECT_TYPE,
+  MSG_REFRESH_SUCCESS,
+} from "src/utils/toastMessages";
+import { DragAndDropComponent } from "../components/DragAndDrop";
 import { useLazyGetObjectDetailsQuery } from "src/slices/apis/dropped.api";
 import { getErrorMessage } from "src/slices/apis/types";
-import { useAppDispatch, useAppSelector } from "src/store";
+import store, { useAppDispatch, useAppSelector } from "src/store";
 
-export const withDroppableLogic = <P extends object, T extends unknown>(
+export const withDroppable = <P extends object, T extends unknown>(
   WrappedComponent: ComponentType<P & InjectedDroppableProps<T>>
 ) => {
   const ComponentWithDroppableLogic = (props: P) => {
@@ -31,7 +34,11 @@ export const withDroppableLogic = <P extends object, T extends unknown>(
         const objectType = dataItems?.[0]?.objectType;
         const objectId = dataItems?.[0]?.objectId;
 
-        const validTypes = ["VPMReference", "Document", "Raw_Material"];
+        const validTypes = [
+          "VPMReference",
+          // "Document",
+          "Raw_Material",
+        ];
 
         if (!validTypes.includes(objectType)) {
           return showErrorToast(MSG_INVALID_OBJECT_TYPE);
@@ -72,6 +79,40 @@ export const withDroppableLogic = <P extends object, T extends unknown>(
         cleanup?.();
       };
     }, [isDropped, handleDrop, dispatch, showErrorToast]);
+
+    useEffect(() => {
+      if (!(window as any).widget) return;
+
+      const isAutoTriggeredRefresh = (trace: any) => {
+        return trace.some(
+          (line: any) =>
+            line?.includes("UWA_Frame_Alone.js") ||
+            line?.includes("bundle-min.js")
+        );
+      };
+
+      const onRefresh = async () => {
+        const trace = new Error()?.stack?.split("\n");
+        // ✅ Check if refresh was manually triggered
+        const userClickedRefresh = sessionStorage.getItem("userClickedRefresh");
+        if (isAutoTriggeredRefresh(trace) && !userClickedRefresh) return; // ✅ Block auto-triggered refresh
+        // ✅ Reset manual refresh flag so next refresh isn't blocked
+        sessionStorage.removeItem("userClickedRefresh");
+
+        const latestState = store.getState();
+
+        const latestDraggedData =
+          latestState.droppedObject.droppedObjectData.initialDraggedData?.data
+            ?.items;
+
+        if (!!!latestDraggedData?.length) return;
+
+        await handleDrop(latestDraggedData);
+        toast.success(MSG_REFRESH_SUCCESS);
+      };
+
+      (window as any).widget.addEvent("onRefresh", onRefresh);
+    }, []);
 
     if (isFetching) return <Loader />;
     if (!isDropped) return <DragAndDropComponent handleDrop={handleDrop} />;

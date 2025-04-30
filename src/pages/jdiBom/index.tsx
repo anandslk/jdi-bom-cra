@@ -1,8 +1,10 @@
 import { initializeWidget } from "src/components/InitializeWidget";
-import { JdiBomPage } from "src/pages/jdiBom/JdiBomPage";
-import { withDroppableLogic } from "src/components/WithDroppable";
 
-const JDIWidget = withDroppableLogic<{}, {}>(JdiBomPage);
-const JdiBomWidget = () => initializeWidget(<JDIWidget />);
+import { App } from "src/App";
+
+// const JDIWidget = withDroppableLogic<{}, {}>(JdiBomPage);
+// const JdiBomWidget = () => initializeWidget(<JDIWidget />);
+
+const JdiBomWidget = () => initializeWidget(<App />);
 
 export default JdiBomWidget;

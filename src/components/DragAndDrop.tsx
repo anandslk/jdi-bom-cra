@@ -1,8 +1,8 @@
-import "../DragAndDrop/DragAndDrop.css";
+import "./DragAndDrop/DragAndDrop.css";
 import { Image } from "react-bootstrap";
-import SearchInput from "../SearchInput/SearchInput";
+import SearchInput from "./SearchInput/SearchInput";
 import useInterComSearch from "src/hooks/useInterComSearch";
-import { ISelectedItem } from ".";
+import { ISelectedItem } from "../hoc/withDroppable";
 
 export const DragAndDropComponent = ({
   handleDrop,
