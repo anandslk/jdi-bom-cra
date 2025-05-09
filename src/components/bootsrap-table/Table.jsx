@@ -21,6 +21,7 @@ const StaticTable = ({
           const { header, currentMapping, defaultLabel, disabled } = column;
           // Get filtered dropdown options for this specific column
           const filteredOptions = dropdownOptions(header);
+          // console.log(`Filtered options for column ${header}`, filteredOptions);
 
           return (
             <tr key={index} className={disabled ? "disabled-row" : ""}>
@@ -33,7 +34,7 @@ const StaticTable = ({
                 <div className="dropdown-wrapper">
                   <CustomSelect
                     index={index}
-                    selectedValue={currentMapping?.uiLabel || header}
+                    selectedValue={currentMapping?.uiLabel || "--"}
                     onChange={(index, value) =>
                       handleSelectChange(header, value)
                     }

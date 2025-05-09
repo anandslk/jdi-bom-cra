@@ -44,17 +44,6 @@ const FileUpload = forwardRef(
     const handleClearFile = () => {
       ref.current.handleClearFiles(false); // Pass false to show success toast
     };
-    // const handleDragOver = (event) => {
-    //   if (disabled) {
-    //     event.preventDefault();
-    //     event.stopPropagation();
-    //     showErrorToast("Please choose an operation from the drop-down first");
-    //   } else {
-    //     // Allow drag-over behavior for valid file uploads
-    //     event.preventDefault();
-    //     event.dataTransfer.dropEffect = "copy";
-    //   }
-    // };
 
     return (
       <div
@@ -62,7 +51,9 @@ const FileUpload = forwardRef(
         // onDragOver={handleDragOver}
       >
         <h2>
-          {disabled ? "Please select an operation first" : "Drag & Drop Files"}
+          {disabled
+            ? "Please select an operation first to Enable File uploading "
+            : "Drag & Drop Files"}
         </h2>
         <div className="upload-area">
           <FileUploader

@@ -10,6 +10,7 @@ import {
 import CustomModal from "../../components/Modal/customModal";
 import AvailablePlant from "../../components/Popup/Popup";
 import { useRef } from "react";
+import CustomButton from "../../components/Button/Button";
 
 const PlantAssignmentToolbarNativeCta = ({
   onAddPlant,
@@ -137,6 +138,8 @@ const PlantAssignmentToolbarNativeCta = ({
         >
           Remove
         </button>
+
+        <CustomButton />
       </div>
       <CustomModal
         show={addPlantPopup}

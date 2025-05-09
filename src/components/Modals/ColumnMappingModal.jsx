@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import CustomModal from "../../components/Modal/customModal";
 import ReusableAlert from "../../components/Alert/ReusableAlert";
 import MappedList from "../../pages/mass-upload/mappedList";
-import useMassUpload from "../../hooks/Mass-Upload/useMassUpload";
 
 const ColumnMappingModal = ({
   show, //controls modal visibility//
@@ -12,10 +11,12 @@ const ColumnMappingModal = ({
   mandatoryAttributes, //required fields from excel//
   onColumnsMapped, //callback to receive the final mapping
   existingMappings = {}, // Add this prop for existing mappings
+  dropdownOptions, // Receive dropdownOptions
+  allNLSValues, // Add this prop
+  operationChoice, // Add operation choice
 }) => {
   // Initialize with existing mappings if available
   const [selectedMappings, setSelectedMappings] = useState(existingMappings);
-  const { mappedAttributes } = useMassUpload();
 
   // Reset mappings when modal is opened with new existingMappings
   useEffect(() => {
@@ -23,6 +24,8 @@ const ColumnMappingModal = ({
       setSelectedMappings(existingMappings);
     }
   }, [show, existingMappings]);
+
+  console.log("ColumnMappingModal NLS values:", allNLSValues);
 
   const handleOkClick = () => {
     console.group("Column Mapping Results");
@@ -33,8 +36,6 @@ const ColumnMappingModal = ({
 
     // Start with existing mappings to ensure we don't lose any
     const simplifiedMappings = { ...existingMappings };
-
-    const { allNLSValues = [], dropdownOptions = [] } = mappedAttributes || {};
 
     // Helper function to check if column has matching NLS
     const hasMatchingNLS = (header) => {
@@ -123,15 +124,12 @@ const ColumnMappingModal = ({
 
             simplifiedMappings[columnName] = mappedAttribute;
           } else {
-            // For unmapped columns without NLS match, use column name as attribute
-            simplifiedMappings[columnName] = columnName;
-            completeMappings[columnName] = {
-              columnName: columnName,
-              uiLabel: columnName,
-              mappedAttribute: columnName,
-              isMandatory: false,
-              autoMapped: false,
-            };
+            // For unmapped columns without NLS match, don't include them in the mappings at all
+            // This will effectively exclude them from the payload
+            console.log(
+              `Skipping unmapped column without NLS match: ${columnName}`
+            );
+            // Don't add anything to simplifiedMappings or completeMappings
           }
         }
       }
@@ -154,6 +152,12 @@ const ColumnMappingModal = ({
 
     onHide();
   };
+
+  console.log(
+    "ColumnMappingModal - received dropdownOptions:",
+    dropdownOptions
+  );
+  console.log("ColumnMappingModal - operation choice:", operationChoice);
 
   const errorMessage = (
     <>
@@ -196,6 +200,9 @@ const ColumnMappingModal = ({
         mandatoryAttributes={mandatoryAttributes}
         selectedMappings={selectedMappings}
         setSelectedMappings={setSelectedMappings}
+        dropdownOptions={dropdownOptions}
+        allNLSValues={allNLSValues} // Pass this to MappedList
+        operationChoice={operationChoice} // Pass operation choice
       />
     </CustomModal>
   );

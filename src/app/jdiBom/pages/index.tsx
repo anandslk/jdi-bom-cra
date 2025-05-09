@@ -1,0 +1,493 @@
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import {
+  Alert,
+  Autocomplete,
+  AutocompleteChangeDetails,
+  AutocompleteChangeReason,
+  Box,
+  Button,
+  Chip,
+  InputLabel,
+  Paper,
+  Stack,
+  TextField,
+} from "@mui/material";
+import { FormEvent, SyntheticEvent, useEffect, useState } from "react";
+import { ConfirmationScreen } from "src/app/jdiBom/components/Confirmation";
+import { Dialog } from "src/app/jdiBom/components/Dialog";
+import { DropdownMultiSelect } from "src/app/jdiBom/components/DropdownSelect";
+import { ResultsScreen } from "src/app/jdiBom/components/Result";
+import { InjectedDroppableProps } from "src/app/jdiBom/hoc/withDroppable";
+import {
+  removeProduct,
+  setIsDropped,
+} from "src/app/jdiBom/slices/reducers/jdiBom.reducer";
+import { useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
+import { RDO_ORGS, RdoKey, rdoList } from "src/app/jdiBom/utils";
+// import useToast from "src/hooks/useToast";
+// import { MSG_INVALID_OBJECT_TYPE } from "src/utils/toastMessages";
+// import { useLazyGetObjectDetailsQuery } from "src/slices/apis/dropped.api";
+import Loader from "src/components/Loader/Loader";
+
+import { Tooltip } from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { useJdiBom } from "../hooks/useJdiBom";
+
+const JdiBomPage: React.FC<JdiBomPageProps> = () => {
+  const dispatch = useAppDispatch();
+
+  const { objectDetails } = useAppSelector((state) => state.jdiBom);
+
+  const { plants } = useJdiBom();
+
+  // Form fields and error state
+  const [errors, setErrors] = useState<Partial<IFormErrors>>({
+    parentParts: "",
+    sourceOrg: "",
+    plants: "",
+
+    rdo: "",
+    jdi: "",
+  });
+
+  const initialForm = {
+    parentParts: [],
+    sourceOrg: "",
+    plants: [],
+
+    rdo: "" as RdoKey,
+    jdi: "",
+  };
+
+  const [formState, setFormState] = useState<IFormState>(initialForm);
+
+  const [jdiList, setJdiList] = useState<string[]>([]);
+
+  useEffect(() => {
+    const selectedRdo = formState.rdo;
+    const orgs = selectedRdo ? RDO_ORGS[selectedRdo] || [] : [];
+    setJdiList(orgs);
+
+    setFormState((fs) => ({
+      ...fs,
+      jdi: "",
+      plants: fs.plants.filter(
+        (p) => !Object.values(RDO_ORGS).flat().includes(p) || orgs.includes(p),
+      ),
+    }));
+  }, [formState.rdo]);
+
+  const handleChange = (
+    key: keyof IFormState,
+    value: IFormState[keyof IFormState],
+  ) => {
+    setErrors((prev) => ({ ...prev, [key]: "" }));
+
+    setFormState((prev) => ({ ...prev, [key]: value }));
+  };
+
+  useEffect(() => {
+    setFormState((prev) => ({
+      ...prev,
+      parentParts: objectDetails,
+      // parentParts: objectDetails.filter(
+      //   (item) => item["Maturity State"] === "Released"
+      // ),
+      // sourceOrg: objectDetails?.["Collaborative Space"],
+    }));
+  }, [objectDetails]);
+
+  // useEffect(() => {
+  //   const rv =
+  //     formState.parentPart && objectDetails?.["Maturity State"] !== "Released";
+
+  //   setErrors((prev) => ({
+  //     ...prev,
+  //     parentPart: rv
+  //       ? "Part is not in released state, please select another part"
+  //       : "",
+  //   }));
+  // }, [objectDetails, formState.parentPart]);
+
+  useEffect(() => {
+    if (formState.rdo?.trim()) {
+      setErrors((prev) => ({ ...prev, rdo: "" }));
+    }
+  }, [formState.rdo]);
+
+  // clear JDI error as soon as there's at least one JDI Org selected
+  useEffect(() => {
+    if (formState.jdi?.trim()) {
+      setErrors((prev) => ({ ...prev, jdi: "" }));
+    }
+  }, [formState.jdi]);
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  // --- Form Submission ---
+  const handleFormSubmit = (e: FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    const newErrors: IFormErrors = {};
+
+    if (!formState.sourceOrg?.trim())
+      newErrors.sourceOrg = "Source org is required";
+
+    if (!formState.rdo?.trim()) newErrors.rdo = "RDO Name is required";
+    if (!formState.jdi?.trim()) newErrors.jdi = "JDI is required";
+
+    if (!formState.plants.length)
+      newErrors.plants = "Select either RDO Name or Destination JDI Org";
+
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+
+    const hasErrors = Object.values({ ...errors, ...newErrors }).some(
+      (val) => !!val,
+    );
+
+    if (!hasErrors) setIsOpen(true);
+  };
+
+  // --- Cancel Handler ---
+  const handleCancel = () => dispatch(removeProduct());
+
+  // --- Confirmation Stage ---
+  const handleConfirmationSubmit = async () => {
+    // const { data, error } = await bomMutation({
+    //   parentParts: formState.parentParts,
+    //   sourceOrg: formState.sourceOrg,
+    //   plants: formState.plants,
+    // });
+
+    // if (error) return toast.error(getErrorMessage(error));
+
+    setIsOpen(false);
+    // toast.success(data.message);
+    // setTimeout(() => navigate("/tasks"), 500);
+  };
+
+  const handleChangePI = (
+    _event: SyntheticEvent<Element, Event>,
+    newValue: IProductInfo[],
+    _reason: AutocompleteChangeReason,
+    _details?: AutocompleteChangeDetails<IProductInfo>,
+  ) => {
+    // const attempted = details?.option;
+    // if (
+    //   reason === "selectOption" &&
+    //   attempted &&
+    //   attempted?.["Maturity State"] !== "Released"
+    // ) {
+    //   return;
+    // }
+
+    handleChange("parentParts", newValue);
+  };
+
+  // const { showErrorToast } = useToast();
+
+  // const [getDroppedObject, { isFetching }] = useLazyGetObjectDetailsQuery();
+
+  // const handleDrop = useCallback(
+  //   async (dataItems: ISelectedItem[]): Promise<void> => {
+  //     if (dataItems.length === 0) {
+  //       toast.error("No data items to process.");
+  //       return;
+  //     }
+
+  //     const validTypes = [
+  //       "VPMReference",
+  //       // "Document",
+  //       "Raw_Material",
+  //     ];
+
+  //     const validDataItems = dataItems.filter((item) =>
+  //       validTypes.includes(item.objectType)
+  //     );
+
+  //     if (validDataItems.length === 0) {
+  //       return showErrorToast(MSG_INVALID_OBJECT_TYPE);
+  //     }
+
+  //     // Optionally store all valid objectIds (if needed in state)
+  //     dispatch(setObjectIds(validDataItems));
+
+  //     // Fetch each object in parallel
+  //     const results = await Promise.allSettled(
+  //       validDataItems.map((item) =>
+  //         getDroppedObject({ oid: item.objectId, type: item.objectType })
+  //       )
+  //     );
+
+  //     results.forEach((result) => {
+  //       if (result.status === "rejected" || result.value?.error) {
+  //         const error =
+  //           result.status === "rejected" ? result.reason : result?.value?.error;
+
+  //         showErrorToast(getErrorMessage(error));
+  //       }
+  //     });
+  //   },
+  //   [dispatch, showErrorToast]
+  // );
+
+  // useEffect(() => {
+  //   handleDrop([
+  //     {
+  //       objectId: "6B8F27BD5646250067FCA7500000252B",
+  //       // objectId: "6B8F27BD42FD0F00680784DB0000C1A2",
+  //       objectType: "VPMReference",
+  //     },
+  //     {
+  //       objectId: "CF75043C908508006808BC670000373A",
+  //       // objectId: "6B8F27BD42FD0F00680784DB0000C1A",
+  //       objectType: "VPMReference",
+  //     },
+  //     {
+  //       objectId: "6B8F27BD42FD0F00680784DB0000C1A1",
+  //       // objectId: "6B8F27BD42FD0F00680784DB0000C1A22",
+  //       objectType: "VPMReference",
+  //     },
+  //   ]);
+  // }, []);
+
+  if (plants?.isFetching) return <Loader />;
+  return (
+    <>
+      <Box sx={{ minHeight: "calc(100vh - 65px)" }} className="h-screen">
+        <Dialog
+          isOpen={isOpen}
+          title="Confirm Your Submission"
+          onSubmit={handleConfirmationSubmit}
+          onCancel={() => setIsOpen(false)}
+          disabled={false}
+        >
+          <ConfirmationScreen
+            parentParts={formState.parentParts?.map((item) => item.Title)}
+            sourceOrg={formState.sourceOrg}
+            selectedItems={formState.plants}
+          />
+        </Dialog>
+
+        <Box
+          sx={{
+            padding: 4,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 4,
+            minHeight: "calc(100vh - 200px)",
+          }}
+        >
+          <Paper
+            sx={{
+              padding: 4,
+              width: "100%",
+              maxWidth: 600,
+              borderRadius: 4,
+              boxShadow: 3,
+            }}
+          >
+            <form noValidate onSubmit={handleFormSubmit}>
+              <Stack spacing={3}>
+                <InputLabel
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  Parent item(s) to Assign
+                  <AddCircleOutlineIcon
+                    sx={{ color: "#1976d2", fontSize: 22, cursor: "pointer" }}
+                    onClick={() => dispatch(setIsDropped(false))}
+                  />
+                </InputLabel>
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  options={objectDetails}
+                  getOptionLabel={(option) => option.Title}
+                  value={formState.parentParts}
+                  onChange={handleChangePI}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.Title}>
+                      <span
+                      // style={{
+                      //   color:
+                      //     option?.["Maturity State"] !== "Released"
+                      //       ? "#ccc"
+                      //       : "inherit",
+                      // }}
+                      >
+                        {option.Title}
+                      </span>
+                      <Tooltip
+                        title={
+                          option["Maturity State"] !== "Released"
+                            ? "Part is not in Released state"
+                            : ""
+                        }
+                        slotProps={{ tooltip: { sx: { fontSize: "14px" } } }}
+                      >
+                        {option["Maturity State"] !== "Released" ? (
+                          <ErrorOutlineIcon
+                            sx={{ color: "red", fontSize: 16, marginLeft: 0.5 }}
+                          />
+                        ) : (
+                          <span></span>
+                        )}
+                      </Tooltip>
+                    </li>
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.Title === value.Title
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      required
+                      fullWidth
+                      variant="outlined"
+                      // label="Parent item(s) to Assign"
+                      error={!!errors.parentParts}
+                      helperText={errors.parentParts}
+                    />
+                  )}
+                  renderValue={(value, getTagProps) => {
+                    return (
+                      <Box
+                        sx={{
+                          maxHeight: 100,
+                          overflowY: "auto",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 0.5,
+                          paddingRight: 1,
+                        }}
+                      >
+                        {value.map((option, index) => (
+                          <Chip
+                            label={option.Title}
+                            {...getTagProps({ index })}
+                          />
+                        ))}
+                      </Box>
+                    );
+                  }}
+                  sx={{
+                    marginTop: "5px !important",
+                    "& .MuiAutocomplete-tag": {
+                      maxWidth: "100%",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      maxHeight: `400px !important`,
+                    },
+                    "& .MuiAutocomplete-endAdornment": {
+                      maxHeight: `400px !important`,
+                      alignSelf: "flex-start",
+                      // marginTop: "8px",
+                    },
+                  }}
+                />
+
+                <InputLabel sx={{ fontWeight: "bold", fontSize: 16 }}>
+                  Source Orgs
+                </InputLabel>
+                <Autocomplete
+                  options={plants?.data ?? []}
+                  value={formState.sourceOrg}
+                  onChange={(_, value) =>
+                    handleChange("sourceOrg", value || "")
+                  }
+                  // clearOnEscape
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      required
+                      fullWidth
+                      variant="outlined"
+                      // placeholder="Source Orgs"
+                      error={!!errors.sourceOrg}
+                      helperText={errors.sourceOrg}
+                    />
+                  )}
+                  sx={{ marginTop: "5px !important" }}
+                />
+
+                <DropdownMultiSelect
+                  selectedItems={formState.plants}
+                  selectedRdo={formState.rdo}
+                  onChangePlants={(newSelectedItems) =>
+                    handleChange("plants", newSelectedItems)
+                  }
+                  handleChange={handleChange}
+                  disabled={false}
+                  rdoList={rdoList}
+                  // jdiList={orgList?.data!}
+                  jdiList={jdiList}
+                  errors={errors}
+                />
+
+                {errors.plants && (
+                  <Alert severity="error">{errors.plants}</Alert>
+                )}
+
+                <Stack direction="row" spacing={2} justifyContent="flex-end">
+                  <Button type="submit" variant="contained" color="primary">
+                    Submit
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </Button>
+                </Stack>
+              </Stack>
+            </form>
+          </Paper>
+
+          {/* <LoadingScreen message="Assigning items and commoning required parts..." /> */}
+
+          {/* Results Screen */}
+          {false && (
+            <ResultsScreen
+              parentParts={formState.parentParts?.map((item) => item.Title)}
+              sourceOrg={formState.sourceOrg}
+              selectedItems={formState.plants}
+              onBack={() => setIsOpen(false)}
+            />
+          )}
+        </Box>
+      </Box>
+      {/* </SecureRoute> */}
+    </>
+  );
+};
+
+export default JdiBomPage;
+
+export type IFormState = {
+  parentParts: IProductInfo[];
+  sourceOrg: string;
+  plants: string[];
+
+  rdo: RdoKey;
+  jdi: string;
+};
+
+export interface IFormErrors {
+  parentParts?: string;
+  sourceOrg?: string;
+  plants?: string;
+
+  rdo?: string;
+  jdi?: string;
+}
+
+export interface JdiBomPageProps extends InjectedDroppableProps<{}> {}

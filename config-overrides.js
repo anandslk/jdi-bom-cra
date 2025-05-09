@@ -2,7 +2,7 @@ const path = require("path");
 const { override } = require("customize-cra");
 const webpack = require("webpack");
 
-module.exports = override((config, env) => {
+module.exports = override((config) => {
   // Set a common entry point but determine the correct widget inside it
 
   if (process.env.WIDGET_ENTRY) {
@@ -10,7 +10,7 @@ module.exports = override((config, env) => {
     config.entry = { main: "./src/lib/widget-starter.js" };
   } else {
     console.info("Creating React App");
-    config.entry = { main: "./src/App" };
+    config.entry = { main: "./src/app/jdiBom/App" };
   }
 
   // Remove the DefinePlugin that sets process.env.WIDGET_ENTRY if it exists
@@ -24,12 +24,7 @@ module.exports = override((config, env) => {
     })
   );
 
-  config.resolve = {
-    ...config.resolve,
-    alias: {
-      src: path.resolve(__dirname, "src/"),
-    },
-  };
+  config.resolve.alias.src = path.resolve(__dirname, "src/");
 
   // Define externals for the 3DEXPERIENCE modules
   config.externals = {

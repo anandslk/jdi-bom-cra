@@ -8,13 +8,14 @@ const widgetModules = {
   plantAssignment: () => import("src/pages/plantAssignment/plantIndex"),
   massUpload: () => import("src/massuUploadIndex"),
   bosAttribute: () => import("src/pages/BOSWidget/bosIndex"),
-  jdiBom: () => import("src/pages/jdiBom"),
+  jdiBom: () => import("src/app/jdiBom"),
   default: () => import("src/index"),
 };
 
 initWidget(
   async (widget) => {
     const response = await SecurityContext();
+
     const securitycontext = response.securitycontextpreference;
     const email = response.email;
 

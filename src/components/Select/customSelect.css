@@ -1,3 +1,71 @@
 .custom-select {
   width: auto;
 }
+
+/* Styling for dropdown groups and options */
+
+/* Group label styling */
+.form-select optgroup {
+  font-weight: 600;
+  font-size: 14px;
+  /* color: #080808;
+  background-color: #f8f9fa; */
+  padding: 5px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+
+
+/* Option styling */
+.form-select option {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+/* EBOM Attributes group specific styling */
+.form-select optgroup[label="EBOM Attributes"] {
+  color: #080808; /* Bootstrap primary blue color */
+  background-color: #7195ca87 /* Light blue background */
+}
+
+/* Part Attributes group specific styling */
+.form-select optgroup[label="Item Attributes"] {
+  color: #080808; /* Bootstrap success green color */
+  background-color: rgba(197, 201, 201, 0.904); /* Light green background */
+}
+
+
+/* Focus style with custom background */
+.form-select:focus {
+  border-color: #bbe6f5;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(187, 230, 245, 0.5);
+  background-color: #ffff; /* Light aqua-blue */
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+
+/* Premium custom scrollbar */
+.form-select::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.form-select::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #c7c7c7, #9e9e9e);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
+}
+
+.form-select::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #a0a0a0, #7d7d7d);
+}
+
+.form-select::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.05);
+}

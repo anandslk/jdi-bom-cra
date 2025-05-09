@@ -67,9 +67,10 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
       const headerMismatch = !expectedHeaders.every((header) =>
         uploadedHeaders.includes(header)
       );
+      
 
       if (headerMismatch) {
-        console.error("❌ Template mismatch detected!");
+        console.error(" Template mismatch detected!");
         reject({
           isTemplateMismatch: true,
           errors: [
@@ -113,6 +114,11 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
         docPrefix: 0,
       };
 
+      // Convert collabSpaceTitles to lowercase for case-insensitive comparison
+      const lowerCaseCollabSpaceTitles = collabSpaceTitles.map((title) =>
+        title.toLowerCase()
+      );
+
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         const chunk = chunks[chunkIndex];
         const progress = Math.round(((chunkIndex + 1) / chunks.length) * 100);
@@ -122,23 +128,39 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
 
           // Mandatory fields validation
           mandatoryAttributes.forEach((field) => {
-            if (!row[field] || row[field].toString().trim() === "") {
+            // Special case for Physical Product Structure: Find Number and Quantity not mandatory for level 0 rows
+            if (
+              matchedOperation === "Physical Product Structure" &&
+              (field === "Find Number" || field === "Quantity") &&
+              row["Level"] !== undefined &&
+              (row["Level"] === 0 || row["Level"] === "0")
+            ) {
+              // Skip validation for these fields on level 0 rows
+              return;
+            }
+
+            // Modified check that doesn't treat 0 as empty
+            if (
+              row[field] === undefined ||
+              row[field] === null ||
+              (row[field].toString().trim() === "" && row[field] !== 0)
+            ) {
               errorStats.mandatory++;
               validationErrors.push(
                 `Row ${globalRowIndex + 2}: "${field}" is required but is empty`
               );
             }
           });
-
           // Collaborative Space validation
           if (
             matchedOperation === "Physical Product" ||
             matchedOperation === "Document"
           ) {
-            const userCollabSpace = row["Collaborative Space"]?.trim() || "";
+            const userCollabSpace =
+              row["Collaborative Space"]?.trim().toLowerCase() || "";
             if (
               !userCollabSpace ||
-              !collabSpaceTitles.includes(userCollabSpace)
+              !lowerCaseCollabSpaceTitles.includes(userCollabSpace)
             ) {
               errorStats.collabSpace++;
               validationErrors.push(
@@ -180,8 +202,6 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
                 levelValue
               );
             }
-
-            
           }
 
           // EIN Number / Document Name validation
@@ -228,23 +248,25 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
             }
           }
 
-             // NEW: Validate that for Physical Product Structure, the "Quantity" value is positive (cannot be zero or negative)
-             if (matchedOperation === "Physical Product Structure") {
-              columnName = "Quantity";
-              const quantityValue = row[columnName]?.toString().trim();
-              if (quantityValue) {
-                const numQuantity = Number(quantityValue);
-                if (isNaN(numQuantity) || numQuantity <= 0) {
-                  validationErrors.push(
-                    `Row ${globalRowIndex + 2}: "Quantity" value "${quantityValue}" Quantity should not be 0 or -ve.`
-                  );
-                  console.log(
-                    "Quantity validation failed - Quantity is 0 or -ve:",
-                    quantityValue
-                  );
-                }
+          // NEW: Validate that for Physical Product Structure, the "Quantity" value is positive (cannot be zero or negative)
+          if (matchedOperation === "Physical Product Structure") {
+            columnName = "Quantity";
+            const quantityValue = row[columnName]?.toString().trim();
+            if (quantityValue) {
+              const numQuantity = Number(quantityValue);
+              if (isNaN(numQuantity) || numQuantity <= 0) {
+                validationErrors.push(
+                  `Row ${
+                    globalRowIndex + 2
+                  }: "Quantity" value "${quantityValue}" Quantity should not be 0 or -ve.`
+                );
+                console.log(
+                  "Quantity validation failed - Quantity is 0 or -ve:",
+                  quantityValue
+                );
               }
             }
+          }
         });
 
         // Log only at 25% intervals
@@ -264,7 +286,7 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
       }
 
       if (validationErrors.length > 0) {
-        console.log("❌ Validation completed with errors:", {
+        console.log(" Validation completed with errors:", {
           total: validationErrors.length,
           byType: errorStats,
         });

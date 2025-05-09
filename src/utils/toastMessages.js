@@ -37,5 +37,28 @@ export const MSG_INVALID_OBJECT_TYPE =
 export const MSG_MULTIPLE_OBJECTS_DROPPED =
   "Multiple objects dropped. Please drop only one object.";
 
+// Mass Upload specific messages
+export const MSG_TEMPLATE_OPERATION_MISMATCH =
+  "The template uploaded and the selected operation do not match";
+export const MSG_NO_DATA_TO_SUBMIT = "No data to submit";
+export const MSG_INVALID_OPERATION_TYPE = "Invalid operation type";
+export const MSG_UPLOAD_FAILED_CONTACT_ADMIN =
+  "Upload failed. Please contact your admin";
+export const MSG_NO_SHEET_DATA =
+  "No sheet data available to transform with mappings";
+export const MSG_UPLOAD_FAILED = "Upload failed: ";
+export const MSG_DROPDOWN_NOT_SELECTED =
+  "Please Choose an Opertaion  from the dropdown Menu";
 
- export const MSG_DROPDOWN_NOT_SELECTED = "Please Choose an Opertaion  from the dropdown Menu";
+
+  // Mass Upload Success Messages
+// export const MSG_AUTO_MAPPED_SUCCESS = "Data automatically mapped with {0} columns";
+export const MSG_FILE_VALIDATED_SUCCESS = "File validated successfully!";
+export const MSG_WIDGET_RESET_SUCCESS = "Widget reset successfully!";
+export const MSG_UPLOAD_SUCCESS = "Upload successful!";
+// export const MSG_DATA_MAPPED_SUCCESS = "Data mapped successfully with {0} columns";
+// export const MSG_PROCESSED_CHUNKS = "Processed {0} of {1} document chunks...";
+
+// Mass Upload Info Message
+
+export const MSG_OPERATION_CHNAGED="Operation changed, please re-upload the file";

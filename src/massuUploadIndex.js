@@ -15,6 +15,7 @@ let root = null; // Global React root
 function start() {
   requirejs(["DS/PlatformAPI/PlatformAPI"], (PlatformAPI) => {
     window.PlatformAPI = PlatformAPI;
+    
   });
   // console.log("[index.js] start() called. Mounting React app.");
   // Find the root element within the widget's body (if available)

@@ -4,14 +4,31 @@ import { fetchCsrfToken } from "../../services/api/PlantAssignment/fetchCsrfServ
 import { callEnoviaWebService, fetchData } from "../../utils/helpers";
 import { useEffect, useState } from "react";
 
-const useMassUpload = () => {
+const useMassUpload = (initialOperationChoice) => {
   const { showErrorToast } = useToast();
   const [mappedAttributes, setMappedAttributes] = useState([]);
+  const [operationChoice, setOperationChoice] = useState(
+    initialOperationChoice
+  );
   const ENOVIA_BASE_URL = process.env.REACT_APP_ENOVIA_BASE_URL;
 
   // Function to Fetch Spreadsheet Column Mapping
-  const fetchColumnMapping = async () => {
+  const fetchColumnMapping = async (operation = null) => {
     try {
+      // Use the passed operation or fall back to state
+      const effectiveOperation = operation || operationChoice;
+      console.log("Fetching column mapping for operation:", effectiveOperation);
+
+      if (!effectiveOperation) {
+        console.log("No operation specified, skipping fetch");
+        return;
+      }
+
+      // Update state if a new operation is passed
+      if (operation && operation !== operationChoice) {
+        setOperationChoice(operation);
+      }
+
       console.log("Fetching column mapping...");
 
       // Get CSRF Headers
@@ -65,12 +82,6 @@ const useMassUpload = () => {
         groupData.map((item) => item.nls)
       );
 
-      /// Extract attribute groups
-      // const attributeGroups = [
-      //   ...new Set(groupData.map((item) => item.groupNLS)),
-      // ];
-      // console.log("Attribute Groups:", attributeGroups);
-
       const systemAttributes = [
         {
           name: "description", // Change from backendName to name
@@ -97,10 +108,56 @@ const useMassUpload = () => {
           nls: "Collaborative Space",
           groupNLS: "System Attributes",
         },
+        {
+          name:"Physical Product/Raw Material",
+          nls: "Physical Product/Raw Material",
+          groupNLS: "System Attributes",
+        
+        }
+       
       ];
+
+      // Define EBOM attributes for Product Structure operation
+      let ebomAttributes = [];
+      if (effectiveOperation === "2") {
+        ebomAttributes = [
+          {
+            name: "MBOMFindNumber__e7ead0d4e78a4d7f99e9e5fd900f8fdf",
+            nls: "Find Number",
+            group: "EBOM Attributes",
+            groupNLS: "EBOM Attributes",
+          },
+          {
+            name: "MBOMComponentLocation__00cc2e44830642d69dd3728d8c279a75",
+            nls: "Component Location",
+            group: "EBOM Attributes",
+            groupNLS: "EBOM Attributes",
+          },
+          {
+            name: "Level",
+            nls: "Level",
+            group: "EBOM Attributes",
+            groupNLS: "EBOM Attributes",
+          },
+          {
+            name: "name",
+            nls: "Reference Designator",
+            group: "EBOM Attributes",
+            groupNLS: "EBOM Attributes",
+          },
+        ];
+      }
 
       const attributeGroups = groupData.map((item) => item.groupNLS);
       console.log("Attribute Groups:", attributeGroups);
+
+      // Add EBOM Attributes group for operation 2
+      if (
+        effectiveOperation === "2" &&
+        !attributeGroups.includes("EBOM Attributes")
+      ) {
+        attributeGroups.push("EBOM Attributes");
+      }
 
       // Get NLS values from API response
       const apiNlsValues = groupData.map((item) => item.nls);
@@ -110,7 +167,17 @@ const useMassUpload = () => {
       const systemNlsValues = systemAttributes.map((item) => item.nls);
       console.log("System NLS Values:", systemNlsValues);
 
-      const allNLSValues = [...new Set([...apiNlsValues, ...systemNlsValues])];
+      // Get NLS values from EBOM attributes when operation is 2
+      let ebomNlsValues = [];
+      if (effectiveOperation === "2") {
+        ebomNlsValues = ebomAttributes.map((item) => item.nls);
+        console.log("EBOM NLS Values:", ebomNlsValues);
+      }
+
+      // Combine all NLS values including EBOM attributes if operation is 2
+      const allNLSValues = [
+        ...new Set([...apiNlsValues, ...systemNlsValues, ...ebomNlsValues]),
+      ];
       console.log("all nls value with Hardcode :", allNLSValues);
 
       // First filter out System Attributes from API response
@@ -124,15 +191,23 @@ const useMassUpload = () => {
         "items removed"
       );
 
-      // Then merge only non-system API attributes with your hardcoded ones
-      const mergeAttributes = [...filteredGroupData, ...systemAttributes];
+      // Then merge non-system API attributes with hardcoded ones and EBOM attributes
+      let mergeAttributes = [...filteredGroupData, ...systemAttributes];
+      if (effectiveOperation === "2") {
+        mergeAttributes = [...mergeAttributes, ...ebomAttributes];
+        console.log(
+          "Added EBOM attributes to merged attributes for operation 2",
+          mergeAttributes
+        );
+      }
 
       // Then continue with your other filtering if needed
       const relevantAttributes =
         mergeAttributes.filter(
           (attr) =>
             attr.deploymentExtension === true ||
-            (attr.groupNLS && attr.groupNLS.trim() !== "")
+            (attr.groupNLS && attr.groupNLS.trim() !== "") ||
+            (effectiveOperation === "2" && attr.group === "EBOM Attributes")
         ) || [];
 
       console.log("Non-system attributes from API:", relevantAttributes.length);
@@ -140,7 +215,7 @@ const useMassUpload = () => {
       const mappedData = relevantAttributes.map((attr) => ({
         uiLabel: attr.nls, // UI Display Name
         backendName: attr.name || attr.backendName, // Backend Name (or name)
-        group: attr.groupNLS || "General", // Default group if not specified
+        group: attr.groupNLS || attr.group || "General", // Default group if not specified
       }));
 
       // Create a filtered version for dropdown that excludes System Attributes
@@ -152,6 +227,7 @@ const useMassUpload = () => {
         "Dropdown Options (excluding System Attributes):",
         dropdownOptions
       );
+
       // Organize attributes by their groups
       const attributesByGroup = {};
 
@@ -179,6 +255,28 @@ const useMassUpload = () => {
         relevantAttributes.find((attr) => attr.groupNLS === "System Attributes")
       );
 
+      // For operation 2, log EBOM attributes as well
+      if (effectiveOperation === "2") {
+        console.log(
+          "EBOM Attributes found:",
+          relevantAttributes.filter(
+            (attr) =>
+              attr.groupNLS === "EBOM Attributes" ||
+              attr.group === "EBOM Attributes"
+          ).length
+        );
+        console.log(
+          "Sample EBOM Attribute:",
+          relevantAttributes.find(
+            (attr) =>
+              attr.groupNLS === "EBOM Attributes" ||
+              attr.group === "EBOM Attributes"
+          )
+        );
+      }
+
+      
+
       setMappedAttributes({
         allNLSValues: allNLSValues,
         dropdownOptions: dropdownOptions, // Use filtered list without System Attributes
@@ -193,8 +291,10 @@ const useMassUpload = () => {
   };
 
   useEffect(() => {
-    fetchColumnMapping();
-  }, []);
+    if (operationChoice) {
+      fetchColumnMapping();
+    }
+  }, [operationChoice]);
 
   return { mappedAttributes, refreshMapping: fetchColumnMapping };
 };
