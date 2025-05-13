@@ -317,7 +317,6 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
                     "& .MuiAutocomplete-endAdornment": {
                       maxHeight: `400px !important`,
                       alignSelf: "flex-start",
-                      // marginTop: "8px",
                     },
                   }}
                 />

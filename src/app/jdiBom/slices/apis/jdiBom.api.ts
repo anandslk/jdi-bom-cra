@@ -17,6 +17,4 @@ export const jdiBomApiSlice = createApi({
   }),
 });
 
-export const {} = jdiBomApiSlice;
-
 export const { useGetUserQuery } = jdiBomApiSlice;

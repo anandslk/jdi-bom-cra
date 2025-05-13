@@ -81,7 +81,7 @@ export const useHandleDrop = () => {
         }
       });
     },
-    [dispatch, showErrorToast],
+    [dispatch, showErrorToast, getDroppedObject],
   );
 
   useEffect(() => {

@@ -13,4 +13,16 @@ declare global {
     PlatformAPI: any;
     require: any;
   }
+
+  interface IWidget {
+    setTitle: (title: string) => void;
+    addPreference: (pref: any) => void;
+    setValue: (key: string, value: any) => void;
+    preferences?: any;
+    body: HTMLElement;
+  }
+
+  interface IWidgetModules {
+    [key: string]: () => Promise<{ default: () => void }>;
+  }
 }

@@ -6,7 +6,7 @@ function customizeWebpack(config) {
   // Set custom entry point based on WIDGET_ENTRY
   if (process.env.WIDGET_ENTRY) {
     console.info("Creating Widget :-", process.env.WIDGET_ENTRY);
-    config.entry = { main: "./src/lib/widget-starter.js" };
+    config.entry = { main: "./src/lib/widget-starter" };
   } else {
     console.info("Creating React App");
     config.entry = { main: "./src/app/jdiBom/App" };

@@ -1,5 +1,5 @@
 import { ComponentType, useCallback, useEffect } from "react";
-import Loader from "../../../components/Loader/Loader";
+import Loader from "src/components/Loader/Loader";
 import { toast } from "react-toastify";
 import {
   setInitialDroppedObjectData,
@@ -101,7 +101,7 @@ export const withDroppable = <P extends object, T extends unknown>(
           }
         });
       },
-      [dispatch, showErrorToast],
+      [dispatch, showErrorToast, getDroppedObject],
     );
 
     useEffect(() => {
