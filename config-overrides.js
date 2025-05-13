@@ -1,10 +1,9 @@
 const path = require("path");
-const { override } = require("customize-cra");
 const webpack = require("webpack");
+const { override, overrideDevServer } = require("customize-cra");
 
-module.exports = override((config) => {
-  // Set a common entry point but determine the correct widget inside it
-
+function customizeWebpack(config) {
+  // Set custom entry point based on WIDGET_ENTRY
   if (process.env.WIDGET_ENTRY) {
     console.info("Creating Widget :-", process.env.WIDGET_ENTRY);
     config.entry = { main: "./src/lib/widget-starter.js" };
@@ -13,7 +12,7 @@ module.exports = override((config) => {
     config.entry = { main: "./src/app/jdiBom/App" };
   }
 
-  // Remove the DefinePlugin that sets process.env.WIDGET_ENTRY if it exists
+  // Remove any existing DefinePlugin to avoid duplicates
   config.plugins = config.plugins.filter(
     (plugin) => !(plugin instanceof webpack.DefinePlugin)
   );
@@ -24,9 +23,10 @@ module.exports = override((config) => {
     })
   );
 
+  // Alias for 'src'
   config.resolve.alias.src = path.resolve(__dirname, "src/");
 
-  // Define externals for the 3DEXPERIENCE modules
+  // 3DEXPERIENCE externals
   config.externals = {
     "DS/DataDragAndDrop/DataDragAndDrop": "DS/DataDragAndDrop/DataDragAndDrop",
     "DS/PlatformAPI/PlatformAPI": "DS/PlatformAPI/PlatformAPI",
@@ -37,4 +37,24 @@ module.exports = override((config) => {
   };
 
   return config;
-});
+}
+
+function customizeJest(config) {
+  return {
+    ...config,
+    moduleNameMapper: {
+      ...config.moduleNameMapper,
+      "^DS/(.*)$": "<rootDir>/__mocks__/DS/$1.js",
+      "^src/(.*)$": "<rootDir>/src/$1",
+    },
+    transformIgnorePatterns: [
+      "/node_modules/(?!@standard-schema)/", // transform this ESM module
+    ],
+  };
+}
+
+module.exports = {
+  webpack: override(customizeWebpack),
+  jest: customizeJest,
+  devServer: overrideDevServer((config) => config),
+};

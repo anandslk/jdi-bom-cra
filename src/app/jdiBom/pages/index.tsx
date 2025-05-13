@@ -24,13 +24,10 @@ import {
 } from "src/app/jdiBom/slices/reducers/jdiBom.reducer";
 import { useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
 import { RDO_ORGS, RdoKey, rdoList } from "src/app/jdiBom/utils";
-// import useToast from "src/hooks/useToast";
-// import { MSG_INVALID_OBJECT_TYPE } from "src/utils/toastMessages";
-// import { useLazyGetObjectDetailsQuery } from "src/slices/apis/dropped.api";
 import Loader from "src/components/Loader/Loader";
 
-import { Tooltip } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { Tooltip } from "@mui/material";
 import { useJdiBom } from "../hooks/useJdiBom";
 
 const JdiBomPage: React.FC<JdiBomPageProps> = () => {
@@ -182,73 +179,6 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
 
     handleChange("parentParts", newValue);
   };
-
-  // const { showErrorToast } = useToast();
-
-  // const [getDroppedObject, { isFetching }] = useLazyGetObjectDetailsQuery();
-
-  // const handleDrop = useCallback(
-  //   async (dataItems: ISelectedItem[]): Promise<void> => {
-  //     if (dataItems.length === 0) {
-  //       toast.error("No data items to process.");
-  //       return;
-  //     }
-
-  //     const validTypes = [
-  //       "VPMReference",
-  //       // "Document",
-  //       "Raw_Material",
-  //     ];
-
-  //     const validDataItems = dataItems.filter((item) =>
-  //       validTypes.includes(item.objectType)
-  //     );
-
-  //     if (validDataItems.length === 0) {
-  //       return showErrorToast(MSG_INVALID_OBJECT_TYPE);
-  //     }
-
-  //     // Optionally store all valid objectIds (if needed in state)
-  //     dispatch(setObjectIds(validDataItems));
-
-  //     // Fetch each object in parallel
-  //     const results = await Promise.allSettled(
-  //       validDataItems.map((item) =>
-  //         getDroppedObject({ oid: item.objectId, type: item.objectType })
-  //       )
-  //     );
-
-  //     results.forEach((result) => {
-  //       if (result.status === "rejected" || result.value?.error) {
-  //         const error =
-  //           result.status === "rejected" ? result.reason : result?.value?.error;
-
-  //         showErrorToast(getErrorMessage(error));
-  //       }
-  //     });
-  //   },
-  //   [dispatch, showErrorToast]
-  // );
-
-  // useEffect(() => {
-  //   handleDrop([
-  //     {
-  //       objectId: "6B8F27BD5646250067FCA7500000252B",
-  //       // objectId: "6B8F27BD42FD0F00680784DB0000C1A2",
-  //       objectType: "VPMReference",
-  //     },
-  //     {
-  //       objectId: "CF75043C908508006808BC670000373A",
-  //       // objectId: "6B8F27BD42FD0F00680784DB0000C1A",
-  //       objectType: "VPMReference",
-  //     },
-  //     {
-  //       objectId: "6B8F27BD42FD0F00680784DB0000C1A1",
-  //       // objectId: "6B8F27BD42FD0F00680784DB0000C1A22",
-  //       objectType: "VPMReference",
-  //     },
-  //   ]);
-  // }, []);
 
   if (plants?.isFetching) return <Loader />;
   return (

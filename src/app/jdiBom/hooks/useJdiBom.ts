@@ -2,9 +2,6 @@ import { useAppSelector } from "src/app/jdiBom/store";
 import { useFetchWithAuth } from "./useFetchWithAuth";
 import { useQuery } from "@tanstack/react-query";
 import { env } from "src/app/jdiBom/env";
-// import { IDetail, IEnrichedMember, IMfg } from "src/pages/jdiBom/types";
-// import { removeProduct } from "src/slices/reducers/jdiBom.reducer";
-// import { toast } from "react-toastify";
 
 export const useJdiBom = () => {
   const { objectDetails, isDropped } = useAppSelector((state) => state.jdiBom);
@@ -124,8 +121,6 @@ export const useJdiBom = () => {
     },
     enabled: !!collabSpaceId?.data && isDropped,
   });
-
-  console.log("plants......................", plants?.data);
 
   // // Fetch classified item data
   // const associatedPlants = useQuery({

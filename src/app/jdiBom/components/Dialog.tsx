@@ -34,7 +34,7 @@ export function Dialog({
   }, [isOpen, onCancel]);
 
   return (
-    <div className="flex justify-center items-center">
+    <div className="">
       <AnimatePresence>
         {isOpen && (
           <Typography
@@ -65,7 +65,7 @@ export function Dialog({
                 borderRadius: 4,
                 padding: 2,
                 minWidth: { sm: "70%", md: "40%" },
-                maxWidth: "60%",
+                maxWidth: { sm: "90%", md: "70%" },
                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
               }}
               initial={{ scale: 0.8, opacity: 0 }}

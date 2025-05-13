@@ -18,23 +18,17 @@ export const useFetchWithAuth = () => {
     const isWriteMethod = requestMethod === "POST" || requestMethod === "PUT";
     const baseUrl = customUrl || `${env.ENOVIA_BASE_URL}/resources/v1${url}`;
 
-    const apiOptions = {
-      method: method ?? "GET",
-      headers: {
-        ...headers?.data,
-        "Content-Type": "application/json",
-        // ...(isWriteMethod ? { "Content-Type": "application/json" } : {}),
-      },
-
-      ...(isWriteMethod && body ? { data: JSON.stringify(body) } : {}),
-      type: "json",
-      // onComplete: resolve,
-      // onFailure: reject,
-    };
-
     return new Promise((resolve, reject) => {
       WAFData.authenticatedRequest(baseUrl, {
-        ...apiOptions,
+        method: method ?? "GET",
+        headers: {
+          ...headers?.data,
+          "Content-Type": "application/json",
+        },
+
+        ...(isWriteMethod && body ? { data: JSON.stringify(body) } : {}),
+        type: "json",
+
         onComplete: resolve,
         onFailure: reject,
       });
