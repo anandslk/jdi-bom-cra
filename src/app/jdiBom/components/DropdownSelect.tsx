@@ -1,29 +1,24 @@
-import React, { useRef } from "react";
 import {
-  Autocomplete,
-  TextField,
   Chip,
   Box,
   Paper,
   Typography,
   InputLabel,
+  IconButton,
   // AutocompleteRenderOptionState,
 } from "@mui/material";
 import { IFormErrors, IFormState } from "src/app/jdiBom/pages";
-import EditNoteIcon from "@mui/icons-material/EditNote";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 
 export const DropdownMultiSelect: React.FC<DropdownProps> = ({
   selectedItems,
-  selectedRdo,
   onChangePlants,
   handleChange,
-  disabled,
   rdoList = [],
   jdiList = [],
-  errors,
 }) => {
   // track last selected index for shift-click range selection
-  const lastSelectedIndex = useRef<number | null>(null);
+  // const lastSelectedIndex = useRef<number | null>(null);
 
   // Handler for RDO (single-select)
   // const handleRdoSelect = (newValue: string | null) => {
@@ -39,10 +34,6 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
   //     handleChange("plants", noRdo);
   //   }
   // };
-
-  const handleRdoSelect = (newValue: string | null) => {
-    handleChange("rdo", newValue || "");
-  };
 
   // Handler for JDI (multi-select) with shift-select
   // const handleOrgSelect = (event: React.SyntheticEvent, option: string) => {
@@ -73,18 +64,18 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
   // };
 
   // Ctrl+A to select all JDI options
-  const handleOrgKeyDown = (event: React.KeyboardEvent) => {
-    if (event.ctrlKey && event.key.toLowerCase() === "a") {
-      event.preventDefault();
-      const all = [
-        ...selectedItems.filter((i) => !jdiList.includes(i)),
-        ...jdiList,
-      ];
-      onChangePlants(all);
-      handleChange("jdi", jdiList.join(", "));
-      handleChange("plants", all);
-    }
-  };
+  // const handleOrgKeyDown = (event: React.KeyboardEvent) => {
+  //   if (event.ctrlKey && event.key.toLowerCase() === "a") {
+  //     event.preventDefault();
+  //     const all = [
+  //       ...selectedItems.filter((i) => !jdiList.includes(i)),
+  //       ...jdiList,
+  //     ];
+  //     onChangePlants(all);
+  //     handleChange("jdi", jdiList.join(", "));
+  //     handleChange("plants", all);
+  //   }
+  // };
 
   // Remove chips
   const handleDelete = (item: string) => {
@@ -103,47 +94,14 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
 
   // const selectedRdo =
   //   selectedItems.find((item) => rdoList.includes(item)) || null;
-  const selectedOrgs = selectedItems.filter((item) => jdiList.includes(item));
+  // const selectedOrgs = selectedItems.filter((item) => jdiList.includes(item));
 
   return (
     <Box
       sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}
     >
-      {/* RDO single-select */}
-      <InputLabel
-        sx={{
-          fontWeight: "bold",
-          fontSize: 16,
-          marginBottom: "-15px !important",
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
-        JDI RDO List
-        <EditNoteIcon sx={{ color: "#1976d2", fontSize: 22 }} />
-      </InputLabel>
-      <Autocomplete
-        options={rdoList}
-        value={selectedRdo}
-        onChange={(_, newVal) => handleRdoSelect(newVal as string | null)}
-        clearOnEscape
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            required
-            // placeholder="JDI RDO List"
-            fullWidth
-            variant="outlined"
-            error={!!errors.rdo}
-            helperText={errors.rdo}
-            disabled={disabled}
-          />
-        )}
-      />
-
       {/* JDI multi-select with shift-select & ctrl+A */}
-      <InputLabel
+      {/* <InputLabel
         sx={{
           fontWeight: "bold",
           fontSize: 16,
@@ -228,26 +186,66 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
             alignSelf: "flex-start",
           },
         }}
-      />
+      /> */}
 
-      <Typography variant="caption" color="textSecondary" sx={{ fontSize: 14 }}>
+      {/* <Typography variant="caption" color="textSecondary" sx={{ fontSize: 14 }}>
         You can Shift-click to select a range, Ctrl-click to toggle individual
         items, or Ctrl +A to select all.
-      </Typography>
+      </Typography> */}
+
+      <InputLabel
+        sx={{
+          fontWeight: "bold",
+          fontSize: 16,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        Destination Orgs
+        <IconButton
+          disabled={!selectedItems.length}
+          onClick={() => onChangePlants([])}
+        >
+          <RemoveCircleOutlineIcon
+            sx={{
+              color: !selectedItems.length ? "gray" : "red",
+              marginLeft: 1,
+              fontSize: 22,
+            }}
+          />
+        </IconButton>
+      </InputLabel>
 
       <Paper
         sx={{
           padding: 2,
           borderRadius: 2,
           boxShadow: 2,
-          maxHeight: 200,
+          height: 200,
           overflowY: "auto",
         }}
       >
-        <Typography sx={{ fontWeight: "bold", fontSize: 16 }}>
-          Selected Plants
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, minHeight: 20 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 1,
+            minHeight: 20,
+
+            ...(!!!selectedItems.length && {
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+            }),
+          }}
+        >
+          {!!!selectedItems.length && (
+            <Typography
+              sx={{ fontWeight: "bold", textAlign: "center", fontSize: 18 }}
+            >
+              No Items Selected
+            </Typography>
+          )}
           {selectedItems.map((item) => (
             <Chip
               key={item}
@@ -264,7 +262,6 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
 
 interface DropdownProps {
   selectedItems: string[];
-  selectedRdo: string;
   onChangePlants: (items: string[]) => void;
   handleChange: (
     key: keyof IFormState,

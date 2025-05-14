@@ -1,7 +1,7 @@
 export const rdoList = [
   "Daniel",
-  "JDI NoBOM Orgs",
-  "Emerson",
+  // "JDI NoBOM Orgs",
+  // "Emerson",
   "Micro Motion",
   "Rosmount Leve",
   "Roxar",
@@ -106,7 +106,7 @@ export const emersonOrgs = [
   "MMB",
 ];
 
-export const microMotionOrgs = [
+const microMotionOrgs = [
   "FSA",
   "AO1",
   "MIA",
@@ -150,7 +150,7 @@ export const microMotionOrgs = [
   "HCE",
 ];
 
-export const rosemountFlowOrgs = [
+const rosemountFlowOrgs = [
   "FSA",
   "AO1",
   "MIA",
@@ -194,7 +194,7 @@ export const rosemountFlowOrgs = [
   "HCE",
 ];
 
-export const roxarOrgs = [
+const roxarOrgs = [
   "FSA",
   "AO1",
   "MIA",
@@ -262,7 +262,7 @@ export const roxarOrgs = [
   "HCE",
 ];
 
-export const ultrasonicOrgs = [
+const ultrasonicOrgs = [
   "FSA",
   "AO1",
   "MIA",
@@ -333,13 +333,97 @@ export const ultrasonicOrgs = [
 
 export const RDO_ORGS: Record<RdoKey, string[]> = {
   Daniel: [],
-  "JDI NoBOM Orgs": jDINoBOMOrgs,
-  Emerson: emersonOrgs,
+  // "JDI NoBOM Orgs": jDINoBOMOrgs,
+  // Emerson: emersonOrgs,
   "Micro Motion": microMotionOrgs,
   "Rosmount Leve": rosemountFlowOrgs,
   Roxar: roxarOrgs,
   Ultrasonic: ultrasonicOrgs,
 };
+
+export const availOrgsList = [
+  "AD1",
+  "AO1",
+  "AT1",
+  "AY5",
+  "AZS",
+  "BES",
+  "BGS",
+  "CDC",
+  "CG1",
+  "CHS",
+  "CST",
+  "CZ1",
+  "DE1",
+  "DES",
+  "DK1",
+  "DTV",
+  "DX1",
+  "EDO",
+  "ES1",
+  "EWK",
+  "EY1",
+  "FRS",
+  "FS1",
+  "FSA",
+  "GA1",
+  "GB1",
+  "GB5",
+  "HAC",
+  "HCE",
+  "HJH",
+  "HR1",
+  "HRS",
+  "IE1",
+  "IES",
+  "IQ1",
+  "ITS",
+  "JPS",
+  "KW1",
+  "KZS",
+  "LIM",
+  "LKS",
+  "LRD",
+  "MEE",
+  "MIA",
+  "MO1",
+  "NG1",
+  "NL1",
+  "NS1",
+  "NZE",
+  "PDS",
+  "PMI",
+  "PS0",
+  "PT1",
+  "QA1",
+  "RAE",
+  "RGA",
+  "RO1",
+  "RUS",
+  "S04",
+  "S05",
+  "S08",
+  "S13",
+  "SA1",
+  "SBD",
+  "SBG",
+  "SE1",
+  "SEE",
+  "SG2",
+  "SG3",
+  "SGC",
+  "SGD",
+  "SGS",
+  "SJN",
+  "SK1",
+  "SOC",
+  "SOR",
+  "STG",
+  "TRS",
+  "VHS",
+  "VLO",
+  "MMB",
+];
 
 export const orgList: string[] = [
   "AD1",
