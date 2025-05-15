@@ -15,7 +15,7 @@ import PlantAssignment from "./plantAssignment";
 // This function mounts the React app.
 let root = null; // Global React root
 function start() {
-  requirejs(["DS/PlatformAPI/PlatformAPI"], (PlatformAPI) => {
+  window.requirejs(["DS/PlatformAPI/PlatformAPI"], (PlatformAPI) => {
     window.PlatformAPI = PlatformAPI;
   });
   // console.log("[index.js] start() called. Mounting React app.");

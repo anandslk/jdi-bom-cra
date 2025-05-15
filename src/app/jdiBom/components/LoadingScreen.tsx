@@ -1,10 +1,11 @@
 import { Box, LinearProgress, Paper, Typography } from "@mui/material";
+import { FC } from "react";
 
 interface LoadingScreenProps {
   message: string;
 }
 
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ message }) => {
+export const LoadingScreen: FC<LoadingScreenProps> = ({ message }) => {
   return (
     <Paper
       sx={{

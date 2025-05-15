@@ -11,7 +11,7 @@ let root: any = null;
  * @returns {JSX.Element} - Returns the mounted component.
  */
 function start(AppComponent: JSX.Element): JSX.Element {
-  requirejs(["DS/PlatformAPI/PlatformAPI"], (PlatformAPI: any) => {
+  window.requirejs(["DS/PlatformAPI/PlatformAPI"], (PlatformAPI: any) => {
     window.PlatformAPI = PlatformAPI;
   });
 

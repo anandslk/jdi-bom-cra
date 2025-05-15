@@ -13,7 +13,7 @@ import MassUpload from "./pages/mass-upload/massUpload";
 // This function mounts the React app.
 let root = null; // Global React root
 function start() {
-  requirejs(["DS/PlatformAPI/PlatformAPI"], (PlatformAPI) => {
+  window.requirejs(["DS/PlatformAPI/PlatformAPI"], (PlatformAPI) => {
     window.PlatformAPI = PlatformAPI;
     
   });

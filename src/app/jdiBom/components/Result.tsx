@@ -1,4 +1,5 @@
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
+import { FC } from "react";
 
 interface ResultsScreenProps {
   parentParts: string[];
@@ -7,7 +8,7 @@ interface ResultsScreenProps {
   onBack: () => void;
 }
 
-export const ResultsScreen: React.FC<ResultsScreenProps> = ({
+export const ResultsScreen: FC<ResultsScreenProps> = ({
   parentParts,
   sourceOrg,
   selectedItems,

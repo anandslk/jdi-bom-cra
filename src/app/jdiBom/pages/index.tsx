@@ -14,7 +14,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { FormEvent, SyntheticEvent, useEffect, useState } from "react";
+import { FC, FormEvent, SyntheticEvent, useEffect, useState } from "react";
 import { ConfirmationScreen } from "src/app/jdiBom/components/Confirmation";
 import { Dialog } from "src/app/jdiBom/components/Dialog";
 import { DropdownMultiSelect } from "src/app/jdiBom/components/DropdownSelect";
@@ -32,10 +32,11 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ArrowCircleLeftIcon from "@mui/icons-material/ArrowCircleLeft";
 import ArrowCircleRightIcon from "@mui/icons-material/ArrowCircleRight";
 import { Tooltip } from "@mui/material";
-import { useJdiBom } from "../hooks/useJdiBom";
 import { MultiSelectList } from "../components/MultiSelect";
+import { Unreleased } from "../components/Unreleased";
+import { useJdiBom } from "../hooks/useJdiBom";
 
-const JdiBomPage: React.FC<JdiBomPageProps> = () => {
+const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
 
   const { objectDetails } = useAppSelector((state) => state.jdiBom);
@@ -66,11 +67,12 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
   const [jdiList, setJdiList] = useState<string[]>([]);
   const [availOrgs, setAvailOrgs] = useState<string[]>([]);
 
+  const [isOpen, setIsOpen] = useState(false);
+
   useEffect(() => {
     const selectedRdo = formState.rdo;
     const orgs = selectedRdo ? RDO_ORGS[selectedRdo] || [] : [];
 
-    console.log("orgs....................", orgs);
     setJdiList(orgs);
 
     // setFormState((fs) => ({
@@ -99,10 +101,9 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
   useEffect(() => {
     setFormState((prev) => ({
       ...prev,
-      parentParts: objectDetails,
-      // parentParts: objectDetails.filter(
-      //   (item) => item["Maturity State"] === "Released"
-      // ),
+      parentParts: objectDetails.filter(
+        (item) => item["Maturity State"] === "Released",
+      ),
       // sourceOrg: objectDetails?.["Collaborative Space"],
     }));
   }, [objectDetails]);
@@ -132,8 +133,6 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
     }
   }, [formState.jdi]);
 
-  const [isOpen, setIsOpen] = useState(false);
-
   // --- Form Submission ---
   const handleFormSubmit = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
@@ -142,8 +141,8 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
     if (!formState.sourceOrg?.trim())
       newErrors.sourceOrg = "Source org is required";
 
-    if (!formState.rdo?.trim()) newErrors.rdo = "RDO Name is required";
-    if (!formState.jdi?.trim()) newErrors.jdi = "JDI is required";
+    // if (!formState.rdo?.trim()) newErrors.rdo = "RDO Name is required";
+    // if (!formState.jdi?.trim()) newErrors.jdi = "JDI is required";
 
     if (!formState.plants.length)
       newErrors.plants = "Select either RDO Name or Destination JDI Org";
@@ -178,17 +177,17 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
   const handleChangePI = (
     _event: SyntheticEvent<Element, Event>,
     newValue: IProductInfo[],
-    _reason: AutocompleteChangeReason,
-    _details?: AutocompleteChangeDetails<IProductInfo>,
+    reason: AutocompleteChangeReason,
+    details?: AutocompleteChangeDetails<IProductInfo>,
   ) => {
-    // const attempted = details?.option;
-    // if (
-    //   reason === "selectOption" &&
-    //   attempted &&
-    //   attempted?.["Maturity State"] !== "Released"
-    // ) {
-    //   return;
-    // }
+    const attempted = details?.option;
+    if (
+      reason === "selectOption" &&
+      attempted &&
+      attempted?.["Maturity State"] !== "Released"
+    ) {
+      return;
+    }
 
     handleChange("parentParts", newValue);
   };
@@ -211,6 +210,8 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
               selectedItems={formState.plants}
             />
           </Dialog>
+
+          <Unreleased />
 
           <Box
             sx={{
@@ -258,12 +259,12 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
                     renderOption={(props, option) => (
                       <li {...props} key={option.Title}>
                         <span
-                        // style={{
-                        //   color:
-                        //     option?.["Maturity State"] !== "Released"
-                        //       ? "#ccc"
-                        //       : "inherit",
-                        // }}
+                          style={{
+                            color:
+                              option?.["Maturity State"] !== "Released"
+                                ? "#6c757d"
+                                : "inherit",
+                          }}
                         >
                           {option.Title}
                         </span>
@@ -562,7 +563,12 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
                   </Box>
 
                   <Stack direction="row" spacing={2} justifyContent="flex-end">
-                    <Button type="submit" variant="contained" color="primary">
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      sx={{ fontSize: 14 }}
+                    >
                       Submit
                     </Button>
 
@@ -571,6 +577,7 @@ const JdiBomPage: React.FC<JdiBomPageProps> = () => {
                       variant="outlined"
                       color="secondary"
                       onClick={handleCancel}
+                      sx={{ fontSize: 14 }}
                     >
                       Cancel
                     </Button>

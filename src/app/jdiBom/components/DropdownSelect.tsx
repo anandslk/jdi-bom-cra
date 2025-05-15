@@ -9,8 +9,9 @@ import {
 } from "@mui/material";
 import { IFormErrors, IFormState } from "src/app/jdiBom/pages";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import { FC } from "react";
 
-export const DropdownMultiSelect: React.FC<DropdownProps> = ({
+export const DropdownMultiSelect: FC<DropdownProps> = ({
   selectedItems,
   onChangePlants,
   handleChange,
@@ -97,9 +98,7 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
   // const selectedOrgs = selectedItems.filter((item) => jdiList.includes(item));
 
   return (
-    <Box
-      sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}
-    >
+    <Box sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
       {/* JDI multi-select with shift-select & ctrl+A */}
       {/* <InputLabel
         sx={{
@@ -218,11 +217,16 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
 
       <Paper
         sx={{
-          padding: 2,
+          paddingY: 1,
+          paddingLeft: 2,
           borderRadius: 2,
           boxShadow: 2,
           height: 200,
-          overflowY: "auto",
+          display: "flex",
+
+          ...(!!!selectedItems.length && {
+            justifyContent: "center",
+          }),
         }}
       >
         <Box
@@ -230,7 +234,9 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
             display: "flex",
             flexWrap: "wrap",
             gap: 1,
-            minHeight: 20,
+
+            height: 180,
+            overflowY: "auto",
 
             ...(!!!selectedItems.length && {
               justifyContent: "center",
@@ -241,7 +247,11 @@ export const DropdownMultiSelect: React.FC<DropdownProps> = ({
         >
           {!!!selectedItems.length && (
             <Typography
-              sx={{ fontWeight: "bold", textAlign: "center", fontSize: 18 }}
+              sx={{
+                fontWeight: "bold",
+                textAlign: "center",
+                fontSize: 18,
+              }}
             >
               No Items Selected
             </Typography>

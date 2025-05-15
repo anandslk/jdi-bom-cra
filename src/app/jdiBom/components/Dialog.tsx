@@ -11,6 +11,7 @@ export function Dialog({
   onCancel,
   disabled,
   title,
+  cancelText,
 }: IDialog) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -74,7 +75,7 @@ export function Dialog({
             >
               <Typography
                 variant="h5"
-                sx={{ fontWeight: "bold", textAlign: "center" }}
+                sx={{ fontWeight: "bold", textAlign: "center", fontSize: 22 }}
               >
                 {title}
               </Typography>
@@ -100,22 +101,26 @@ export function Dialog({
                 justifyContent="flex-end"
                 className="pt-4"
               >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={onSubmit}
-                  disabled={disabled}
-                >
-                  Confirm
-                </Button>
+                {onSubmit && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={onSubmit}
+                    disabled={disabled}
+                    sx={{ fontSize: 14 }}
+                  >
+                    Confirm
+                  </Button>
+                )}
 
                 <Button
                   variant="outlined"
                   color="secondary"
                   onClick={onCancel}
                   disabled={disabled}
+                  sx={{ fontSize: 14 }}
                 >
-                  Cancel
+                  {cancelText || "Cancel"}
                 </Button>
               </Stack>
             </Box>
@@ -131,7 +136,8 @@ interface IDialog {
   isOpen: boolean;
   disabled: boolean;
   title: string;
+  cancelText?: string;
 
-  onSubmit: () => void;
+  onSubmit?: () => void;
   onCancel: () => void;
 }
