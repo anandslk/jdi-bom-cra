@@ -3,17 +3,18 @@ import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { withDroppable } from "src/app/jdiBom/hoc/withDroppable";
 import { Layout } from "src/app/jdiBom/layout";
-import { BASENAME } from "src/app/jdiBom/constants";
+import { BASENAME, route } from "src/app/jdiBom/constants";
 import { env } from "src/app/jdiBom/env";
 
 const Home = lazy(() => import("src/app/jdiBom/pages"));
+const Status = lazy(() => import("src/app/jdiBom/pages/StatusCheck"));
 
 const DroppableLayout = env.WIDGET_ENTRY ? withDroppable(Layout) : Layout;
 
 export const router = createBrowserRouter(
   [
     {
-      path: "/",
+      path: route.index,
       element: <DroppableLayout />,
 
       children: [
@@ -23,17 +24,21 @@ export const router = createBrowserRouter(
         },
 
         {
-          path: "/login/callback",
+          path: route.status,
+          element: <Status />,
+        },
+        {
+          path: route.callback,
           element: <LoginCallback />,
         },
       ],
     },
 
     {
-      path: "*",
+      path: route[404],
       element: <>Page Not Found</>,
     },
   ],
 
-  { basename: env.WIDGET_ENTRY ? BASENAME : "/" },
+  { basename: env.WIDGET_ENTRY ? BASENAME : route.index },
 );

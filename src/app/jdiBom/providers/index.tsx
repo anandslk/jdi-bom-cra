@@ -10,6 +10,10 @@ import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
 
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+
+import "../styles/dateRange.css";
 import "src/index.css";
 import "src/App.css";
 import "src/styles/variables.css";

@@ -14,7 +14,14 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { FC, FormEvent, SyntheticEvent, useEffect, useState } from "react";
+import {
+  FC,
+  FormEvent,
+  Fragment,
+  SyntheticEvent,
+  useEffect,
+  useState,
+} from "react";
 import { ConfirmationScreen } from "src/app/jdiBom/components/Confirmation";
 import { Dialog } from "src/app/jdiBom/components/Dialog";
 import { DropdownMultiSelect } from "src/app/jdiBom/components/DropdownSelect";
@@ -169,6 +176,33 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     // if (error) return toast.error(getErrorMessage(error));
 
+    const data = {
+      itemName: formState.parentParts?.map((item) => item.Title),
+      sourceOrgs: formState.sourceOrg,
+      targetOrgs: formState.plants,
+      targetInfo: {
+        system: "ORACLE",
+        businessUnit: "",
+      },
+      systemInfo: {
+        url: "oi000186152-us1-space.3dexperience.3ds.com",
+        instance: "ENOVIA",
+      },
+
+      // itemName: ["MMI-100", ],
+      // sourceOrgs: "MVO",
+      // targetOrgs: ["AD1", "AO1", "AT1", "AY5", "AZ5", "BES", "CDC", "CHS"],
+      // targetInfo: {
+      //   system: "ORACLE",
+      //   businessUnit: "",
+      // },
+      // systemInfo: {
+      //   url: "oi000186152-us1-space.3dexperience.3ds.com",
+      //   instance: "ENOVIA",
+      // },
+    };
+    console.warn("payload.....................", data);
+
     setIsOpen(false);
     // toast.success(data.message);
     // setTimeout(() => navigate("/tasks"), 500);
@@ -207,7 +241,7 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
             <ConfirmationScreen
               parentParts={formState.parentParts?.map((item) => item.Title)}
               sourceOrg={formState.sourceOrg}
-              selectedItems={formState.plants}
+              selectedItems={formState.parentParts?.map((item) => item.Title)}
             />
           </Dialog>
 
@@ -317,10 +351,12 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
                           }}
                         >
                           {value.map((option, index) => (
-                            <Chip
-                              label={option.Title}
-                              {...getTagProps({ index })}
-                            />
+                            <Fragment key={index}>
+                              <Chip
+                                label={option.Title}
+                                {...getTagProps({ index })}
+                              />
+                            </Fragment>
                           ))}
                         </Box>
                       );

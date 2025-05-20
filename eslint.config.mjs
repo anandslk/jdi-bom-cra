@@ -45,6 +45,8 @@ export default [
     rules: {
       ...pluginReact.configs.flat.recommended.rules,
       "react/react-in-jsx-scope": "off", // ✅ modern JSX doesn't need `React` in scope
+      "no-unused-vars": "off",
+      "no-extra-boolean-cast": "off",
     },
   },
 

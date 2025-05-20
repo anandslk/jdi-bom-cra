@@ -2,6 +2,7 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import { Link } from "react-router-dom";
+import { route } from "../constants";
 
 export function NotFoundView() {
   return (
@@ -27,7 +28,7 @@ export function NotFoundView() {
 
       <Button
         component={Link}
-        to="/"
+        to={route.index}
         size="large"
         variant="contained"
         color="inherit"

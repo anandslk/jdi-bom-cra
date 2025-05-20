@@ -45,7 +45,25 @@ declare global {
     isDropped: boolean;
   }
 
+  interface IUser {
+    id: string;
+    userId: string;
+    userName: string;
+    name: string;
+    email: string;
+    is_authorized: "Y" | "N" | "";
+    userinfo: ["admin", "Everyone", "Guest"] | [];
+    updated_at: string;
+    created_at: string;
+    _rid: string;
+    _self: string;
+    _etag: string;
+    _attachments: string;
+    _ts: number | null;
+  }
+
   interface IinitialState {
     jdiBom: IJdiBom;
+    user: IUser;
   }
 }

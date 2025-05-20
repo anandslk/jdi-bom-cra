@@ -1,0 +1,14 @@
+.rdrDefinedRangesWrapper {
+  display: none !important;
+}
+
+/* 2. collapse the grid to one column so no empty gutter remains */
+.rdrDateRangeWrapper {
+  display: grid !important; /* ensure grid mode */
+  grid-template-columns: 1fr !important;
+}
+
+/* 3. make each calendar fill its container */
+.rdrCalendarWrapper {
+  width: 100% !important;
+}

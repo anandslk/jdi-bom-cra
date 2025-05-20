@@ -3,6 +3,11 @@ import { Image } from "react-bootstrap";
 import SearchInput from "src/components/SearchInput/SearchInput";
 import useInterComSearch from "src/hooks/useInterComSearch";
 import { ISelectedItem } from "../hoc/withDroppable";
+import { Link as RouterLink } from "react-router-dom";
+import { Button } from "@mui/material";
+import { setIsDropped } from "../slices/reducers/jdiBom.reducer";
+import { useAppDispatch } from "../store";
+import { route } from "../constants";
 
 export const DragAndDropComponent = ({
   handleDrop,
@@ -10,6 +15,7 @@ export const DragAndDropComponent = ({
   handleDrop: (payload: ISelectedItem[]) => Promise<void>;
 }) => {
   const { performSearch } = useInterComSearch();
+  const dispatch = useAppDispatch();
 
   const handleSearch = (searchText: string) => {
     const searchOpts = {
@@ -46,6 +52,19 @@ export const DragAndDropComponent = ({
   return (
     <>
       <div className="droppable-container mt-4">
+        <div className="mb-3" style={{ textAlign: "center" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            component={RouterLink}
+            to={route.status}
+            sx={{ marginRight: 4, fontSize: 15, color:"white" }}
+            onClick={() => dispatch(setIsDropped(true))}
+          >
+            Check BOM Status
+          </Button>
+        </div>
+
         <Image
           style={{ width: "90px", height: "90px" }}
           src="https://thewhitechamaleon.github.io/testrapp/images/drag.png"

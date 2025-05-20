@@ -18,5 +18,3 @@ export const droppedApiSlice = createApi({
 });
 
 export const { useLazyGetObjectDetailsQuery } = droppedApiSlice;
-
-export const {} = droppedApiSlice;

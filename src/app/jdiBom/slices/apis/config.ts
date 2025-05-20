@@ -1,6 +1,6 @@
 export const createMutationQuery = <T>(
   url: string,
-  method: "POST" | "PUT" | "PATCH" = "POST",
+  method: "POST" | "PUT" | "PATCH" | "DELETE" = "POST",
 ) => ({
   query: (args: T) => ({
     url,
@@ -11,7 +11,7 @@ export const createMutationQuery = <T>(
 
 export const createMutationParamQuery = <T, P extends Record<string, any>>(
   url: string,
-  method: "POST" | "PUT" | "PATCH" = "POST",
+  method: "POST" | "PUT" | "PATCH" | "DELETE" = "POST",
 ) => ({
   query: ({ params, body }: { params?: P; body: T }) => {
     let resolvedUrl = url;

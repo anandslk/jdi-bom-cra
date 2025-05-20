@@ -9,4 +9,20 @@ export const jdiBom: IinitialState["jdiBom"] = {
 
 export const initialState: IinitialState = {
   jdiBom,
+  user: {
+    id: "",
+    userId: "",
+    userName: "",
+    name: "",
+    email: "",
+    is_authorized: "",
+    userinfo: [],
+    updated_at: "",
+    created_at: "",
+    _rid: "",
+    _self: "",
+    _etag: "",
+    _attachments: "",
+    _ts: null,
+  },
 };
