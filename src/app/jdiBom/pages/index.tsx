@@ -355,6 +355,7 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
                               <Chip
                                 label={option.Title}
                                 {...getTagProps({ index })}
+                                sx={{ fontSize: 15 }}
                               />
                             </Fragment>
                           ))}
@@ -372,6 +373,15 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
                       "& .MuiAutocomplete-endAdornment": {
                         maxHeight: `400px !important`,
                         alignSelf: "flex-start",
+                      },
+                    }}
+                    slotProps={{
+                      paper: {
+                        sx: {
+                          "& .MuiAutocomplete-option": {
+                            fontSize: 16,
+                          },
+                        },
                       },
                     }}
                   />
@@ -395,9 +405,19 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
                         // placeholder="Source Orgs"
                         error={!!errors.sourceOrg}
                         helperText={errors.sourceOrg}
+                        sx={{ ".MuiInputBase-input": { fontSize: 16 } }}
                       />
                     )}
                     sx={{ marginTop: "5px !important" }}
+                    slotProps={{
+                      paper: {
+                        sx: {
+                          "& .MuiAutocomplete-option": {
+                            fontSize: 16,
+                          },
+                        },
+                      },
+                    }}
                   />
 
                   <>
@@ -524,7 +544,7 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
                       justifyContent: "center",
                       alignItems: "center",
                       height: { md: 300 },
-                      gap: 2,
+                      gap: 1,
                     }}
                   >
                     <Box>

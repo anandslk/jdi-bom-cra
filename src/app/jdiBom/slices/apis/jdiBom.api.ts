@@ -6,6 +6,7 @@ import {
   headers,
 } from "./config";
 import { env } from "src/app/jdiBom/env";
+import { Dayjs } from "dayjs";
 
 export const jdiBomApiSlice = createApi({
   reducerPath: "jdiBomApi",
@@ -26,10 +27,12 @@ export const jdiBomApiSlice = createApi({
       BomResponse,
       {
         search: string;
-        status: string;
+        status: "All" | "In Process" | "Completed" | "Failed";
         sortOrder: "ASC" | "DESC";
         pageNumber: number;
         pageSize: number;
+        timestampFrom?: Dayjs | null | undefined;
+        timestampTo?: Dayjs | null | undefined;
       }
     >({
       ...createGetQuery("/jdiBom"),

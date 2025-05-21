@@ -9,6 +9,7 @@ declare global {
       getValue: (key: Value) => any;
       addEvent: (event: WidgetEvent, handler: (...args: any[]) => void) => void;
       body: any;
+      id: string;
     };
     PlatformAPI: any;
     require: any;

@@ -27,10 +27,7 @@ export const withDroppable = <P extends object, T extends unknown>(
 
     const email = window.widget.getValue("email");
 
-    const { data, isFetching: isUserFetching } = useGetUserQuery(
-      { email },
-      { skip: !email },
-    );
+    const { data } = useGetUserQuery({ email }, { skip: !email });
 
     console.log("data..................", data);
 
@@ -188,7 +185,7 @@ export const withDroppable = <P extends object, T extends unknown>(
       window.widget.addEvent("onRefresh", onRefresh);
     }, []);
 
-    if (isFetching || isUserFetching) return <Loader />;
+    if (isFetching) return <Loader />;
     if (!isDropped) return <DragAndDropComponent handleDrop={handleDrop} />;
 
     return <WrappedComponent {...props} />;

@@ -4,10 +4,11 @@ import SearchInput from "src/components/SearchInput/SearchInput";
 import useInterComSearch from "src/hooks/useInterComSearch";
 import { ISelectedItem } from "../hoc/withDroppable";
 import { Link as RouterLink } from "react-router-dom";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { setIsDropped } from "../slices/reducers/jdiBom.reducer";
-import { useAppDispatch } from "../store";
+import { useAppDispatch, useAppSelector } from "../store";
 import { route } from "../constants";
+import ReplyIcon from "@mui/icons-material/Reply";
 
 export const DragAndDropComponent = ({
   handleDrop,
@@ -16,6 +17,7 @@ export const DragAndDropComponent = ({
 }) => {
   const { performSearch } = useInterComSearch();
   const dispatch = useAppDispatch();
+  const objectDetails = useAppSelector((state) => state.jdiBom.objectDetails);
 
   const handleSearch = (searchText: string) => {
     const searchOpts = {
@@ -46,25 +48,18 @@ export const DragAndDropComponent = ({
       }
     };
 
-    performSearch(searchText, searchOpts, handleSearchResults);
+    const multiSearch = searchText
+      ?.trim()
+      ?.split(/[\s,]+/) // split by spaces and/or commas
+      ?.filter(Boolean) // remove empty strings
+      ?.join(" OR ");
+
+    performSearch(multiSearch, searchOpts, handleSearchResults);
   };
 
   return (
     <>
       <div className="droppable-container mt-4">
-        <div className="mb-3" style={{ textAlign: "center" }}>
-          <Button
-            variant="contained"
-            color="primary"
-            component={RouterLink}
-            to={route.status}
-            sx={{ marginRight: 4, fontSize: 15, color:"white" }}
-            onClick={() => dispatch(setIsDropped(true))}
-          >
-            Check BOM Status
-          </Button>
-        </div>
-
         <Image
           style={{ width: "90px", height: "90px" }}
           src="https://thewhitechamaleon.github.io/testrapp/images/drag.png"
@@ -78,6 +73,41 @@ export const DragAndDropComponent = ({
           <hr className="divider" />
         </div>
         <SearchInput onSearch={handleSearch} disabled={false} />
+
+        <Box
+          sx={{
+            marginTop: 1,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          {objectDetails?.length > 0 && (
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => dispatch(setIsDropped(true))}
+            >
+              <ReplyIcon sx={{ fontSize: 25 }} />
+            </Button>
+          )}
+
+          <Button
+            variant="contained"
+            color="primary"
+            component={RouterLink}
+            to={route.status}
+            sx={{
+              fontSize: 15,
+              color: "white !important",
+              textTransform: "none",
+            }}
+            onClick={() => dispatch(setIsDropped(true))}
+          >
+            Check BOM Status
+          </Button>
+        </Box>
       </div>
     </>
   );
