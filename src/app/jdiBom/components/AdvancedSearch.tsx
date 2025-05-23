@@ -40,9 +40,9 @@ import { Login } from "@mui/icons-material";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
-export const AdvancedSearchComponent: React.FC<{
-  advancedViewButton: ReactNode;
-}> = ({ advancedViewButton }) => {
+export const AdvancedSearch: React.FC<{
+  advSearchBtn: ReactNode;
+}> = ({ advSearchBtn: advancedViewButton }) => {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -225,7 +225,7 @@ export const AdvancedSearchComponent: React.FC<{
       items?.map((item) => ({
         objectId: item?.objectId,
         objectType: item?.objectType,
-      })),
+      }))
     );
   };
 
@@ -470,162 +470,178 @@ export const AdvancedSearchComponent: React.FC<{
   );
 
   return (
-    <Container maxWidth="lg">
-      <Box
-        p={2}
-        sx={{
-          // maxHeight: "100vh",
-          // overflow: "hidden",
-          overflowY: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          width: "100%",
-        }}
-      >
-        {/* Search Section remains the same */}
-        {isFetching && <Loader />}
-
-        {/* Top Section: Search */}
-        <Paper
-          variant="outlined"
+    <>
+      {/* <Box
+      mt={2}
+      sx={{
+        // height: "calc(100vh - 63px)",
+        // overflow: "auto",
+        // width: "100%",
+      }}
+    > */}
+      <Container maxWidth="lg">
+        <Box
+          p={2}
           sx={{
-            p: 2,
-            mb: 2,
-            position: "sticky",
-            top: 0,
-            backgroundColor: "white",
-            zIndex: 1,
+            height: "calc(100vh - 90px)",
+            overflow: "auto",
             width: "100%",
+
+            // maxHeight: "100vh",
+            // overflow: "hidden",
+            // overflowY: "hidden",
+            // display: "flex",
+            // flexDirection: "column",
+            // width: "100%",
           }}
         >
-          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-            <TextField
-              variant="standard"
-              placeholder="Enter or paste text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onPaste={handlePaste}
-              sx={{ minWidth: 200, flexGrow: 1 }}
-              slotProps={{ input: { sx: { fontSize: 16 } } }}
-            />
+          {/* Search Section remains the same */}
+          {isFetching && <Loader />}
 
-            <Button variant="outlined" onClick={handleInputChange}>
-              <Login sx={{ fontSize: 25 }} />
-            </Button>
-          </Box>
-
-          <Box mt={1} sx={{ maxHeight: 100, overflowY: "auto" }}>
-            {chips?.map((chip) => (
-              <Chip
-                key={chip}
-                label={chip}
-                onDelete={() => handleDeleteChip(chip)}
-                sx={{ mr: 1, mb: 1, fontSize: 14 }}
-              />
-            ))}
-          </Box>
-
-          <Box
+          {/* Top Section: Search */}
+          <Paper
+            variant="outlined"
             sx={{
-              display: "flex",
-              gap: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              marginTop: 1,
-            }}
-          >
-            {advancedViewButton}
-
-            <Button
-              variant="contained"
-              onClick={handleSearchClick}
-              disabled={mutation.isPending || chips?.length === 0}
-              sx={{ width: 120 }}
-            >
-              <SearchIcon sx={{ fontSize: 28 }} />
-            </Button>
-          </Box>
-        </Paper>
-
-        {/* Results Section */}
-        <Box sx={{ flex: 1, pr: 1, width: "100%" }}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={1}
-            sx={{ width: "100%" }}
-          >
-            <Typography variant="subtitle1" sx={{ fontSize: 16 }}>
-              Results ({mutation.isPending ? "..." : resultCount})
-              {mutation.isPending && (
-                <CircularProgress size={20} sx={{ ml: 2 }} />
-              )}
-            </Typography>
-
-            {/* View Toggle remains the same */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {results?.length > 0 && (
-                <Button
-                  size="small"
-                  startIcon={<SelectAllIcon sx={{ fontSize: 14 }} />}
-                  onClick={handleSelectAll}
-                  sx={{ fontSize: 14 }}
-                >
-                  {selectedIds.size === results?.length
-                    ? "Unselect All"
-                    : "Select All"}
-                </Button>
-              )}
-
-              {!isMobile && (
-                <ToggleButtonGroup
-                  value={viewMode}
-                  exclusive
-                  onChange={(_, v) => v && setViewMode(v)}
-                >
-                  <ToggleButton value="grid">
-                    <ViewModuleIcon sx={{ fontSize: 23 }} />
-                  </ToggleButton>
-                  <ToggleButton value="list">
-                    <ViewListIcon sx={{ fontSize: 23 }} />
-                  </ToggleButton>
-                  <ToggleButton value="table">
-                    <TableChartIcon sx={{ fontSize: 23 }} />
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              )}
-            </Box>
-          </Box>
-
-          {mutation.error && (
-            <Typography color="error" sx={{ p: 2 }}>
-              Error fetching results: {mutation.error?.message}
-            </Typography>
-          )}
-
-          <Box
-            sx={{
+              p: 2,
+              mb: 2,
+              // position: "sticky",
+              // top: 0,
+              backgroundColor: "white",
+              // zIndex: 1,
               width: "100%",
-              // maxHeight: "calc(100vh - 510px)",
-              // overflow: "auto",
             }}
           >
-            {viewMode === "grid" && (
-              <Grid container spacing={2}>
-                {results?.map(renderGridItem)}
-              </Grid>
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+              <TextField
+                variant="standard"
+                placeholder="Enter or paste text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+                sx={{ minWidth: 200, flexGrow: 1 }}
+                slotProps={{ input: { sx: { fontSize: 16 } } }}
+              />
+
+              <Button variant="outlined" onClick={handleInputChange}>
+                <Login sx={{ fontSize: 25 }} />
+              </Button>
+            </Box>
+
+            <Box mt={1} sx={{ maxHeight: 100, overflowY: "auto" }}>
+              {chips?.map((chip) => (
+                <Chip
+                  key={chip}
+                  label={chip}
+                  onDelete={() => handleDeleteChip(chip)}
+                  sx={{ mr: 1, mb: 1, fontSize: 14 }}
+                />
+              ))}
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: 1,
+              }}
+            >
+              {advancedViewButton}
+
+              <Button
+                variant="contained"
+                onClick={handleSearchClick}
+                disabled={mutation.isPending || chips?.length === 0}
+                sx={{ width: 120 }}
+              >
+                <SearchIcon sx={{ fontSize: 28 }} />
+              </Button>
+            </Box>
+          </Paper>
+
+          {/* Results Section */}
+          <Box sx={{ flex: 1, pr: 1, width: "100%" }}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={1}
+              sx={{ width: "100%" }}
+            >
+              <Typography variant="subtitle1" sx={{ fontSize: 16 }}>
+                Results ({mutation.isPending ? "..." : resultCount})
+                {mutation.isPending && (
+                  <CircularProgress size={20} sx={{ ml: 2 }} />
+                )}
+              </Typography>
+
+              {/* View Toggle remains the same */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {results?.length > 0 && (
+                  <Button
+                    size="small"
+                    startIcon={<SelectAllIcon sx={{ fontSize: 14 }} />}
+                    onClick={handleSelectAll}
+                    sx={{ fontSize: 14 }}
+                  >
+                    {selectedIds.size === results?.length
+                      ? "Unselect All"
+                      : "Select All"}
+                  </Button>
+                )}
+
+                {!isMobile && (
+                  <ToggleButtonGroup
+                    value={viewMode}
+                    exclusive
+                    onChange={(_, v) => v && setViewMode(v)}
+                  >
+                    <ToggleButton value="grid">
+                      <ViewModuleIcon sx={{ fontSize: 23 }} />
+                    </ToggleButton>
+                    <ToggleButton value="list">
+                      <ViewListIcon sx={{ fontSize: 23 }} />
+                    </ToggleButton>
+                    <ToggleButton value="table">
+                      <TableChartIcon sx={{ fontSize: 23 }} />
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                )}
+              </Box>
+            </Box>
+
+            {mutation.error && (
+              <Typography color="error" sx={{ p: 2 }}>
+                Error fetching results: {mutation.error?.message}
+              </Typography>
             )}
 
-            {viewMode === "list" && (
-              <List sx={{ width: "100%" }}>{results?.map(renderListItem)}</List>
-            )}
+            <Box
+              sx={{
+                width: "100%",
+                // maxHeight: "calc(100vh - 510px)",
+                // overflow: "auto",
+              }}
+            >
+              {viewMode === "grid" && (
+                <Grid container spacing={2}>
+                  {results?.map(renderGridItem)}
+                </Grid>
+              )}
 
-            {viewMode === "table" && renderTableRow()}
+              {viewMode === "list" && (
+                <List sx={{ width: "100%" }}>
+                  {results?.map(renderListItem)}
+                </List>
+              )}
+
+              {viewMode === "table" && renderTableRow()}
+            </Box>
+
+            {/* Submit Section remains the same */}
           </Box>
-
-          {/* Submit Section remains the same */}
         </Box>
 
         <Divider sx={{ my: 2 }} />
@@ -641,8 +657,9 @@ export const AdvancedSearchComponent: React.FC<{
             Submit
           </Button>
         </Box>
-      </Box>
-    </Container>
+      </Container>
+      {/* </Box> */}
+    </>
   );
 };
 

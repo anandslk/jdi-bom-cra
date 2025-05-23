@@ -10,7 +10,7 @@ import { setIsDropped } from "../slices/reducers/jdiBom.reducer";
 import { useAppDispatch, useAppSelector } from "../store";
 import { route } from "../constants";
 import ReplyIcon from "@mui/icons-material/Reply";
-import { AdvancedSearchComponent } from "./AdvancedSearch";
+import { AdvancedSearch } from "./AdvancedSearch";
 
 export const DragAndDropComponent = ({
   handleDrop = async (_: ISelectedItem[]) => {},
@@ -21,7 +21,7 @@ export const DragAndDropComponent = ({
   const dispatch = useAppDispatch();
   const objectDetails = useAppSelector((state) => state.jdiBom.objectDetails);
 
-  const [showAdvancedView, setShowAdvancedView] = useState(false);
+  const [advancedSearch, setShowAdvancedView] = useState(false);
 
   const handleSearch = (searchText: string) => {
     const searchOpts = {
@@ -61,7 +61,7 @@ export const DragAndDropComponent = ({
     performSearch(multiSearch, searchOpts, handleSearchResults);
   };
 
-  const advancedViewButton = (
+  const advSearchBtn = (
     <Button
       // variant={showAdvancedView ? "outlined" : "text"}
       variant={"outlined"}
@@ -69,80 +69,65 @@ export const DragAndDropComponent = ({
       onClick={() => setShowAdvancedView((prev) => !prev)}
       sx={{ textTransform: "none", fontSize: 15 }}
     >
-      {showAdvancedView ? "Hide Advanced View" : "Show Advanced View"}
+      {advancedSearch ? "Normal Search" : "Advanced Search"}
     </Button>
   );
 
-  return (
-    <>
-      <div className="droppable-container mt-4">
-        {showAdvancedView ? (
-          <Box
-            mt={2}
-            sx={{
-              height: "calc(100vh - 63px)",
-              overflow: "auto",
-              width: "100%",
-            }}
-          >
-            <AdvancedSearchComponent advancedViewButton={advancedViewButton} />
-          </Box>
-        ) : (
-          <>
-            <Image
-              style={{ width: "90px", height: "90px" }}
-              src="https://thewhitechamaleon.github.io/testrapp/images/drag.png"
-              alt="Data Collect"
-              className="search-icon"
-            />
-            <span className="drag-and-drop-text">Drag and Drop</span>
-            <div className="divider-container">
-              <hr className="divider" />
-              <span className="divider-text">or</span>
-              <hr className="divider" />
-            </div>
-            <SearchInput onSearch={handleSearch} disabled={false} />
-            <Box
-              sx={{
-                marginTop: 1,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 1,
-                flexWrap: "wrap",
-              }}
-            >
-              {objectDetails?.length > 0 && (
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => dispatch(setIsDropped(true))}
-                >
-                  <ReplyIcon sx={{ fontSize: 25 }} />
-                </Button>
-              )}
-
-              <Button
-                variant="contained"
-                color="primary"
-                component={RouterLink}
-                to={route.status}
-                sx={{
-                  fontSize: 15,
-                  color: "white !important",
-                  textTransform: "none",
-                }}
-                onClick={() => dispatch(setIsDropped(true))}
-              >
-                Check BOM Status
-              </Button>
-
-              {advancedViewButton}
-            </Box>
-          </>
-        )}
+  return advancedSearch ? (
+    <AdvancedSearch advSearchBtn={advSearchBtn} />
+  ) : (
+    <div className="droppable-container mt-4">
+      <Image
+        style={{ width: "90px", height: "90px" }}
+        src="https://thewhitechamaleon.github.io/testrapp/images/drag.png"
+        alt="Data Collect"
+        className="search-icon"
+      />
+      <span className="drag-and-drop-text">Drag and Drop</span>
+      <div className="divider-container">
+        <hr className="divider" />
+        <span className="divider-text">or</span>
+        <hr className="divider" />
       </div>
-    </>
+      <SearchInput onSearch={handleSearch} disabled={false} />
+      <Box
+        sx={{
+          marginTop: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 1,
+          flexWrap: "wrap",
+        }}
+      >
+        {objectDetails?.length > 0 && (
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => dispatch(setIsDropped(true))}
+          >
+            <ReplyIcon sx={{ fontSize: 25 }} />
+          </Button>
+        )}
+
+        <Button
+          variant="contained"
+          color="primary"
+          component={RouterLink}
+          to={route.status}
+          sx={{
+            fontSize: 15,
+            color: "white !important",
+            textTransform: "none",
+          }}
+          onClick={() => dispatch(setIsDropped(true))}
+        >
+          Check BOM Status
+        </Button>
+
+        {advSearchBtn}
+      </Box>
+    </div>
   );
 };
 

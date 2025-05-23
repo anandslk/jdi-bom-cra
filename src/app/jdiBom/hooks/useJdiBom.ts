@@ -29,11 +29,11 @@ export const useJdiBom = () => {
           const url = `/modeler/dslib/dslib:Library/search?$searchStr=${searchStr}`;
           const response = (await fetchWithAuth({ url })) as any;
           const found = response.member.find(
-            (item: any) => item.title === collabSpace.name,
+            (item: any) => item.title === collabSpace.name
           );
 
           return found?.id ?? null;
-        }),
+        })
       );
 
       // Map down to our result shape, logging or capturing errors
@@ -43,7 +43,7 @@ export const useJdiBom = () => {
         } else {
           console.error(
             `Error fetching ID for "${collabSpace?.data?.collabspaces[idx].name}":`,
-            res.reason,
+            res.reason
           );
           return { id: null, error: res.reason as Error };
         }
@@ -66,13 +66,13 @@ export const useJdiBom = () => {
         validIds.map((id) =>
           fetchWithAuth({
             url: `/modeler/dslib/dslib:Library/${id}?$mask=dslib:ExpandClassifiableClassesMask`,
-          }),
-        ),
+          })
+        )
       );
 
       // Return array of successful responses
       return responses.map((res) =>
-        res.status === "fulfilled" ? res.value : null,
+        res.status === "fulfilled" ? res.value : null
       );
     },
     select: (data: any[]) => {
@@ -90,8 +90,8 @@ export const useJdiBom = () => {
           const result = library?.ChildClasses?.member?.flatMap(
             (classItem: any) =>
               classItem?.ChildClasses?.member?.map(
-                (child: any) => child?.title,
-              ) ?? [],
+                (child: any) => child?.title
+              ) ?? []
           );
 
           // const library = libraryResponse?.member?.find((l: any) =>
@@ -121,6 +121,18 @@ export const useJdiBom = () => {
     },
     enabled: !!collabSpaceId?.data && isDropped,
   });
+
+  const prevRev = useQuery({
+    queryKey: ["advancedSearch"],
+    queryFn: async () => {
+      const url = `${env.ENOVIA_BASE_URL}/enovia/resources/v1/modeler/dslc/version/getGraph`;
+      const response = (await fetchWithAuth({ customUrl: url })) as any;
+      return response;
+    },
+    enabled: !!headers?.data,
+  });
+
+  console.log("prevRev................", prevRev?.data);
 
   // // Fetch classified item data
   // const associatedPlants = useQuery({
