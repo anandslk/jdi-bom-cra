@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { droppedApiSlice } from "src/app/jdiBom/slices/apis/dropped.api";
 import { initialState } from "src/app/jdiBom/store/initialState";
 
@@ -7,12 +7,45 @@ const droppedObjectSlice = createSlice({
   initialState: initialState.jdiBom,
 
   reducers: {
-    setObjectIds: (state, action) => {
+    setObjectIds: (state, action: PayloadAction<IObjectId[]>) => {
       state.objectIds = action.payload;
     },
 
-    setObjectDetails: (state, action) => {
+    setObjectDetails: (state, action: PayloadAction<IProductInfo[]>) => {
       state.objectDetails = action.payload;
+    },
+
+    updateObjectDetail: (
+      state,
+      action: PayloadAction<UpdateObjectDetailPayload>,
+    ) => {
+      const { droppedRevisionId, updates } = action.payload;
+
+      const index = state.objectDetails.findIndex(
+        (item) => item["Dropped Revision ID"] === droppedRevisionId,
+      );
+
+      if (index !== -1) {
+        state.objectDetails[index] = {
+          ...state.objectDetails[index],
+          ...updates,
+        };
+      }
+    },
+
+    updateObjectId: (state, action: PayloadAction<UpdateObjectIdPayload>) => {
+      const { objectId, updates } = action.payload;
+
+      const index = state.objectIds.findIndex(
+        (item) => item.objectId === objectId,
+      );
+
+      if (index !== -1) {
+        state.objectIds[index] = {
+          ...state.objectIds[index],
+          ...updates,
+        };
+      }
     },
 
     removeProduct: (state) => {
@@ -22,11 +55,14 @@ const droppedObjectSlice = createSlice({
       state.initialDraggedData = initialState.jdiBom.initialDraggedData;
     },
 
-    setInitialDroppedObjectData: (state, action) => {
+    setInitialDroppedObjectData: (
+      state,
+      action: PayloadAction<IJdiBom["initialDraggedData"]>,
+    ) => {
       state.initialDraggedData = action.payload;
     },
 
-    setIsDropped: (state, action) => {
+    setIsDropped: (state, action: PayloadAction<boolean>) => {
       state.isDropped = action.payload;
     },
   },
@@ -60,11 +96,24 @@ const droppedObjectSlice = createSlice({
   },
 });
 
+// ---- Payload types ----
+interface UpdateObjectDetailPayload {
+  droppedRevisionId: string;
+  updates: Partial<IProductInfo>;
+}
+
+interface UpdateObjectIdPayload {
+  objectId: string;
+  updates: Partial<IObjectId>;
+}
+
 export const {
   setInitialDroppedObjectData,
   setIsDropped,
   setObjectIds,
   setObjectDetails,
+  updateObjectDetail,
+  updateObjectId,
   removeProduct,
 } = droppedObjectSlice.actions;
 

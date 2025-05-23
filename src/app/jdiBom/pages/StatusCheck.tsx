@@ -156,27 +156,27 @@ export default function BomCommoningStatusTable() {
   };
 
   const update = async (id: string) => {
+    const randomFiveDigit = Math.floor(10000 + Math.random() * 90000);
+
     await updateJdi({
       id,
       updates: {
-        status: "In Process",
+        requestID: "REQ" + randomFiveDigit,
+        status: "Failed",
+        // status: "Completed",
+        sourceORG: "MMB",
+        // // userId: "1743650926892",
+        // // userEmail: "anand@em.com",
+        processedItems: [
+          { Segment1: "ISV-823741278" },
+          { Segment1: "ISV-TEST-00889" },
+          { Segment1: "MMI-100" },
+          { Segment1: "ISV-TEST-0101" },
+          { Segment1: "ISV-0001234" },
+          { Segment1: "ISV-PARENT" },
+        ],
+        // targetOrgs: ["CDC", "CHS","AD1", "AO1", "AT1", "AY5", "AZ5", "BES", ],
       },
-      // requestID: "REQ12345",
-      // status: "Completed",
-      // // sourceORG: "MVO",
-      // processedItems: [
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      //   { Segment1: "MMI-100" },
-      // ],
-      // targetOrgs: ["AD1", "AO1", "AT1", "AY5", "AZ5", "BES", "CDC", "CHS"],
     });
   };
 
@@ -530,7 +530,7 @@ export default function BomCommoningStatusTable() {
                       <RemoveRedEyeIcon sx={{ fontSize: 22 }} />
                     </Button>
 
-                    {false && (
+                    {true && (
                       <Button
                         variant="outlined"
                         size="small"

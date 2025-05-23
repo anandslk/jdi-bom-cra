@@ -69,7 +69,7 @@ export const DragAndDropComponent = ({
       onClick={() => setShowAdvancedView((prev) => !prev)}
       sx={{ textTransform: "none", fontSize: 15 }}
     >
-      {advancedSearch ? "Normal Search" : "Advanced Search"}
+      {advancedSearch ? "Cancel" : "Advanced Search"}
     </Button>
   );
 

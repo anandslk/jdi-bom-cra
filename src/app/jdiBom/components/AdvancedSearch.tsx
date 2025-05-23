@@ -42,7 +42,7 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
 export const AdvancedSearch: React.FC<{
   advSearchBtn: ReactNode;
-}> = ({ advSearchBtn: advancedViewButton }) => {
+}> = ({ advSearchBtn }) => {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -225,7 +225,7 @@ export const AdvancedSearch: React.FC<{
       items?.map((item) => ({
         objectId: item?.objectId,
         objectType: item?.objectType,
-      }))
+      })),
     );
   };
 
@@ -548,8 +548,6 @@ export const AdvancedSearch: React.FC<{
                 marginTop: 1,
               }}
             >
-              {advancedViewButton}
-
               <Button
                 variant="contained"
                 onClick={handleSearchClick}
@@ -646,7 +644,9 @@ export const AdvancedSearch: React.FC<{
 
         <Divider sx={{ my: 2 }} />
 
-        <Box display="flex" justifyContent="flex-end">
+        <Box display="flex" justifyContent="flex-end" gap={1}>
+          {advSearchBtn}
+
           <Button
             variant="contained"
             color="primary"

@@ -38,15 +38,12 @@ function start(AppComponent: JSX.Element): JSX.Element {
 function injectRefreshListener() {
   const scriptContent = `
       function listenForRefreshClicks() {
-        // console.log("🌍 [Parent] Listening for manual refresh clicks...");
   
         document.body.addEventListener("click", function (event) {
           let refreshButton = event.target.closest("#refresh"); // Check if refresh was clicked
   
           if (refreshButton) {
-            // console.log("✅ [Parent] User clicked Refresh!");
             sessionStorage.setItem("userClickedRefresh", "true"); // Store flag
-            // console.log("Stored Flag:", sessionStorage.getItem("userClickedRefresh"));
           }
         }, true);
       }

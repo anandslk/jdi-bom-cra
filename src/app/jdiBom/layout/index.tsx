@@ -7,10 +7,12 @@ import { Security } from "@okta/okta-react";
 import Loader from "src/components/Loader/Loader";
 // import { Navbar } from "src/components/Navbar";
 import { oktaAuth, widgetBase } from "src/app/jdiBom/config";
+import { useAppSelector } from "../store";
 
 export const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const isLoading = useAppSelector((state) => state.jdiBom.isLoading);
 
   const restoreOriginalUri = (_oktaAuth: OktaAuth, originalUri: string) => {
     const appOrigin = window.location.origin + widgetBase;
@@ -22,8 +24,6 @@ export const Layout = () => {
     const { pathname, search } = location;
     const fullOriginalUri = pathname + search;
 
-    console.warn("fullOriginalUri......................", fullOriginalUri);
-
     oktaAuth.signInWithRedirect({ originalUri: fullOriginalUri });
   };
 
@@ -34,7 +34,9 @@ export const Layout = () => {
         restoreOriginalUri={restoreOriginalUri}
         onAuthRequired={onAuthRequired}
       >
+        {isLoading && <Loader />}
         {/* <Navbar /> */}
+
         <Outlet />
       </Security>
     </Suspense>

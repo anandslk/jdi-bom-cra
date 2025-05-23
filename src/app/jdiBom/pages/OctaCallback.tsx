@@ -11,7 +11,7 @@ const OctaCallback = () => {
     // Redirect the user to their intended destination or the home page
     // oktaAuth.redirect("/");
 
-    console.log("user", user);
+    console.info("user", user);
     // navigate('/');
   };
 

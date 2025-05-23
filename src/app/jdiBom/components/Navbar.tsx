@@ -1,15 +1,11 @@
 import { useOktaAuth } from "@okta/okta-react";
 
 export const Navbar = () => {
-  console.warn("window.location...........", window.location);
-
   const { authState, oktaAuth } = useOktaAuth();
 
   const loginWithRedirect = async () => {
     const { pathname, search } = window.location;
     const originalUri = pathname + search;
-
-    console.warn("originalUri......................", originalUri);
 
     oktaAuth.signInWithRedirect({ originalUri });
   };

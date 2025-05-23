@@ -43,12 +43,12 @@ import { MultiSelectList } from "../components/MultiSelect";
 import { Unreleased } from "../components/Unreleased";
 import { useJdiBom } from "../hooks/useJdiBom";
 
-const JdiBomPage: FC<JdiBomPageProps> = () => {
+export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
 
   const { objectDetails } = useAppSelector((state) => state.jdiBom);
 
-  const { plants } = useJdiBom();
+  const { plants, prevRev, engRelease } = useJdiBom();
 
   // Form fields and error state
   const [errors, setErrors] = useState<Partial<IFormErrors>>({
@@ -226,7 +226,9 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
     handleChange("parentParts", newValue);
   };
 
-  if (plants?.isFetching) return <Loader />;
+  const isProcessed =
+    plants.isFetching || prevRev.isFetching || engRelease.isFetching;
+
   return (
     <>
       <Container>
@@ -244,9 +246,7 @@ const JdiBomPage: FC<JdiBomPageProps> = () => {
               selectedItems={formState.parentParts?.map((item) => item.Title)}
             />
           </Dialog>
-
-          <Unreleased />
-
+          {isProcessed && <Loader />};{!isProcessed && <Unreleased />}
           <Box
             sx={{
               padding: 4,

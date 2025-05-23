@@ -16,7 +16,7 @@ export const useFetchWithAuth = () => {
     const requestMethod = method ?? "GET";
 
     const isWriteMethod = requestMethod === "POST" || requestMethod === "PUT";
-    const baseUrl = customUrl || `${env.ENOVIA_BASE_URL}/resources/v1${url}`;
+    const baseUrl = customUrl || `${env.ENOVIA_URL}/resources/v1${url}`;
 
     return new Promise((resolve, reject) => {
       WAFData.authenticatedRequest(baseUrl, {

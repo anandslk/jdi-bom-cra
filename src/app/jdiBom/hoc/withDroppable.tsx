@@ -39,8 +39,6 @@ export const withDroppable = <P extends object, T extends unknown>(
             (DataDragAndDrop: any) => {
               DataDragAndDrop.droppable(droppableContainer, {
                 drop: async (data: any) => {
-                  console.info("[DragAndDrop] Drop event:", data);
-
                   const parsedData = JSON.parse(data);
 
                   const newItems =

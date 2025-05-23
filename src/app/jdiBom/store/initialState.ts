@@ -5,6 +5,7 @@ export const jdiBom: IinitialState["jdiBom"] = {
   objectDetails: [],
 
   isDropped: false,
+  isLoading: false,
 };
 
 export const initialState: IinitialState = {

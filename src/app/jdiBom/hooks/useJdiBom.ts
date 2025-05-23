@@ -1,17 +1,25 @@
-import { useAppSelector } from "src/app/jdiBom/store";
+import { useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
 import { useFetchWithAuth } from "./useFetchWithAuth";
 import { useQuery } from "@tanstack/react-query";
 import { env } from "src/app/jdiBom/env";
+import {
+  updateObjectDetail,
+  updateObjectId,
+} from "../slices/reducers/jdiBom.reducer";
 
 export const useJdiBom = () => {
-  const { objectDetails, isDropped } = useAppSelector((state) => state.jdiBom);
+  const dispatch = useAppDispatch();
+
+  const { objectIds, objectDetails, isDropped } = useAppSelector(
+    (state) => state.jdiBom,
+  );
 
   const { fetchWithAuth, headers } = useFetchWithAuth();
 
   const collabSpace = useQuery<Datas>({
     queryKey: ["collabSpace", objectDetails, isDropped],
     queryFn: async () => {
-      const url = `${env.ENOVIA_BASE_URL}/resources/modeler/pno/person?current=true&select=collabspaces`;
+      const url = `${env.ENOVIA_URL}/resources/modeler/pno/person?current=true&select=collabspaces`;
       const response = (await fetchWithAuth({ customUrl: url })) as any;
       return response;
     },
@@ -29,11 +37,11 @@ export const useJdiBom = () => {
           const url = `/modeler/dslib/dslib:Library/search?$searchStr=${searchStr}`;
           const response = (await fetchWithAuth({ url })) as any;
           const found = response.member.find(
-            (item: any) => item.title === collabSpace.name
+            (item: any) => item.title === collabSpace.name,
           );
 
           return found?.id ?? null;
-        })
+        }),
       );
 
       // Map down to our result shape, logging or capturing errors
@@ -43,7 +51,7 @@ export const useJdiBom = () => {
         } else {
           console.error(
             `Error fetching ID for "${collabSpace?.data?.collabspaces[idx].name}":`,
-            res.reason
+            res.reason,
           );
           return { id: null, error: res.reason as Error };
         }
@@ -66,13 +74,13 @@ export const useJdiBom = () => {
         validIds.map((id) =>
           fetchWithAuth({
             url: `/modeler/dslib/dslib:Library/${id}?$mask=dslib:ExpandClassifiableClassesMask`,
-          })
-        )
+          }),
+        ),
       );
 
       // Return array of successful responses
       return responses.map((res) =>
-        res.status === "fulfilled" ? res.value : null
+        res.status === "fulfilled" ? res.value : null,
       );
     },
     select: (data: any[]) => {
@@ -90,8 +98,8 @@ export const useJdiBom = () => {
           const result = library?.ChildClasses?.member?.flatMap(
             (classItem: any) =>
               classItem?.ChildClasses?.member?.map(
-                (child: any) => child?.title
-              ) ?? []
+                (child: any) => child?.title,
+              ) ?? [],
           );
 
           // const library = libraryResponse?.member?.find((l: any) =>
@@ -123,28 +131,128 @@ export const useJdiBom = () => {
   });
 
   const prevRev = useQuery({
-    queryKey: ["advancedSearch"],
+    queryKey: ["prevRev", objectIds, isDropped],
     queryFn: async () => {
-      const url = `${env.ENOVIA_BASE_URL}/enovia/resources/v1/modeler/dslc/version/getGraph`;
-      const response = (await fetchWithAuth({ customUrl: url })) as any;
-      return response;
+      const inWorkIds = objectIds?.filter(({ objectId }) => {
+        const detail = objectDetails?.find(
+          (obj) => obj["Dropped Revision ID"] === objectId,
+        );
+
+        return ["In Work", "Frozen"].includes(detail?.["Maturity State"]!);
+      });
+
+      if (inWorkIds.length === 0) return [];
+
+      const products = inWorkIds?.map(({ objectId, objectType }) => {
+        const detail = objectDetails?.find(
+          (obj) => obj?.["Dropped Revision ID"] === objectId,
+        );
+
+        const baseURL = new URL(detail?.imageURL!);
+        const source = `${baseURL?.protocol}//${baseURL?.hostname}/enovia`;
+
+        return {
+          id: objectId,
+          identifier: objectId,
+          type: objectType,
+          source,
+          relativePath: detail?.relativePath,
+        };
+      });
+
+      if (products.length === 0) return [];
+
+      const response = (await fetchWithAuth({
+        url: "/modeler/dslc/version/getGraph",
+        method: "POST",
+        body: { data: products },
+      })) as EngItemResponse;
+
+      return (response.results as EngItemResult[]) || [];
     },
-    enabled: !!headers?.data,
+
+    enabled: !!headers?.data && isDropped,
   });
 
-  console.log("prevRev................", prevRev?.data);
+  const engRelease = useQuery({
+    queryKey: ["advancedSearch"],
+    queryFn: async () => {
+      const responses = await Promise.allSettled(
+        (prevRev?.data ?? []).map((item) => {
+          const released = item?.versions?.find(
+            (v) => v?.maturityState === "RELEASED",
+          );
+
+          // const objectId = objectIds?.find((o) => o?.objectId === item?.id);
+
+          // const objectDetailsData = objectDetails?.find(
+          //   (o) => o?.["Dropped Revision ID"] === item?.identifier
+          // );
+
+          if (released) {
+            dispatch(
+              updateObjectDetail({
+                droppedRevisionId: item?.id,
+                updates: {
+                  "Dropped Revision ID": released?.id,
+                  "Latest Released Revision ID": released?.id,
+                  "Maturity State": released?.maturityState,
+                  relativePath: released?.relativePath,
+                  "Dropped Revision": released?.revision,
+                },
+              }),
+            );
+
+            dispatch(
+              updateObjectId({
+                objectId: item?.id,
+                updates: {
+                  objectId: released?.id,
+                },
+              }),
+            );
+          }
+
+          if (!released) return Promise.resolve(null);
+
+          const id = released?.id;
+
+          return fetchWithAuth({
+            url: `/modeler/dslib/dslib:ClassifiedItem/${id}?$mask=dslib:ClassificationAttributesMask`,
+          });
+        }),
+      );
+
+      return responses.map((res) =>
+        res.status === "fulfilled" ? res.value : null,
+      );
+    },
+
+    select: (data: any) => {
+      console.log("data...........", data);
+    },
+
+    enabled: !!headers?.data && isDropped && !!prevRev?.data,
+  });
+
+  console.log("prevRev................", engRelease?.data);
 
   // // Fetch classified item data
   // const associatedPlants = useQuery({
-  //   queryKey: ["classifiedItem", objectIds?.objectId, plants?.data, isDropped],
+  //   queryKey: [
+  //     "classifiedItem",
+  //     objectIds?.[0].objectId,
+  //     plants?.data,
+  //     isDropped,
+  //   ],
   //   queryFn: async () => {
-  //     const url = `/modeler/dslib/dslib:ClassifiedItem/${objectIds?.objectId}?$mask=dslib:ClassificationAttributesMask`;
-  //     return await fetchWithAuth(url);
+  //     const url = `/modeler/dslib/dslib:ClassifiedItem/${objectIds?.[0].objectId}?$mask=dslib:ClassificationAttributesMask`;
+  //     return await fetchWithAuth({ url });
   //   },
 
   //   select: (data: any) => {
   //     const lib = data?.member?.find(
-  //       (l: any) => l?.name === objectDetails?.Name
+  //       (l: any) => l?.name === objectDetails?.[0].Name
   //     );
 
   //     const allValues =
@@ -162,7 +270,7 @@ export const useJdiBom = () => {
   //     return uniqueMatches as string[];
   //   },
 
-  //   enabled: !!objectIds?.objectId && !!plants?.data && isDropped,
+  //   enabled: !!objectIds?.[0].objectId && !!plants?.data && isDropped,
   // });
 
   // useQuery({
@@ -202,7 +310,7 @@ export const useJdiBom = () => {
   //   enabled: !!headers?.data && !!objectIds?.objectId && isDropped,
   // });
 
-  return { plants };
+  return { plants, prevRev, collabSpace, collabSpaceId, engRelease };
 };
 
 interface Role {

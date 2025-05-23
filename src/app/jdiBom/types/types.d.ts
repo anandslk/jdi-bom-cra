@@ -43,6 +43,7 @@ declare global {
     objectIds: IObjectId[];
     objectDetails: IProductInfo[];
     isDropped: boolean;
+    isLoading: boolean;
   }
 
   interface IUser {
