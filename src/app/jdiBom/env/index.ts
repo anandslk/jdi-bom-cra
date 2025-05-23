@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 export const env = Object.freeze({
   API_URL: process.env.API_URL,
   ENOVIA_BASE_URL: process.env.REACT_APP_ENOVIA_BASE_URL,
+  ADVANCED_SEARCH: process.env.ENOVIA_ADVANCED_SEARCH_URL,
   ENOVIA_URL: process.env.ENOVIA_BASE_URL,
   NODE_ENV: process.env.NODE_ENV,
   WIDGET_ENTRY: process.env.WIDGET_ENTRY,

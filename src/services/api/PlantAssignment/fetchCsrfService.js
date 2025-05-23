@@ -25,6 +25,7 @@ export const fetchCsrfToken = async () => {
       [csrfToken]: csrfValue,
       [securityContextHeader]: securityContextValue,
     };
+
     return headers;
   } catch (error) {
     console.error("[CSRF] Failed to fetch token:", error);

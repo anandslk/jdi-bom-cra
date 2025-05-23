@@ -4,13 +4,13 @@ import { env } from "src/app/jdiBom/env";
 import { loadWAFData } from "src/utils/helpers";
 
 export const useFetchWithAuth = () => {
-  const headers = useQuery({
+  const headersQuery = useQuery({
     queryKey: ["headers"],
     queryFn: fetchCsrfToken,
   });
 
   const fetchWithAuth = async (options: FetchOptions) => {
-    const { url, method, body, customUrl } = options;
+    const { url, method, body, customUrl, headers: customHeaders } = options;
     const WAFData = await loadWAFData();
 
     const requestMethod = method ?? "GET";
@@ -20,9 +20,9 @@ export const useFetchWithAuth = () => {
 
     return new Promise((resolve, reject) => {
       WAFData.authenticatedRequest(baseUrl, {
-        method: method ?? "GET",
+        method: requestMethod,
         headers: {
-          ...headers?.data,
+          ...(customHeaders || headersQuery.data),
           "Content-Type": "application/json",
         },
 
@@ -37,7 +37,7 @@ export const useFetchWithAuth = () => {
 
   return {
     fetchWithAuth,
-    headers,
+    headers: headersQuery,
   };
 };
 
@@ -45,14 +45,16 @@ type Imethod = "POST" | "PUT" | "GET";
 
 type FetchOptions =
   | {
-      url?: never; // explicitly disallow url when customUrl is present
+      url?: never;
       method?: Imethod;
       body?: any;
       customUrl: string;
+      headers?: Record<string, string>;
     }
   | {
       url: string;
       method?: Imethod;
       body?: any;
-      customUrl?: undefined; // disallow customUrl when url is used
+      customUrl?: undefined;
+      headers?: Record<string, string>;
     };

@@ -1,21 +1,13 @@
-import { ComponentType, useCallback, useEffect } from "react";
+import { ComponentType, useEffect } from "react";
 import Loader from "src/components/Loader/Loader";
 import { toast } from "react-toastify";
-import {
-  setInitialDroppedObjectData,
-  setObjectIds,
-} from "src/app/jdiBom/slices/reducers/jdiBom.reducer";
 
 import useToast from "src/hooks/useToast";
-import {
-  MSG_INVALID_OBJECT_TYPE,
-  MSG_REFRESH_SUCCESS,
-} from "src/utils/toastMessages";
+import { MSG_REFRESH_SUCCESS } from "src/utils/toastMessages";
 import { DragAndDropComponent } from "../components/DragAndDrop";
-import { useLazyGetObjectDetailsQuery } from "src/app/jdiBom/slices/apis/dropped.api";
-import { getErrorMessage } from "src/app/jdiBom/slices/apis/types";
 import { store, useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
 import { useGetUserQuery } from "../slices/apis/jdiBom.api";
+import { useHandleDrop } from "../hooks/useHandleDrop";
 
 export const withDroppable = <P extends object, T extends unknown>(
   WrappedComponent: ComponentType<P & InjectedDroppableProps<T>>,
@@ -29,77 +21,9 @@ export const withDroppable = <P extends object, T extends unknown>(
 
     const { data } = useGetUserQuery({ email }, { skip: !email });
 
+    const { handleDrop, isFetching } = useHandleDrop();
+
     console.log("data..................", data);
-
-    const [getDroppedObject, { isFetching }] = useLazyGetObjectDetailsQuery();
-
-    const handleDrop = useCallback(
-      async (newItems: ISelectedItem[]): Promise<void> => {
-        const currentState = store.getState().jdiBom.initialDraggedData || [];
-
-        if (newItems.length === 0) {
-          toast.error("No data items to process.");
-          return;
-        }
-
-        const uniqueItemsMap = new Map<string, ISelectedItem>();
-
-        // Add existing items first
-        currentState.forEach((item) => {
-          uniqueItemsMap.set(item.objectId, item);
-        });
-
-        // Add or overwrite with new items
-        newItems.forEach((item) => {
-          uniqueItemsMap.set(item.objectId, item);
-        });
-
-        const mergedItems = Array.from(uniqueItemsMap.values());
-
-        const isSameData =
-          currentState.length === mergedItems.length &&
-          currentState.every(
-            (item, index) => item.objectId === mergedItems[index].objectId,
-          );
-
-        if (!isSameData) {
-          dispatch(setInitialDroppedObjectData(mergedItems));
-        } else {
-          console.info(
-            "[initializeDroppableArea] Data unchanged. Skipping dispatch.",
-          );
-        }
-
-        const validTypes = ["VPMReference", "Raw_Material"];
-        const validDataItems = newItems.filter((item) =>
-          validTypes.includes(item.objectType),
-        );
-
-        if (validDataItems.length === 0) {
-          return showErrorToast(MSG_INVALID_OBJECT_TYPE);
-        }
-
-        dispatch(setObjectIds(validDataItems));
-
-        const results = await Promise.allSettled(
-          validDataItems.map((item) =>
-            getDroppedObject({ oid: item.objectId, type: item.objectType }),
-          ),
-        );
-
-        results.forEach((result) => {
-          if (result.status === "rejected" || result.value?.error) {
-            const error =
-              result.status === "rejected"
-                ? result.reason
-                : result?.value?.error;
-
-            showErrorToast(getErrorMessage(error));
-          }
-        });
-      },
-      [dispatch, showErrorToast, getDroppedObject],
-    );
 
     useEffect(() => {
       if (isDropped) return;
