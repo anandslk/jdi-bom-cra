@@ -7,7 +7,10 @@ export function Unreleased() {
   const { objectDetails } = useAppSelector((state) => state.jdiBom);
 
   const unreleasedItems = useMemo(
-    () => objectDetails.filter((item) => item["Maturity State"] !== "Released"),
+    () =>
+      objectDetails.filter(
+        (item) => item["Maturity State"]?.toLowerCase() !== "released",
+      ),
     [objectDetails],
   );
 

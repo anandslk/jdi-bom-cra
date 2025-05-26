@@ -109,7 +109,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     setFormState((prev) => ({
       ...prev,
       parentParts: objectDetails.filter(
-        (item) => item["Maturity State"] === "Released",
+        (item) => item["Maturity State"]?.toLowerCase() === "released",
       ),
       // sourceOrg: objectDetails?.["Collaborative Space"],
     }));
@@ -117,7 +117,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   // useEffect(() => {
   //   const rv =
-  //     formState.parentPart && objectDetails?.["Maturity State"] !== "Released";
+  //     formState.parentPart && objectDetails?.["Maturity State"]?.toLowerCase() !== "released";
 
   //   setErrors((prev) => ({
   //     ...prev,
@@ -218,7 +218,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     if (
       reason === "selectOption" &&
       attempted &&
-      attempted?.["Maturity State"] !== "Released"
+      attempted?.["Maturity State"]?.toLowerCase() !== "released"
     ) {
       return;
     }
@@ -295,7 +295,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                         <span
                           style={{
                             color:
-                              option?.["Maturity State"] !== "Released"
+                              option?.["Maturity State"]?.toLowerCase() !==
+                              "released"
                                 ? "#6c757d"
                                 : "inherit",
                           }}
@@ -304,13 +305,15 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                         </span>
                         <Tooltip
                           title={
-                            option["Maturity State"] !== "Released"
+                            option["Maturity State"]?.toLowerCase() !==
+                            "released"
                               ? "Part is not in Released state"
                               : ""
                           }
                           slotProps={{ tooltip: { sx: { fontSize: "14px" } } }}
                         >
-                          {option["Maturity State"] !== "Released" ? (
+                          {option["Maturity State"]?.toLowerCase() !==
+                          "released" ? (
                             <ErrorOutlineIcon
                               sx={{
                                 color: "red",
