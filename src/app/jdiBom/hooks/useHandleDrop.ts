@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "react-toastify";
 import { MSG_INVALID_OBJECT_TYPE } from "src/utils/toastMessages";
 import { ISelectedItem } from "../hoc/withDroppable";
@@ -9,6 +9,7 @@ import {
   setObjectIds,
 } from "../slices/reducers/jdiBom.reducer";
 import { store, useAppDispatch } from "../store";
+import { env } from "../env";
 
 export const useHandleDrop = () => {
   const dispatch = useAppDispatch();
@@ -82,34 +83,36 @@ export const useHandleDrop = () => {
     [dispatch, getDroppedObject],
   );
 
-  // useEffect(() => {
-  //   handleDrop([
-  //     {
-  //       objectId: "6B8F27BD5646250067FCA7500000252B",
-  //       objectType: "VPMReference",
-  //     },
-  //     {
-  //       objectId: "6B8F27BD42FD0F0068073E930000BCEB",
-  //       objectType: "VPMReference",
-  //     },
-  //     {
-  //       objectId: "6B8F27BD42FD0F006807849C0000C187",
-  //       objectType: "VPMReference",
-  //     },
-  //     {
-  //       objectId: "6B8F27BD42FD0F00680737090000BBDB",
-  //       objectType: "VPMReference",
-  //     },
-  //     {
-  //       objectId: "CF75043C908508006808BC670000373A",
-  //       objectType: "VPMReference",
-  //     },
-  //     {
-  //       objectId: "6B8F27BD42FD0F00680784DB0000C1A1",
-  //       objectType: "VPMReference",
-  //     },
-  //   ]);
-  // }, []);
+  useEffect(() => {
+    if (env.NODE_ENV === "development") {
+      handleDrop([
+        {
+          objectId: "6B8F27BD5646250067FCA7500000252B",
+          objectType: "VPMReference",
+        },
+        {
+          objectId: "6B8F27BD42FD0F0068073E930000BCEB",
+          objectType: "VPMReference",
+        },
+        {
+          objectId: "6B8F27BD42FD0F006807849C0000C187",
+          objectType: "VPMReference",
+        },
+        {
+          objectId: "6B8F27BD42FD0F00680737090000BBDB",
+          objectType: "VPMReference",
+        },
+        {
+          objectId: "CF75043C908508006808BC670000373A",
+          objectType: "VPMReference",
+        },
+        {
+          objectId: "6B8F27BD42FD0F00680784DB0000C1A1",
+          objectType: "VPMReference",
+        },
+      ]);
+    }
+  }, []);
 
   return { handleDrop, isFetching };
 };

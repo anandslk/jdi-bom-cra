@@ -74,13 +74,11 @@ export const {
 
 export interface BomItem {
   id: string;
-  requestID: string;
-  sourceORG: string;
+  sourceOrg: string;
   status: string;
   timestamp: string;
-  // sourceOrg: string;
   targetOrgs: string[];
-  processedItems: { Segment1: string }[];
+  processedItems: IProductInfo[];
 }
 
 export interface BomResponse {

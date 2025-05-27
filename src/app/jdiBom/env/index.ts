@@ -8,7 +8,7 @@ export const env = Object.freeze({
   ADVANCED_SEARCH: process.env.ENOVIA_ADVANCED_SEARCH_URL,
 
   NODE_ENV: process.env.NODE_ENV,
-  WIDGET_ENTRY: process.env.WIDGET_ENTRY,
+  WIDGET_ENTRY: process.env.NODE_ENV !== "development",
 
   OKTA_CLIENT_ID: process.env.REACT_APP_OKTA_CLIENT_ID,
   OKTA_ISSUER: process.env.REACT_APP_OKTA_ISSUER,

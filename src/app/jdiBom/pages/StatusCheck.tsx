@@ -134,47 +134,61 @@ export default function BomCommoningStatusTable() {
 
   const create = async () => {
     await mutate({
-      requestID: "REQ12345",
       status: "Completed",
-      sourceORG: "MVO",
+      sourceOrg: "MVO",
       userId: "1743650926892",
       userEmail: "anand@em.com",
       processedItems: [
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
-        { Segment1: "MMI-100" },
+        "ISV-823741278",
+        "ISV-TEST-00889",
+
+        "MMI-100",
+        "ISV-TEST-0101",
+        "ISV-0001234",
+        "ISV-PARENT",
       ],
       targetOrgs: ["AD1", "AO1", "AT1", "AY5", "AZ5", "BES", "CDC", "CHS"],
     });
   };
 
   const update = async (id: string) => {
-    const randomFiveDigit = Math.floor(10000 + Math.random() * 90000);
-
     await updateJdi({
       id,
       updates: {
-        requestID: "REQ" + randomFiveDigit,
         status: "Failed",
         // status: "Completed",
-        sourceORG: "MMB",
+        sourceOrg: "MMB",
         // // userId: "1743650926892",
         // // userEmail: "anand@em.com",
-        processedItems: [
-          { Segment1: "ISV-823741278" },
-          { Segment1: "ISV-TEST-00889" },
-          { Segment1: "MMI-100" },
-          { Segment1: "ISV-TEST-0101" },
-          { Segment1: "ISV-0001234" },
-          { Segment1: "ISV-PARENT" },
-        ],
+        // processedItems: [
+        //   "ISV-823741278",
+        //   "ISV-TEST-00889",
+
+        //   "MMI-100",
+        //   "ISV-TEST-0101",
+        //   "ISV-0001234",
+        //   "ISV-PARENT",
+        // ],
+        // processedItems: [
+        //   { Segment1:
+        // "ISV-823741278" ,
+        // },
+        //   { Segment1:
+        // "ISV-TEST-00889" ,
+        // },
+        //   { Segment1:
+        // "MMI-100" ,
+        // },
+        //   { Segment1:
+        // "ISV-TEST-0101" ,
+        // },
+        //   { Segment1:
+        // "ISV-0001234" ,
+        // },
+        //   { Segment1:
+        // "ISV-PARENT" ,
+        // },
+        // ],
         // targetOrgs: ["CDC", "CHS","AD1", "AO1", "AT1", "AY5", "AZ5", "BES", ],
       },
     });
@@ -237,17 +251,17 @@ export default function BomCommoningStatusTable() {
         {selectedItem && (
           <Stack spacing={2} sx={{ paddingY: 2 }}>
             <Typography sx={{ fontSize: 18 }}>
-              <strong>Request ID:</strong> {selectedItem.requestID}
+              <strong>Request ID:</strong> {selectedItem.id}
             </Typography>
             <Typography sx={{ fontSize: 18 }}>
-              <strong>Source Org:</strong> {selectedItem.sourceORG}
+              <strong>Source Org:</strong> {selectedItem.sourceOrg}
             </Typography>
             <Typography sx={{ fontSize: 18 }}>
               <strong>Processed Items:</strong>
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               {selectedItem.processedItems.map((p, idx) => (
-                <Chip key={idx} label={p.Segment1} sx={{ fontSize: 15 }} />
+                <Chip key={idx} label={p.Title} sx={{ fontSize: 15 }} />
               ))}
             </Box>
             <Typography sx={{ fontSize: 18 }}>
@@ -492,11 +506,11 @@ export default function BomCommoningStatusTable() {
               // ) : data?.data?.length ? (
               data?.data?.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell sx={{ fontSize: 15 }}>{item.requestID}</TableCell>
-                  <TableCell sx={{ fontSize: 15 }}>{item.sourceORG}</TableCell>
+                  <TableCell sx={{ fontSize: 15 }}>{item.id}</TableCell>
+                  <TableCell sx={{ fontSize: 15 }}>{item.sourceOrg}</TableCell>
                   <TableCell sx={{ fontSize: 15 }}>
                     {renderChipsWithEllipsis(
-                      item.processedItems.map((p) => p.Segment1),
+                      item.processedItems.map((p) => p.Title),
                     )}
                   </TableCell>
                   <TableCell sx={{ fontSize: 15 }}>
@@ -530,7 +544,7 @@ export default function BomCommoningStatusTable() {
                       <RemoveRedEyeIcon sx={{ fontSize: 22 }} />
                     </Button>
 
-                    {true && (
+                    {false && (
                       <Button
                         variant="outlined"
                         size="small"

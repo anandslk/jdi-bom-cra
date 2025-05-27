@@ -42,11 +42,20 @@ import { Tooltip } from "@mui/material";
 import { MultiSelectList } from "../components/MultiSelect";
 import { Unreleased } from "../components/Unreleased";
 import { useJdiBom } from "../hooks/useJdiBom";
+import { useHandleDrop } from "../hooks/useHandleDrop";
+import { useCreateJdiBomMutation } from "../slices/apis/jdiBom.api";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { getErrorMessage } from "../slices/apis/types";
+import { route } from "../constants";
 
 export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
 
   const { objectDetails } = useAppSelector((state) => state.jdiBom);
+  const user = useAppSelector((state) => state.user);
+
+  const navigate = useNavigate();
 
   const { plants, prevRev, engRelease } = useJdiBom();
 
@@ -75,6 +84,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const [availOrgs, setAvailOrgs] = useState<string[]>([]);
 
   const [isOpen, setIsOpen] = useState(false);
+
+  useHandleDrop();
 
   useEffect(() => {
     const selectedRdo = formState.rdo;
@@ -166,6 +177,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   // --- Cancel Handler ---
   const handleCancel = () => dispatch(removeProduct());
 
+  const [createBom, { isLoading }] = useCreateJdiBomMutation();
+
   // --- Confirmation Stage ---
   const handleConfirmationSubmit = async () => {
     // const { data, error } = await bomMutation({
@@ -176,18 +189,22 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     // if (error) return toast.error(getErrorMessage(error));
 
-    const data = {
-      itemName: formState.parentParts?.map((item) => item.Title),
-      sourceOrgs: formState.sourceOrg,
+    const payload = {
+      // itemName: formState.parentParts?.map((item) => item.Title),
+
+      status: "In Process",
+      sourceOrg: formState.sourceOrg,
+      processedItems: formState.parentParts,
+      // processedItems: formState.parentParts?.map((item) => item.Title),
       targetOrgs: formState.plants,
-      targetInfo: {
-        system: "ORACLE",
-        businessUnit: "",
-      },
-      systemInfo: {
-        url: "oi000186152-us1-space.3dexperience.3ds.com",
-        instance: "ENOVIA",
-      },
+      // targetInfo: {
+      //   system: "ORACLE",
+      //   businessUnit: "",
+      // },
+      // systemInfo: {
+      //   url: "oi000186152-us1-space.3dexperience.3ds.com",
+      //   instance: "ENOVIA",
+      // },
 
       // itemName: ["MMI-100", ],
       // sourceOrgs: "MVO",
@@ -201,11 +218,36 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       //   instance: "ENOVIA",
       // },
     };
-    console.warn("payload.....................", data);
 
     setIsOpen(false);
-    // toast.success(data.message);
-    // setTimeout(() => navigate("/tasks"), 500);
+
+    const { error, data } = await createBom({
+      ...payload,
+      userId: user.id, //"1743650926892"
+      userEmail: user.email, //"anand@em.com"
+    });
+
+    if (error) return toast.error(getErrorMessage(error));
+
+    toast.success((data as any).message);
+
+    const payloads = {
+      itemName: formState.parentParts?.map((item) => item.Title),
+      sourceOrgs: formState.sourceOrg,
+      targetOrgs: formState.plants,
+      targetInfo: {
+        system: "ORACLE",
+        businessUnit: "",
+      },
+      systemInfo: {
+        url: "oi000186152-us1-space.3dexperience.3ds.com",
+        instance: "ENOVIA",
+      },
+    };
+
+    console.warn("payload.....................", payloads);
+
+    setTimeout(() => navigate(route.status), 500);
   };
 
   const handleChangePI = (
@@ -227,12 +269,22 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   };
 
   const isProcessed =
-    plants.isFetching || prevRev.isFetching || engRelease.isFetching;
+    plants.isFetching ||
+    prevRev.isFetching ||
+    engRelease.isFetching ||
+    isLoading;
 
   return (
     <>
-      <Container>
-        <Box sx={{ minHeight: "calc(100vh - 65px)" }}>
+      <Box
+        sx={{
+          height: { sm: "calc(100vh - 8px)", md: "calc(100vh - 8px)" },
+          overflow: "auto",
+          width: "100%",
+          // padding: { sm: 0 },
+        }}
+      >
+        <Container maxWidth="lg" sx={{ padding: { sm: 0 } }}>
           <Dialog
             isOpen={isOpen}
             title="Confirm Your Submission"
@@ -246,7 +298,10 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
               selectedItems={formState.parentParts?.map((item) => item.Title)}
             />
           </Dialog>
-          {isProcessed && <Loader />};{!isProcessed && <Unreleased />}
+
+          {isProcessed && <Loader />}
+          {!isProcessed && <Unreleased />}
+
           <Box
             sx={{
               padding: 4,
@@ -254,7 +309,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
               flexDirection: "column",
               alignItems: "center",
               gap: 4,
-              minHeight: "calc(100vh - 200px)",
+              // minHeight: "calc(100vh - 200px)",
             }}
           >
             <Paper
@@ -657,8 +712,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
               />
             )}
           </Box>
-        </Box>
-      </Container>
+        </Container>
+      </Box>
       {/* </SecureRoute> */}
     </>
   );
