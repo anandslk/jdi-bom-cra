@@ -43,11 +43,15 @@ import { MultiSelectList } from "../components/MultiSelect";
 import { Unreleased } from "../components/Unreleased";
 import { useJdiBom } from "../hooks/useJdiBom";
 import { useHandleDrop } from "../hooks/useHandleDrop";
-import { useCreateJdiBomMutation } from "../slices/apis/jdiBom.api";
+import {
+  CreateJdiBomItem,
+  useCreateJdiBomMutation,
+} from "../slices/apis/jdiBom.api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getErrorMessage } from "../slices/apis/types";
 import { route } from "../constants";
+import { customAlphabet } from "nanoid";
 
 export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
@@ -189,10 +193,14 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     // if (error) return toast.error(getErrorMessage(error));
 
+    const nanoidNumbersOnly = customAlphabet("0123456789", 8);
+    const id = `REQ-${nanoidNumbersOnly()}`;
+
     const payload = {
       // itemName: formState.parentParts?.map((item) => item.Title),
 
-      status: "In Process",
+      id,
+      status: "In Process" as CreateJdiBomItem["status"],
       sourceOrg: formState.sourceOrg,
       processedItems: formState.parentParts,
       // processedItems: formState.parentParts?.map((item) => item.Title),
