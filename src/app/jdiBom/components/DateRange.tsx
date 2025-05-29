@@ -113,6 +113,7 @@ const DateRange = ({ filters, handleFilters }: IDateRange) => {
             moveRangeOnFirstSelection={false}
             editableDateInputs={true}
             retainEndDateOnFirstSelection={true}
+            maxDate={dayjs().add(1, "day").toDate()}
           />
 
           <Box

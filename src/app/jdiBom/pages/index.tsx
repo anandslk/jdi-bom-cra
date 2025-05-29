@@ -32,26 +32,23 @@ import {
   setIsDropped,
 } from "src/app/jdiBom/slices/reducers/jdiBom.reducer";
 import { useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
-import { availOrgsList, RDO_ORGS, RdoKey, rdoList } from "src/app/jdiBom/utils";
+import { rdoList } from "src/app/jdiBom/utils";
 import Loader from "src/components/Loader/Loader";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ArrowCircleLeftIcon from "@mui/icons-material/ArrowCircleLeft";
 import ArrowCircleRightIcon from "@mui/icons-material/ArrowCircleRight";
 import { Tooltip } from "@mui/material";
-import { MultiSelectList } from "../components/MultiSelect";
-import { Unreleased } from "../components/Unreleased";
-import { useJdiBom } from "../hooks/useJdiBom";
-import { useHandleDrop } from "../hooks/useHandleDrop";
-import {
-  CreateJdiBomItem,
-  useCreateJdiBomMutation,
-} from "../slices/apis/jdiBom.api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getErrorMessage } from "../slices/apis/types";
+import { MultiSelectList } from "../components/MultiSelect";
+import { Unreleased } from "../components/Unreleased";
 import { route } from "../constants";
-import { customAlphabet } from "nanoid";
+import { useHandleDrop } from "../hooks/useHandleDrop";
+import { useJdiBom } from "../hooks/useJdiBom";
+import { IRDO_ORGS, useDestOrgsQuery } from "../slices/apis/destOrgs.api";
+import { useCreateJdiBomMutation } from "../slices/apis/jdiBom.api";
+import { getErrorMessage } from "../slices/apis/types";
 
 export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
@@ -64,7 +61,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const { plants, prevRev, engRelease } = useJdiBom();
 
   // Form fields and error state
-  const [errors, setErrors] = useState<Partial<IFormErrors>>({
+  const [errors, setErrors] = useState<IFormErrors>({
     parentParts: "",
     sourceOrg: "",
     plants: "",
@@ -91,9 +88,18 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   useHandleDrop();
 
+  const { data, isFetching: isOrgs } = useDestOrgsQuery({});
+
   useEffect(() => {
-    const selectedRdo = formState.rdo;
-    const orgs = selectedRdo ? RDO_ORGS[selectedRdo] || [] : [];
+    if (!data?.data) return;
+
+    // const selectedRdo = formState.rdo as any;
+    // const orgs = selectedRdo ? (data?.data)[selectedRdo] || [] : [];
+
+    const orgs =
+      formState.rdo && data?.data && formState.rdo in data.data
+        ? data.data[formState.rdo as RdoKey]
+        : [];
 
     setJdiList(orgs);
 
@@ -109,7 +115,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     //     (p) => !Object.values(RDO_ORGS).flat().includes(p) || orgs.includes(p)
     //   ),
     // }));
-  }, [formState.rdo]);
+  }, [formState.rdo, data?.data]);
 
   const handleChange = (
     key: keyof IFormState,
@@ -158,7 +164,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   // --- Form Submission ---
   const handleFormSubmit = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    const newErrors: IFormErrors = {};
+    const newErrors: Partial<IFormErrors> = {};
 
     if (!formState.sourceOrg?.trim())
       newErrors.sourceOrg = "Source org is required";
@@ -193,14 +199,14 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     // if (error) return toast.error(getErrorMessage(error));
 
-    const nanoidNumbersOnly = customAlphabet("0123456789", 8);
-    const id = `REQ-${nanoidNumbersOnly()}`;
+    // const nanoidNumbersOnly = customAlphabet("0123456789", 8);
+    // const id = `REQ-${nanoidNumbersOnly()}`;
 
     const payload = {
       // itemName: formState.parentParts?.map((item) => item.Title),
 
-      id,
-      status: "In Process" as CreateJdiBomItem["status"],
+      // id,
+      // status: "In Process" as CreateJdiBomItem["status"],
       sourceOrg: formState.sourceOrg,
       processedItems: formState.parentParts,
       // processedItems: formState.parentParts?.map((item) => item.Title),
@@ -239,21 +245,32 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     toast.success((data as any).message);
 
-    const payloads = {
-      itemName: formState.parentParts?.map((item) => item.Title),
-      sourceOrgs: formState.sourceOrg,
-      targetOrgs: formState.plants,
-      targetInfo: {
-        system: "ORACLE",
-        businessUnit: "",
-      },
-      systemInfo: {
-        url: "oi000186152-us1-space.3dexperience.3ds.com",
-        instance: "ENOVIA",
-      },
-    };
+    // const payloads1 = {
+    //   requestData: [
+    //     {
+    //       source_org: formState.sourceOrg,
+    //       dest_org: formState.plants,
+    //       parent_item: formState.parentParts?.map((item) => item.Title),
+    //       // request_id: id,
+    //     },
+    //   ],
+    // };
 
-    console.warn("payload.....................", payloads);
+    // const _payloads = {
+    //   itemName: formState.parentParts?.map((item) => item.Title),
+    //   sourceOrgs: formState.sourceOrg,
+    //   targetOrgs: formState.plants,
+    //   targetInfo: {
+    //     system: "ORACLE",
+    //     businessUnit: "",
+    //   },
+    //   systemInfo: {
+    //     url: "oi000186152-us1-space.3dexperience.3ds.com",
+    //     instance: "ENOVIA",
+    //   },
+    // };
+
+    // console.warn("payload.....................", payloads1);
 
     setTimeout(() => navigate(route.status), 500);
   };
@@ -280,7 +297,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     plants.isFetching ||
     prevRev.isFetching ||
     engRelease.isFetching ||
-    isLoading;
+    isLoading ||
+    isOrgs;
 
   return (
     <>
@@ -486,123 +504,6 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                     }}
                   />
 
-                  <>
-                    {/* <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "column", md: "row" },
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: { md: 200 },
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    // RDO single-select
-                    <InputLabel
-                      sx={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        // marginBottom: "-15px !important",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                      }}
-                    >
-                      JDI RDO List
-                      <EditNoteIcon sx={{ color: "#1976d2", fontSize: 22 }} />
-                    </InputLabel>
-                    <Autocomplete
-                      options={rdoList}
-                      value={formState.rdo}
-                      onChange={(_, newVal) => handleChange("rdo", newVal!)}
-                      clearOnEscape
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          required
-                          // placeholder="JDI RDO List"
-                          fullWidth
-                          variant="outlined"
-                          error={!!errors.rdo}
-                          helperText={errors.rdo}
-                          // disabled={disabled}
-                        />
-                      )}
-                    />
-                  </Box>
-
-                  <ArrowCircleRightIcon
-                    onClick={() => {
-                      setFormState((fs) => ({
-                        ...fs,
-                        jdi: "",
-                        plants: jdiList,
-                      }));
-                      setAvailOrgs([]);
-                    }}
-                  />
-
-                  <>
-                    <DropdownMultiSelect
-                      selectedItems={formState.plants}
-                      onChangePlants={(newSelectedItems) =>
-                        handleChange("plants", newSelectedItems)
-                      }
-                      handleChange={handleChange}
-                      disabled={false}
-                      rdoList={rdoList}
-                      // jdiList={orgList?.data!}
-                      jdiList={jdiList}
-                      errors={errors}
-                    />
-
-                    {errors.plants && (
-                      <Alert severity="error">{errors.plants}</Alert>
-                    )}
-                  </>
-
-                  <>
-                    <ArrowCircleLeftIcon
-                      onClick={() => {
-                        setFormState((fs) => ({
-                          ...fs,
-                          jdi: "",
-                          rdo: "",
-                          plants: availOrgs,
-                        }));
-                      }}
-                    />
-
-                    <Box>
-                      <InputLabel sx={{ fontWeight: "bold", fontSize: 16 }}>
-                        Available Orgs
-                      </InputLabel>
-                      <Autocomplete
-                        multiple
-                        renderValue={() => null} // Hides the selected chips
-                        options={availOrgsList ?? []}
-                        value={availOrgs}
-                        onChange={(_, value) => setAvailOrgs(value)}
-                        // clearOnEscape
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            required
-                            fullWidth
-                            variant="outlined"
-                            // placeholder="Source Orgs"
-                            error={!!errors.sourceOrg}
-                            helperText={errors.sourceOrg}
-                          />
-                        )}
-                        sx={{ marginTop: "5px !important" }}
-                      />
-                    </Box>
-                  </>
-                </Box> */}
-                  </>
-
                   <Box
                     sx={{
                       display: "flex",
@@ -616,7 +517,9 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                     <Box>
                       <MultiSelectList
                         title="JDI RDO List"
-                        items={rdoList}
+                        items={Object.keys(data?.data ?? {})?.filter(
+                          (item) => item !== "availOrgs",
+                        )}
                         selected={formState.rdo}
                         onChange={(newVal) =>
                           handleChange("rdo", newVal.target.value!)
@@ -676,7 +579,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                         <MultiSelectList
                           multiSelect
                           title="Available Orgs"
-                          items={availOrgsList}
+                          items={data?.data.availOrgs ?? []}
                           selected={availOrgs}
                           onChange={setAvailOrgs}
                         />
@@ -734,7 +637,7 @@ export type IFormState = {
   sourceOrg: string;
   plants: string[];
 
-  rdo: RdoKey;
+  rdo: RdoKey | "";
   jdi: string;
 };
 
@@ -743,8 +646,10 @@ export interface IFormErrors {
   sourceOrg?: string;
   plants?: string;
 
-  rdo?: string;
+  rdo: string;
   jdi?: string;
 }
 
 export interface JdiBomPageProps extends InjectedDroppableProps<{}> {}
+
+type RdoKey = keyof Omit<IRDO_ORGS, "availOrgs">;

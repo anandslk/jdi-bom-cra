@@ -331,7 +331,7 @@ const ultrasonicOrgs = [
   "HCE",
 ];
 
-export const RDO_ORGS: Record<RdoKey, string[]> = {
+export const RDO_ORGS = {
   Daniel: [],
   // "JDI NoBOM Orgs": jDINoBOMOrgs,
   // Emerson: emersonOrgs,

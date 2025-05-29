@@ -93,8 +93,8 @@ export interface BomResponse {
 }
 
 export interface CreateJdiBomItem {
-  id: string;
-  status: "In Process" | "Completed" | "Failed";
+  // id: string;
+  // status: "In Process" | "Completed" | "Failed";
   sourceOrg: string;
   processedItems: IProductInfo[];
   targetOrgs: string[];
