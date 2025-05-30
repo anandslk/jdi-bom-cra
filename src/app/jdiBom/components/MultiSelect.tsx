@@ -2,7 +2,9 @@ import { ChangeEvent, Dispatch, SetStateAction, useEffect } from "react";
 import { useRef } from "react";
 
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import { Box, InputLabel } from "@mui/material";
+import { Box, IconButton, InputLabel } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { route } from "../constants";
 
 export const MultiSelectList = ({
   title,
@@ -12,6 +14,7 @@ export const MultiSelectList = ({
   multiSelect,
 }: MultiSelectListProps) => {
   const selectRef = useRef<HTMLSelectElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -61,7 +64,9 @@ export const MultiSelectList = ({
       >
         {title}
         {!multiSelect && (
-          <EditNoteIcon sx={{ color: "#1976d2", fontSize: 22 }} />
+          <IconButton onClick={() => navigate(route.rdo)}>
+            <EditNoteIcon sx={{ color: "#1976d2", fontSize: 22 }} />
+          </IconButton>
         )}
       </InputLabel>
       <Box

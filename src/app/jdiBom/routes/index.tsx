@@ -7,6 +7,7 @@ import { BASENAME, route } from "src/app/jdiBom/constants";
 import { env } from "src/app/jdiBom/env";
 
 const Home = lazy(() => import("src/app/jdiBom/pages"));
+const RDOList = lazy(() => import("src/app/jdiBom/pages/rdos"));
 const Status = lazy(() => import("src/app/jdiBom/pages/status"));
 const StatusItem = lazy(() => import("src/app/jdiBom/pages/status/[id]"));
 
@@ -22,6 +23,11 @@ export const router = createBrowserRouter(
         {
           index: true,
           element: <Home />,
+        },
+
+        {
+          path: route.rdo,
+          element: <RDOList />,
         },
 
         {

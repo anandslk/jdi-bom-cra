@@ -191,86 +191,23 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   // --- Confirmation Stage ---
   const handleConfirmationSubmit = async () => {
-    // const { data, error } = await bomMutation({
-    //   parentParts: formState.parentParts,
-    //   sourceOrg: formState.sourceOrg,
-    //   plants: formState.plants,
-    // });
-
-    // if (error) return toast.error(getErrorMessage(error));
-
-    // const nanoidNumbersOnly = customAlphabet("0123456789", 8);
-    // const id = `REQ-${nanoidNumbersOnly()}`;
-
     const payload = {
-      // itemName: formState.parentParts?.map((item) => item.Title),
-
-      // id,
-      // status: "In Process" as CreateJdiBomItem["status"],
       sourceOrg: formState.sourceOrg,
       processedItems: formState.parentParts,
-      // processedItems: formState.parentParts?.map((item) => item.Title),
       targetOrgs: formState.plants,
-      // targetInfo: {
-      //   system: "ORACLE",
-      //   businessUnit: "",
-      // },
-      // systemInfo: {
-      //   url: "oi000186152-us1-space.3dexperience.3ds.com",
-      //   instance: "ENOVIA",
-      // },
-
-      // itemName: ["MMI-100", ],
-      // sourceOrgs: "MVO",
-      // targetOrgs: ["AD1", "AO1", "AT1", "AY5", "AZ5", "BES", "CDC", "CHS"],
-      // targetInfo: {
-      //   system: "ORACLE",
-      //   businessUnit: "",
-      // },
-      // systemInfo: {
-      //   url: "oi000186152-us1-space.3dexperience.3ds.com",
-      //   instance: "ENOVIA",
-      // },
     };
 
     setIsOpen(false);
 
     const { error, data } = await createBom({
       ...payload,
-      userId: user.id, //"1743650926892"
-      userEmail: user.email, //"anand@em.com"
+      userId: user.id,
+      userEmail: user.email,
     });
 
     if (error) return toast.error(getErrorMessage(error));
 
     toast.success((data as any).message);
-
-    // const payloads1 = {
-    //   requestData: [
-    //     {
-    //       source_org: formState.sourceOrg,
-    //       dest_org: formState.plants,
-    //       parent_item: formState.parentParts?.map((item) => item.Title),
-    //       // request_id: id,
-    //     },
-    //   ],
-    // };
-
-    // const _payloads = {
-    //   itemName: formState.parentParts?.map((item) => item.Title),
-    //   sourceOrgs: formState.sourceOrg,
-    //   targetOrgs: formState.plants,
-    //   targetInfo: {
-    //     system: "ORACLE",
-    //     businessUnit: "",
-    //   },
-    //   systemInfo: {
-    //     url: "oi000186152-us1-space.3dexperience.3ds.com",
-    //     instance: "ENOVIA",
-    //   },
-    // };
-
-    // console.warn("payload.....................", payloads1);
 
     setTimeout(() => navigate(route.status), 500);
   };

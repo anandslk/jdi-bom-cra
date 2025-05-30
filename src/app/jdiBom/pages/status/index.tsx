@@ -433,7 +433,7 @@ export default function BomCommoningStatusTable() {
 
         <TableContainer
           component={Paper}
-          sx={{ maxHeight: 700, overflow: "auto" }}
+          sx={{ maxHeight: "calc(100vh - 268px)", overflow: "auto" }}
         >
           <Table size="small">
             <TableHead
