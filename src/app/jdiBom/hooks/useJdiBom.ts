@@ -16,11 +16,14 @@ export const useJdiBom = () => {
 
   const { fetchWithAuth, headers } = useFetchWithAuth();
 
-  const collabSpace = useQuery<Datas>({
+  const collabSpace = useQuery({
     queryKey: ["collabSpace", objectDetails, isDropped],
     queryFn: async () => {
       const url = `${env.ENOVIA_URL}/resources/modeler/pno/person?current=true&select=collabspaces`;
-      const response = (await fetchWithAuth({ customUrl: url })) as any;
+      const response = (await fetchWithAuth({
+        customUrl: url,
+      })) as UserCollabspaces;
+
       return response;
     },
 
@@ -337,7 +340,7 @@ interface Collabspace {
   couples: Couple[];
 }
 
-interface Datas {
+interface UserCollabspaces {
   pid: string;
   name: string;
   collabspaces: Collabspace[];

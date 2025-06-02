@@ -30,22 +30,22 @@ import HomeIcon from "@mui/icons-material/Home";
 import debounce from "lodash/debounce";
 import { useNavigate } from "react-router-dom";
 import Loader from "src/components/Loader/Loader";
-import DateRange, { IFilterAtom } from "../components/DateRange";
-import { Dialog } from "../components/Dialog";
-import { route } from "../constants";
+import DateRange, { IFilterAtom } from "../../components/DateRange";
+import { Dialog } from "../../components/Dialog";
+import { route } from "../../constants";
 import {
   BomResponse,
   useCreateJdiBomMutation,
   useDeleteAllMutation,
   useJdiBomsQuery,
   useUpdateJdiBomMutation,
-} from "../slices/apis/jdiBom.api";
-import { setIsDropped } from "../slices/reducers/jdiBom.reducer";
-import { useAppDispatch, useAppSelector } from "../store";
+} from "../../slices/apis/jdiBom.api";
+import { setIsDropped } from "../../slices/reducers/jdiBom.reducer";
+import { useAppDispatch, useAppSelector } from "../../store";
 
-type Status = "In Process" | "Processing" | "Completed" | "Failed";
+export type Status = "In Process" | "Processing" | "Completed" | "Failed";
 
-const getStatusColor = (status: Status) => {
+export const getStatusColor = (status: Status) => {
   switch (status) {
     case "In Process":
       return "warning";
@@ -80,6 +80,8 @@ const renderChipsWithEllipsis = (items: string[], limit: number = 2) => {
 };
 
 export default function BomCommoningStatusTable() {
+  const userId = useAppSelector((state) => state.user?.id);
+
   const [searchInput, setSearchInput] = useState<string>("");
 
   const [filters, setFilters] = useState<IFilterAtom>({
@@ -97,6 +99,7 @@ export default function BomCommoningStatusTable() {
   const objectDetails = useAppSelector((state) => state.jdiBom.objectDetails);
 
   const { data, isFetching } = useJdiBomsQuery({
+    userId,
     search: filters.search,
     status: filters.status,
     sortOrder: filters.sortOrder,
@@ -108,7 +111,7 @@ export default function BomCommoningStatusTable() {
     }),
   }) as { data?: BomResponse; isFetching: boolean };
 
-  const [mutate] = useCreateJdiBomMutation();
+  const [_mutate] = useCreateJdiBomMutation();
   const [deleteAllJdi] = useDeleteAllMutation();
   const [updateJdi] = useUpdateJdiBomMutation();
 
@@ -133,22 +136,21 @@ export default function BomCommoningStatusTable() {
   };
 
   const create = async () => {
-    await mutate({
-      status: "Completed",
-      sourceOrg: "MVO",
-      userId: "1743650926892",
-      userEmail: "anand@em.com",
-      processedItems: [
-        "ISV-823741278",
-        "ISV-TEST-00889",
-
-        "MMI-100",
-        "ISV-TEST-0101",
-        "ISV-0001234",
-        "ISV-PARENT",
-      ],
-      targetOrgs: ["AD1", "AO1", "AT1", "AY5", "AZ5", "BES", "CDC", "CHS"],
-    });
+    // await mutate({
+    //   status: "Completed",
+    //   sourceOrg: "MVO",
+    //   userId: "1743650926892",
+    //   userEmail: "anand@em.com",
+    //   processedItems: [
+    //     "ISV-823741278",
+    //     "ISV-TEST-00889",
+    //     "MMI-100",
+    //     "ISV-TEST-0101",
+    //     "ISV-0001234",
+    //     "ISV-PARENT",
+    //   ],
+    //   targetOrgs: ["AD1", "AO1", "AT1", "AY5", "AZ5", "BES", "CDC", "CHS"],
+    // });
   };
 
   const update = async (id: string) => {
@@ -338,7 +340,7 @@ export default function BomCommoningStatusTable() {
         )}
 
         <Grid container spacing={2} sx={{ my: 2 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Box sx={{ width: { xs: "100%", sm: 300 } }}>
             <InputLabel sx={{ fontSize: 16 }}>Search BOM</InputLabel>
 
             <TextField
@@ -352,9 +354,9 @@ export default function BomCommoningStatusTable() {
               }}
               slotProps={{ input: { style: { fontSize: 16 } } }}
             />
-          </Grid>
+          </Box>
 
-          <Grid size={{ xs: 6, sm: 3, md: 2 }}>
+          <Box sx={{ width: 100 }}>
             <InputLabel sx={{ fontSize: 16 }}>Status</InputLabel>
             <FormControl fullWidth>
               <Select
@@ -379,9 +381,9 @@ export default function BomCommoningStatusTable() {
                 </MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid size={{ xs: 6, sm: 3, md: 2 }}>
+          <Box sx={{ width: 140 }}>
             <InputLabel sx={{ fontSize: 16 }}>Rows per page</InputLabel>
             <FormControl fullWidth>
               <Select
@@ -406,7 +408,7 @@ export default function BomCommoningStatusTable() {
                 </MenuItem>
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
           <DateRange filters={filters} handleFilters={handleFilters} />
 
@@ -431,7 +433,7 @@ export default function BomCommoningStatusTable() {
 
         <TableContainer
           component={Paper}
-          sx={{ maxHeight: 700, overflow: "auto" }}
+          sx={{ maxHeight: "calc(100vh - 268px)", overflow: "auto" }}
         >
           <Table size="small">
             <TableHead

@@ -7,7 +7,9 @@ import { BASENAME, route } from "src/app/jdiBom/constants";
 import { env } from "src/app/jdiBom/env";
 
 const Home = lazy(() => import("src/app/jdiBom/pages"));
-const Status = lazy(() => import("src/app/jdiBom/pages/StatusCheck"));
+const RDOList = lazy(() => import("src/app/jdiBom/pages/rdos"));
+const Status = lazy(() => import("src/app/jdiBom/pages/status"));
+const StatusItem = lazy(() => import("src/app/jdiBom/pages/status/[id]"));
 
 const DroppableLayout = env.WIDGET_ENTRY ? withDroppable(Layout) : Layout;
 
@@ -24,8 +26,17 @@ export const router = createBrowserRouter(
         },
 
         {
+          path: route.rdo,
+          element: <RDOList />,
+        },
+
+        {
           path: route.status,
           element: <Status />,
+        },
+        {
+          path: route.statusItem,
+          element: <StatusItem />,
         },
         {
           path: route.callback,
