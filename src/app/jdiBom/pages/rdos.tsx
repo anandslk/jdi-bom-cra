@@ -12,7 +12,10 @@ import {
 } from "@mui/material";
 import React, { useMemo } from "react";
 import Loader from "src/components/Loader/Loader";
-import { useDestOrgsQuery } from "../slices/apis/destOrgs.api";
+import {
+  useCreateDestOrgsMutation,
+  useDestOrgsQuery,
+} from "../slices/apis/destOrgs.api";
 import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
 import { route } from "../constants";
@@ -48,6 +51,16 @@ const RdoOrgSelector: React.FC = () => {
       RDO_KEYS.map((rdo) => data.data[rdo]?.[i] ?? null),
     );
   }, [data]);
+
+  const [_createDestOrgs] = useCreateDestOrgsMutation();
+
+  // useEffect(() => {
+  //   const get = async () => {
+  //     await createDestOrgs({ ...RDO_ORGS, availOrgs: availOrgsList });
+  //   };
+
+  //   // get();
+  // }, []);
 
   return (
     <Box p={3} sx={{ height: "100vh" }}>

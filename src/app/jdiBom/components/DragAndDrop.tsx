@@ -7,7 +7,7 @@ import { ISelectedItem } from "../hoc/withDroppable";
 import { Link as RouterLink } from "react-router-dom";
 import { Box, Button } from "@mui/material";
 import { setIsDropped } from "../slices/reducers/jdiBom.reducer";
-import { useAppDispatch, useAppSelector } from "../store";
+import { useAppDispatch } from "../store";
 import { route } from "../constants";
 import ReplyIcon from "@mui/icons-material/Reply";
 import { AdvancedSearch } from "./AdvancedSearch";
@@ -19,7 +19,6 @@ export const DragAndDropComponent = ({
 }) => {
   const { performSearch } = useInterComSearch();
   const dispatch = useAppDispatch();
-  const objectDetails = useAppSelector((state) => state.jdiBom.objectDetails);
 
   const [advancedSearch, setShowAdvancedView] = useState(false);
 
@@ -100,15 +99,13 @@ export const DragAndDropComponent = ({
           flexWrap: "wrap",
         }}
       >
-        {objectDetails?.length > 0 && (
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => dispatch(setIsDropped(true))}
-          >
-            <ReplyIcon sx={{ fontSize: 25 }} />
-          </Button>
-        )}
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => dispatch(setIsDropped(true))}
+        >
+          <ReplyIcon sx={{ fontSize: 25 }} />
+        </Button>
 
         <Button
           variant="contained"

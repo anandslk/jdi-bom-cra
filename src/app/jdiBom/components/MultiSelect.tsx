@@ -1,8 +1,14 @@
-import { ChangeEvent, Dispatch, SetStateAction, useEffect } from "react";
-import { useRef } from "react";
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+} from "react";
 
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import { Box, IconButton, InputLabel } from "@mui/material";
+import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
+import { Box, InputLabel, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { route } from "../constants";
 
@@ -63,10 +69,41 @@ export const MultiSelectList = ({
         }}
       >
         {title}
-        {!multiSelect && (
-          <IconButton onClick={() => navigate(route.rdo)}>
-            <EditNoteIcon sx={{ color: "#1976d2", fontSize: 22 }} />
-          </IconButton>
+
+        {!multiSelect ? (
+          <EditNoteIcon
+            onClick={() => navigate(route.rdo)}
+            sx={{ color: "#1976d2", fontSize: 22, cursor: "pointer" }}
+          />
+        ) : (
+          <Tooltip
+            title={
+              <>
+                <div>
+                  <strong>Ctrl + A</strong>: Select all
+                </div>
+                <div>
+                  <strong>Ctrl + Click</strong>: Toggle individual row selection
+                </div>
+                <div>
+                  <strong>Shift + ↑ / ↓</strong>: Extend selection up/down
+                </div>
+                <div>
+                  <strong>Shift + Click</strong>: Select range
+                </div>
+              </>
+            }
+            arrow
+            slotProps={{ tooltip: { sx: { fontSize: "14px" } } }}
+          >
+            <InfoOutlineIcon
+              sx={{
+                color: "#1976d2",
+                fontSize: 20,
+                cursor: "pointer",
+              }}
+            />
+          </Tooltip>
         )}
       </InputLabel>
       <Box

@@ -336,7 +336,7 @@ export const RDO_ORGS = {
   // "JDI NoBOM Orgs": jDINoBOMOrgs,
   // Emerson: emersonOrgs,
   "Micro Motion": microMotionOrgs,
-  "Rosmount Leve": rosemountFlowOrgs,
+  "Rosmount Level": rosemountFlowOrgs,
   Roxar: roxarOrgs,
   Ultrasonic: ultrasonicOrgs,
 };
@@ -502,4 +502,29 @@ export const orgList: string[] = [
   "TRS",
   "VHS",
   "VLO",
+];
+
+export const plantsData = [
+  "P03 Master",
+  "P03 2021",
+  "1021",
+  "3011",
+  "3021",
+  "3023",
+  "MMP01",
+  "MMP03",
+  "MMEP1",
+  "MVO",
+  "MMB",
+  "MMC",
+  "RTC",
+  "DRM",
+  "CLJ",
+  "EB2",
+  "JRM",
+  "MM1I",
+  "Sellable",
+  "Internal Build",
+  "Purchased",
+  "Emerson",
 ];

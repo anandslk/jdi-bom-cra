@@ -3,6 +3,7 @@ import { useFetchWithAuth } from "./useFetchWithAuth";
 import { useQuery } from "@tanstack/react-query";
 import { env } from "src/app/jdiBom/env";
 import {
+  removeSingleObject,
   updateObjectDetail,
   updateObjectId,
 } from "../slices/reducers/jdiBom.reducer";
@@ -14,10 +15,15 @@ export const useJdiBom = () => {
     (state) => state.jdiBom,
   );
 
+  const existingObjectIds = useAppSelector((state) =>
+    state.jdiBom.objectIds.map((obj) => obj.objectId),
+  );
+
   const { fetchWithAuth, headers } = useFetchWithAuth();
 
   const collabSpace = useQuery({
-    queryKey: ["collabSpace", objectDetails, isDropped],
+    queryKey: ["collabSpace", isDropped],
+
     queryFn: async () => {
       const url = `${env.ENOVIA_URL}/resources/modeler/pno/person?current=true&select=collabspaces`;
       const response = (await fetchWithAuth({
@@ -32,7 +38,8 @@ export const useJdiBom = () => {
 
   // Fetch collaborative space ID
   const collabSpaceId = useQuery({
-    queryKey: ["collabSpaceId", objectDetails, isDropped, collabSpace?.data],
+    queryKey: ["collabSpaceId", isDropped, collabSpace?.data],
+
     queryFn: async () => {
       const settles = await Promise.allSettled(
         (collabSpace?.data?.collabspaces ?? []).map(async (collabSpace) => {
@@ -60,12 +67,14 @@ export const useJdiBom = () => {
         }
       });
     },
+
     enabled: !!collabSpace?.data && !!headers?.data && isDropped,
   });
 
   // Fetch library data
   const plants = useQuery({
     queryKey: ["plants", collabSpaceId?.data, isDropped],
+
     queryFn: async () => {
       // Handle array of collab space IDs
       const validIds = (collabSpaceId?.data || [])
@@ -86,6 +95,7 @@ export const useJdiBom = () => {
         res.status === "fulfilled" ? res.value : null,
       );
     },
+
     select: (data: any[]) => {
       // const collaborativeSpaces = (objectDetails || [])
       //   .map((d) => d?.["Collaborative Space"])
@@ -130,11 +140,13 @@ export const useJdiBom = () => {
 
       return results;
     },
+
     enabled: !!collabSpaceId?.data && isDropped,
   });
 
   const prevRev = useQuery({
     queryKey: ["prevRev", objectIds, isDropped],
+
     queryFn: async () => {
       const inWorkIds = objectIds?.filter(({ objectId }) => {
         const detail = objectDetails?.find(
@@ -171,14 +183,15 @@ export const useJdiBom = () => {
         body: { data: products },
       })) as EngItemResponse;
 
-      return (response.results as EngItemResult[]) || [];
+      return (response?.results as EngItemResult[]) || [];
     },
 
     enabled: !!headers?.data && isDropped,
   });
 
   const engRelease = useQuery({
-    queryKey: ["advancedSearch"],
+    queryKey: ["engRelease", prevRev?.data],
+
     queryFn: async () => {
       const responses = await Promise.allSettled(
         (prevRev?.data ?? []).map((item) => {
@@ -186,13 +199,18 @@ export const useJdiBom = () => {
             (v) => v?.maturityState === "RELEASED",
           );
 
+          if (!released) return Promise.resolve(null);
+
+          const releasedId = released?.id;
+          const alreadyExists = existingObjectIds?.includes(releasedId);
+
           // const objectId = objectIds?.find((o) => o?.objectId === item?.id);
 
           // const objectDetailsData = objectDetails?.find(
           //   (o) => o?.["Dropped Revision ID"] === item?.identifier
           // );
 
-          if (released) {
+          if (!alreadyExists) {
             dispatch(
               updateObjectDetail({
                 droppedRevisionId: item?.id,
@@ -209,30 +227,53 @@ export const useJdiBom = () => {
             dispatch(
               updateObjectId({
                 objectId: item?.id,
-                updates: {
-                  objectId: released?.id,
-                },
+                updates: { objectId: released?.id },
               }),
             );
+          } else {
+            dispatch(removeSingleObject(releasedId));
+            return Promise.resolve(null);
           }
 
-          if (!released) return Promise.resolve(null);
-
-          const id = released?.id;
-
           return fetchWithAuth({
-            url: `/modeler/dslib/dslib:ClassifiedItem/${id}?$mask=dslib:ClassificationAttributesMask`,
-          });
+            url: `/modeler/dslib/dslib:ClassifiedItem/${releasedId}?$mask=dslib:ClassificationAttributesMask`,
+          }) as Promise<ClassifiedItemResponse>;
         }),
       );
 
       return responses.map((res) =>
         res.status === "fulfilled" ? res.value : null,
-      );
+      ) as ClassifiedItemResponse[];
     },
 
-    select: (data: any) => {
-      console.log("data...........", data);
+    select: (data) => {
+      data?.forEach((product) => {
+        const classificationMembers =
+          product?.member?.[0]?.ClassificationAttributes?.member ?? [];
+
+        const hasFalsePlantAssignment = classificationMembers?.some(
+          (classItem) =>
+            classItem?.Attributes?.some(
+              (attr) =>
+                attr?.name === "PlantAssignmentClass" && attr?.value !== true,
+            ),
+        );
+
+        if (hasFalsePlantAssignment) {
+          const droppedRevisionId = product?.member?.[0]?.id;
+
+          if (droppedRevisionId) {
+            dispatch(
+              updateObjectDetail({
+                droppedRevisionId,
+                updates: {
+                  "Maturity State": "frozen",
+                },
+              }),
+            );
+          }
+        }
+      });
     },
 
     enabled: !!headers?.data && isDropped && !!prevRev?.data,
@@ -315,33 +356,3 @@ export const useJdiBom = () => {
 
   return { plants, prevRev, collabSpace, collabSpaceId, engRelease };
 };
-
-interface Role {
-  pid: string;
-  name: string;
-  nls: string;
-}
-
-interface Organization {
-  pid: string;
-  name: string;
-  title: string;
-}
-
-interface Couple {
-  organization: Organization;
-  role: Role;
-}
-
-interface Collabspace {
-  pid: string;
-  name: string;
-  title: string;
-  couples: Couple[];
-}
-
-interface UserCollabspaces {
-  pid: string;
-  name: string;
-  collabspaces: Collabspace[];
-}

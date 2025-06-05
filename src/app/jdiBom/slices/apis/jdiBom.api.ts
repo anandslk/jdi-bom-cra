@@ -20,13 +20,13 @@ export const jdiBomApiSlice = createApi({
 
   endpoints: (builder) => ({
     getUser: builder.query<{}, { email: string }>(
-      createGetWithParamsQuery("/users/getUserByEmail/:email"),
+      createGetWithParamsQuery("/users/:email"),
     ),
 
     jdiBoms: builder.query<
       BomResponse,
       {
-        userId: string;
+        userId?: string;
         search: string;
         status: "All" | "In Process" | "Completed" | "Failed";
         sortOrder: "ASC" | "DESC";
@@ -66,11 +66,18 @@ export const jdiBomApiSlice = createApi({
       }),
       invalidatesTags: ["JdiBom"],
     }),
+
+    getIds: builder.query<{}, {}>(createGetQuery("/jdiBom/ids")),
   }),
 });
 
-export const { useGetUserQuery, useJdiBomsQuery, useGetJdiBomQuery } =
-  jdiBomApiSlice;
+export const {
+  useGetUserQuery,
+  useJdiBomsQuery,
+  useGetJdiBomQuery,
+
+  useGetIdsQuery,
+} = jdiBomApiSlice;
 
 export const {
   useCreateJdiBomMutation,
@@ -84,6 +91,7 @@ export interface BomItem {
   status: string;
   timestamp: string;
   targetOrgs: string[];
+  userEmail: string;
   processedItems: IProductInfo[];
 }
 
@@ -93,8 +101,6 @@ export interface BomResponse {
 }
 
 export interface CreateJdiBomItem {
-  // id: string;
-  // status: "In Process" | "Completed" | "Failed";
   sourceOrg: string;
   processedItems: IProductInfo[];
   targetOrgs: string[];

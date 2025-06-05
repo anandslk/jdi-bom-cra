@@ -663,7 +663,7 @@ export const AdvancedSearch: React.FC<{
   );
 };
 
-interface SearchResult {
+export interface SearchResult {
   attributes: Array<{
     name: string;
     value: string | string[];
@@ -672,7 +672,7 @@ interface SearchResult {
   }>;
 }
 
-interface MutationData {
+export interface MutationData {
   results: SearchResult[];
   infos: {
     nresults: number;

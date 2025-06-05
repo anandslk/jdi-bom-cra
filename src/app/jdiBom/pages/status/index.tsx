@@ -157,15 +157,14 @@ export default function BomCommoningStatusTable() {
     await updateJdi({
       id,
       updates: {
-        status: "Failed",
+        // status: "Failed",
         // status: "Completed",
-        sourceOrg: "MMB",
+        // sourceOrg: "MMB",
         // // userId: "1743650926892",
-        // // userEmail: "anand@em.com",
+        // userEmail: "anand.kumar@emerson.com",
         // processedItems: [
         //   "ISV-823741278",
         //   "ISV-TEST-00889",
-
         //   "MMI-100",
         //   "ISV-TEST-0101",
         //   "ISV-0001234",
@@ -285,8 +284,18 @@ export default function BomCommoningStatusTable() {
               />
             </Box>
             <Typography sx={{ fontSize: 18 }}>
-              <strong>Submitted:</strong>{" "}
-              {new Date(selectedItem.timestamp).toLocaleString()}
+              <strong>Submitted At:</strong>{" "}
+              {/* {new Date(selectedItem.timestamp).toLocaleString()} */}
+              {new Date(selectedItem.timestamp).toLocaleDateString("en-GB", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              })}
+            </Typography>
+            <Typography sx={{ fontSize: 18 }}>
+              <strong>Submitted By:</strong>{" "}
+              {/* {new Date(selectedItem.timestamp).toLocaleString()} */}
+              {selectedItem.userEmail}
             </Typography>
           </Stack>
         )}
@@ -383,33 +392,6 @@ export default function BomCommoningStatusTable() {
             </FormControl>
           </Box>
 
-          <Box sx={{ width: 140 }}>
-            <InputLabel sx={{ fontSize: 16 }}>Rows per page</InputLabel>
-            <FormControl fullWidth>
-              <Select
-                value={filters.rowsPerPage}
-                // label="Status"
-                onChange={(e) =>
-                  updateFilterAndResetPage("rowsPerPage", e.target.value)
-                }
-                sx={{ fontSize: 16 }}
-              >
-                <MenuItem sx={{ fontSize: 16 }} value={5}>
-                  5
-                </MenuItem>
-                <MenuItem sx={{ fontSize: 16 }} value={10}>
-                  10
-                </MenuItem>
-                <MenuItem sx={{ fontSize: 16 }} value={25}>
-                  25
-                </MenuItem>
-                <MenuItem sx={{ fontSize: 16 }} value={100}>
-                  100
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
           <DateRange filters={filters} handleFilters={handleFilters} />
 
           {false && (
@@ -461,7 +443,10 @@ export default function BomCommoningStatusTable() {
                   Status
                 </TableCell>
                 <TableCell sx={{ fontSize: 18, fontWeight: "bold" }}>
-                  Submitted
+                  Submitted At
+                </TableCell>
+                <TableCell sx={{ fontSize: 18, fontWeight: "bold" }}>
+                  Submitted By
                 </TableCell>
                 <TableCell
                   align="right"
@@ -533,8 +518,14 @@ export default function BomCommoningStatusTable() {
                     />
                   </TableCell>
                   <TableCell sx={{ fontSize: 15 }}>
-                    {new Date(item.timestamp).toLocaleString()}
+                    {/* {new Date(item.timestamp).toLocaleString()} */}
+                    {new Date(item.timestamp).toLocaleDateString("en-GB", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                    })}
                   </TableCell>
+                  <TableCell sx={{ fontSize: 15 }}>{item.userEmail}</TableCell>
                   <TableCell align="right">
                     <Button
                       // variant="outlined"
@@ -583,7 +574,42 @@ export default function BomCommoningStatusTable() {
           </Table>
         </TableContainer>
 
-        <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "end",
+            alignItems: "center",
+            py: 2,
+            gap: 1,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <InputLabel sx={{ fontSize: 16 }}>Rows per page</InputLabel>
+            <FormControl>
+              <Select
+                value={filters.rowsPerPage}
+                // label="Status"
+                onChange={(e) =>
+                  updateFilterAndResetPage("rowsPerPage", e.target.value)
+                }
+                sx={{ fontSize: 16, height: 30 }}
+              >
+                <MenuItem sx={{ fontSize: 16 }} value={5}>
+                  5
+                </MenuItem>
+                <MenuItem sx={{ fontSize: 16 }} value={10}>
+                  10
+                </MenuItem>
+                <MenuItem sx={{ fontSize: 16 }} value={25}>
+                  25
+                </MenuItem>
+                <MenuItem sx={{ fontSize: 16 }} value={100}>
+                  100
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+
           <Pagination
             count={pageCount}
             page={filters.page + 1}

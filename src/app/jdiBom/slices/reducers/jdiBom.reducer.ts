@@ -48,8 +48,20 @@ const droppedObjectSlice = createSlice({
       }
     },
 
+    removeSingleObject: (state, action: PayloadAction<string>) => {
+      const idToRemove = action.payload;
+
+      state.objectIds = state.objectIds.filter(
+        (obj) => obj.objectId !== idToRemove,
+      );
+
+      state.objectDetails = state.objectDetails.filter(
+        (detail) => detail["Dropped Revision ID"] !== idToRemove,
+      );
+    },
+
     removeProduct: (state) => {
-      state.isDropped = initialState.jdiBom.isDropped;
+      state.isDropped = false;
       state.objectIds = [];
       state.objectDetails = [];
       state.initialDraggedData = initialState.jdiBom.initialDraggedData;
@@ -113,6 +125,7 @@ export const {
   setObjectIds,
   setObjectDetails,
   updateObjectDetail,
+  removeSingleObject,
   updateObjectId,
   removeProduct,
 } = droppedObjectSlice.actions;

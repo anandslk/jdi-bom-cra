@@ -20,6 +20,7 @@ import {
   Fragment,
   SyntheticEvent,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { ConfirmationScreen } from "src/app/jdiBom/components/Confirmation";
@@ -35,7 +36,7 @@ import { useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
 import { rdoList } from "src/app/jdiBom/utils";
 import Loader from "src/components/Loader/Loader";
 
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import ArrowCircleLeftIcon from "@mui/icons-material/ArrowCircleLeft";
 import ArrowCircleRightIcon from "@mui/icons-material/ArrowCircleRight";
 import { Tooltip } from "@mui/material";
@@ -49,6 +50,10 @@ import { useJdiBom } from "../hooks/useJdiBom";
 import { IRDO_ORGS, useDestOrgsQuery } from "../slices/apis/destOrgs.api";
 import { useCreateJdiBomMutation } from "../slices/apis/jdiBom.api";
 import { getErrorMessage } from "../slices/apis/types";
+import {
+  SearchParts,
+  SearchPartsHandlers,
+} from "../components/home/SearchParts";
 
 export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
@@ -57,6 +62,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const user = useAppSelector((state) => state.user);
 
   const navigate = useNavigate();
+
+  const searchPartsRef = useRef<{ handleInputChange?: () => void }>({});
 
   const { plants, prevRev, engRelease, collabSpace } = useJdiBom();
 
@@ -132,21 +139,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       parentParts: objectDetails.filter(
         (item) => item["Maturity State"]?.toLowerCase() === "released",
       ),
-      // sourceOrg: objectDetails?.["Collaborative Space"],
     }));
   }, [objectDetails]);
-
-  // useEffect(() => {
-  //   const rv =
-  //     formState.parentPart && objectDetails?.["Maturity State"]?.toLowerCase() !== "released";
-
-  //   setErrors((prev) => ({
-  //     ...prev,
-  //     parentPart: rv
-  //       ? "Part is not in released state, please select another part"
-  //       : "",
-  //   }));
-  // }, [objectDetails, formState.parentPart]);
 
   useEffect(() => {
     if (formState.rdo?.trim()) {
@@ -172,18 +166,18 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     console.info("Is source org present in collabspaces:", isOrgPresent);
 
-    if (!isOrgPresent) {
-      setErrors((prev) => ({
-        ...prev,
-        sourceOrg: "Source org is not present in the collaborative spaces",
-      }));
-    } else {
-      setErrors((prev) => ({ ...prev, sourceOrg: "" }));
-    }
+    // if (!isOrgPresent) {
+    //   setErrors((prev) => ({
+    //     ...prev,
+    //     sourceOrg: "Source org is not present in the collaborative spaces",
+    //   }));
+    // } else {
+    //   setErrors((prev) => ({ ...prev, sourceOrg: "" }));
+    // }
   }, [collabSpace.data, formState.sourceOrg]);
 
   // --- Form Submission ---
-  const handleFormSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newErrors: Partial<IFormErrors> = {};
 
@@ -194,7 +188,9 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     // if (!formState.jdi?.trim()) newErrors.jdi = "JDI is required";
 
     if (!formState.plants.length)
-      newErrors.plants = "Select either RDO Name or Destination JDI Org";
+      newErrors.plants = "Select either JDI RDO or Available Orgs";
+
+    await searchPartsRef.current?.handleInputChange?.();
 
     setErrors((prev) => ({ ...prev, ...newErrors }));
 
@@ -262,10 +258,9 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     <>
       <Box
         sx={{
-          height: { sm: "calc(100vh - 8px)", md: "calc(100vh - 8px)" },
+          height: "calc(100vh - 8px)",
           overflow: "auto",
           width: "100%",
-          // padding: { sm: 0 },
         }}
       >
         <Container maxWidth="lg" sx={{ padding: { sm: 0 } }}>
@@ -293,257 +288,310 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
               flexDirection: "column",
               alignItems: "center",
               gap: 4,
-              // minHeight: "calc(100vh - 200px)",
             }}
           >
             <Paper
               sx={{
                 padding: 4,
                 width: "100%",
-                // maxWidth: 600,
                 borderRadius: 4,
                 boxShadow: 3,
               }}
             >
               <form noValidate onSubmit={handleFormSubmit}>
                 <Stack spacing={3}>
-                  <InputLabel
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: 16,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                    }}
-                  >
-                    Parent item(s) to Assign
-                    <AddCircleOutlineIcon
-                      sx={{ color: "#1976d2", fontSize: 22, cursor: "pointer" }}
-                      onClick={() => dispatch(setIsDropped(false))}
-                    />
-                  </InputLabel>
-                  <Autocomplete
-                    multiple
-                    disableCloseOnSelect
-                    options={objectDetails}
-                    getOptionLabel={(option) => option.Title}
-                    value={formState.parentParts}
-                    onChange={handleChangePI}
-                    renderOption={(props, option) => (
-                      <li {...props} key={option.Title}>
-                        <span
-                          style={{
-                            color:
-                              option?.["Maturity State"]?.toLowerCase() !==
-                              "released"
-                                ? "#6c757d"
-                                : "inherit",
-                          }}
-                        >
-                          {option.Title}
-                        </span>
-                        <Tooltip
-                          title={
-                            option["Maturity State"]?.toLowerCase() !==
-                            "released"
-                              ? "Part is not in Released state"
-                              : ""
-                          }
-                          slotProps={{ tooltip: { sx: { fontSize: "14px" } } }}
-                        >
-                          {option["Maturity State"]?.toLowerCase() !==
-                          "released" ? (
-                            <ErrorOutlineIcon
-                              sx={{
-                                color: "red",
-                                fontSize: 16,
-                                marginLeft: 0.5,
-                              }}
-                            />
-                          ) : (
-                            <span></span>
-                          )}
-                        </Tooltip>
-                      </li>
-                    )}
-                    isOptionEqualToValue={(option, value) =>
-                      option.Title === value.Title
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        required
-                        fullWidth
-                        variant="outlined"
-                        // label="Parent item(s) to Assign"
-                        error={!!errors.parentParts}
-                        helperText={errors.parentParts}
-                      />
-                    )}
-                    renderValue={(value, getTagProps) => {
-                      return (
-                        <Box
-                          sx={{
-                            maxHeight: 100,
-                            overflowY: "auto",
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: 0.5,
-                            paddingRight: 1,
-                          }}
-                        >
-                          {value.map((option, index) => (
-                            <Fragment key={index}>
-                              <Chip
-                                label={option.Title}
-                                {...getTagProps({ index })}
-                                sx={{ fontSize: 15 }}
-                              />
-                            </Fragment>
-                          ))}
-                        </Box>
-                      );
-                    }}
-                    sx={{
-                      marginTop: "5px !important",
-                      "& .MuiAutocomplete-tag": {
-                        maxWidth: "100%",
-                      },
-                      "& .MuiOutlinedInput-root": {
-                        maxHeight: `400px !important`,
-                      },
-                      "& .MuiAutocomplete-endAdornment": {
-                        maxHeight: `400px !important`,
-                        alignSelf: "flex-start",
-                      },
-                    }}
-                    slotProps={{
-                      paper: {
-                        sx: {
-                          "& .MuiAutocomplete-option": {
-                            fontSize: 16,
-                          },
-                        },
-                      },
-                    }}
-                  />
-
-                  <InputLabel sx={{ fontWeight: "bold", fontSize: 16 }}>
-                    Source Orgs
-                  </InputLabel>
-                  <Autocomplete
-                    options={plants?.data ?? []}
-                    value={formState.sourceOrg}
-                    onChange={(_, value) =>
-                      handleChange("sourceOrg", value || "")
-                    }
-                    // clearOnEscape
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        required
-                        fullWidth
-                        variant="outlined"
-                        // placeholder="Source Orgs"
-                        error={!!errors.sourceOrg}
-                        helperText={errors.sourceOrg}
-                        sx={{ ".MuiInputBase-input": { fontSize: 16 } }}
-                      />
-                    )}
-                    sx={{ marginTop: "5px !important" }}
-                    slotProps={{
-                      paper: {
-                        sx: {
-                          "& .MuiAutocomplete-option": {
-                            fontSize: 16,
-                          },
-                        },
-                      },
-                    }}
-                  />
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      // flexDirection: { xs: "column", sm: "column", md: "row" },
-                      justifyContent: "center",
-                      alignItems: "center",
-                      height: { md: 300 },
-                      gap: 1,
-                    }}
-                  >
-                    <Box>
-                      <MultiSelectList
-                        title="JDI RDO List"
-                        items={Object.keys(data?.data ?? {})?.filter(
-                          (item) => item !== "availOrgs",
-                        )}
-                        selected={formState.rdo}
-                        onChange={(newVal) =>
-                          handleChange("rdo", newVal.target.value!)
-                        }
-                      />
-                    </Box>
-
-                    <IconButton
-                      onClick={() => {
-                        setFormState((fs) => ({
-                          ...fs,
-                          jdi: "",
-                          plants: jdiList,
-                        }));
-                        setAvailOrgs([]);
+                  <>
+                    <InputLabel
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
                       }}
-                      disabled={!formState.rdo}
                     >
-                      <ArrowCircleRightIcon sx={{ fontSize: 25 }} />
-                    </IconButton>
-
-                    <Box sx={{ width: "68%" }}>
-                      <DropdownMultiSelect
-                        selectedItems={formState.plants}
-                        onChangePlants={(newSelectedItems) =>
-                          handleChange("plants", newSelectedItems)
-                        }
-                        handleChange={handleChange}
-                        disabled={false}
-                        rdoList={rdoList}
-                        // jdiList={orgList?.data!}
-                        jdiList={jdiList}
-                        errors={errors}
-                      />
-
-                      {errors.plants && (
-                        <Alert severity="error">{errors.plants}</Alert>
-                      )}
-                    </Box>
-
-                    <>
-                      <IconButton
-                        onClick={() => {
-                          setFormState((fs) => ({
-                            ...fs,
-                            jdi: "",
-                            rdo: "",
-                            plants: availOrgs,
-                          }));
-                        }}
-                        disabled={!!!availOrgs.length}
+                      Parent item(s) to Assign
+                      <Tooltip
+                        title={"Search for parts to assign"}
+                        arrow
+                        slotProps={{ tooltip: { sx: { fontSize: "14px" } } }}
                       >
-                        <ArrowCircleLeftIcon sx={{ fontSize: 25 }} />
-                      </IconButton>
+                        <ManageSearchIcon
+                          sx={{
+                            color: "#1976d2",
+                            fontSize: 26,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => dispatch(setIsDropped(false))}
+                        />
+                      </Tooltip>
+                    </InputLabel>
 
-                      <Box>
-                        <MultiSelectList
-                          multiSelect
-                          title="Available Orgs"
-                          items={data?.data.availOrgs ?? []}
-                          selected={availOrgs}
-                          onChange={setAvailOrgs}
+                    {true && (
+                      <SearchParts
+                        onSearchParts={(fns: SearchPartsHandlers) => {
+                          searchPartsRef.current = fns;
+                        }}
+                        formState={formState}
+                      />
+                    )}
+                    {true && (
+                      <Autocomplete
+                        multiple
+                        disableCloseOnSelect
+                        options={objectDetails}
+                        getOptionLabel={(option) => option.Title}
+                        value={formState.parentParts}
+                        onChange={handleChangePI}
+                        renderOption={(props, option) => (
+                          <li {...props} key={option.Title}>
+                            <span
+                              style={{
+                                color:
+                                  option?.["Maturity State"]?.toLowerCase() !==
+                                  "released"
+                                    ? "#6c757d"
+                                    : "inherit",
+                              }}
+                            >
+                              {option.Title}
+                            </span>
+                            <Tooltip
+                              title={
+                                option["Maturity State"]?.toLowerCase() !==
+                                "released"
+                                  ? "Part is not in Released state"
+                                  : ""
+                              }
+                              slotProps={{
+                                tooltip: { sx: { fontSize: "14px" } },
+                              }}
+                            >
+                              {option["Maturity State"]?.toLowerCase() !==
+                              "released" ? (
+                                <ErrorOutlineIcon
+                                  sx={{
+                                    color: "red",
+                                    fontSize: 16,
+                                    marginLeft: 0.5,
+                                  }}
+                                />
+                              ) : (
+                                <span></span>
+                              )}
+                            </Tooltip>
+                          </li>
+                        )}
+                        isOptionEqualToValue={(option, value) =>
+                          option.Title === value.Title
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            required
+                            fullWidth
+                            variant="outlined"
+                            placeholder="Searched Parts will Appear Here"
+                            error={!!errors.parentParts}
+                            helperText={errors.parentParts}
+                            sx={{ ".MuiInputBase-input": { fontSize: 16 } }}
+                          />
+                        )}
+                        renderValue={(value, getTagProps) => {
+                          return (
+                            <Box
+                              sx={{
+                                maxHeight: 100,
+                                overflowY: "auto",
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                                paddingRight: 1,
+                              }}
+                            >
+                              {value.map((option, index) => (
+                                <Fragment key={index}>
+                                  <Chip
+                                    label={option.Title}
+                                    {...getTagProps({ index })}
+                                    sx={{ fontSize: 15 }}
+                                  />
+                                </Fragment>
+                              ))}
+                            </Box>
+                          );
+                        }}
+                        sx={{
+                          marginTop: "5px !important",
+
+                          // "& .MuiOutlinedInput-notchedOutline": {
+                          //   borderTop: "0 !important",
+                          //   borderTopLeftRadius: "0 !important",
+                          //   borderTopRightRadius: "0 !important",
+                          // },
+
+                          "& .MuiAutocomplete-tag": {
+                            maxWidth: "100%",
+                          },
+                          "& .MuiOutlinedInput-root": {
+                            maxHeight: `400px !important`,
+                          },
+                          "& .MuiAutocomplete-endAdornment": {
+                            maxHeight: `400px !important`,
+                            alignSelf: "flex-start",
+                          },
+                        }}
+                        slotProps={{
+                          paper: {
+                            sx: {
+                              "& .MuiAutocomplete-option": {
+                                fontSize: 16,
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                  </>
+
+                  <>
+                    <InputLabel sx={{ fontWeight: "bold", fontSize: 16 }}>
+                      Source Orgs
+                    </InputLabel>
+                    <Autocomplete
+                      options={plants?.data ?? []}
+                      value={formState.sourceOrg}
+                      onChange={(_, value) =>
+                        handleChange("sourceOrg", value || "")
+                      }
+                      // clearOnEscape
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          required
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Source Orgs"
+                          error={!!errors.sourceOrg}
+                          helperText={errors.sourceOrg}
+                          slotProps={{
+                            formHelperText: { sx: { fontSize: 14 } },
+                          }}
+                          sx={{ ".MuiInputBase-input": { fontSize: 16 } }}
+                        />
+                      )}
+                      sx={{ marginTop: "5px !important" }}
+                      slotProps={{
+                        paper: {
+                          sx: {
+                            "& .MuiAutocomplete-option": {
+                              fontSize: 16,
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </>
+
+                  <>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexWrap: "nowrap",
+                        alignItems: "center",
+                        height: { md: 300 },
+                        gap: 1,
+                        marginTop: {
+                          xs: "15px !important",
+                          md: "0 !important",
+                        },
+                        overflowX: "auto",
+                        width: "100%",
+                      }}
+                    >
+                      <>
+                        <Box sx={{ flexShrink: 0, width: 150 }}>
+                          <MultiSelectList
+                            title="JDI RDO List"
+                            items={Object.keys(data?.data ?? {})?.filter(
+                              (item) => item !== "availOrgs",
+                            )}
+                            selected={formState.rdo}
+                            onChange={(newVal) =>
+                              handleChange("rdo", newVal.target.value!)
+                            }
+                          />
+                        </Box>
+
+                        <IconButton
+                          onClick={() => {
+                            handleChange("jdi", "");
+                            handleChange("plants", jdiList);
+                            setAvailOrgs([]);
+                          }}
+                          disabled={!formState.rdo}
+                        >
+                          <ArrowCircleRightIcon sx={{ fontSize: 25 }} />
+                        </IconButton>
+                      </>
+
+                      <Box sx={{ width: "68%" }}>
+                        <DropdownMultiSelect
+                          selectedItems={formState.plants}
+                          onChangePlants={(newSelectedItems) =>
+                            handleChange("plants", newSelectedItems)
+                          }
+                          handleChange={handleChange}
+                          disabled={false}
+                          rdoList={rdoList}
+                          jdiList={jdiList}
+                          errors={errors}
                         />
                       </Box>
-                    </>
-                  </Box>
+
+                      <>
+                        <IconButton
+                          onClick={() => {
+                            handleChange("jdi", "");
+                            handleChange("rdo", "");
+                            handleChange("plants", availOrgs);
+                          }}
+                          disabled={!!!availOrgs.length}
+                        >
+                          <ArrowCircleLeftIcon sx={{ fontSize: 25 }} />
+                        </IconButton>
+
+                        <Box>
+                          <MultiSelectList
+                            multiSelect
+                            title="Available Orgs"
+                            items={data?.data.availOrgs ?? []}
+                            selected={availOrgs}
+                            onChange={setAvailOrgs}
+                          />
+                        </Box>
+                      </>
+                    </Box>
+
+                    {errors.plants && (
+                      <Alert
+                        severity="error"
+                        sx={{
+                          textAlign: "center",
+                          display: "flex",
+                          justifyContent: "center",
+                          marginTop: {
+                            xs: "10px !important",
+                            md: "-25px !important",
+                          },
+                          marginX: "auto !important",
+                          width: { xs: "100%", md: "50%" },
+                        }}
+                      >
+                        {errors.plants}
+                      </Alert>
+                    )}
+                  </>
 
                   <Stack direction="row" spacing={2} justifyContent="flex-end">
                     <Button
