@@ -53,7 +53,6 @@ export const useHandleDrop = () => {
         );
       }
 
-      const validTypes = ["VPMReference", "Raw_Material"];
       const validDataItems = newItems.filter((item) =>
         validTypes.includes(item.objectType),
       );
@@ -116,3 +115,5 @@ export const useHandleDrop = () => {
 
   return { handleDrop, isFetching };
 };
+
+export const validTypes = ["VPMReference", "Raw_Material"];

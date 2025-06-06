@@ -51,11 +51,11 @@ export const SearchParts = ({ onSearchParts, formState }: SearchPartsProps) => {
         placeholder="Enter or paste text"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={(e) => {
+        onKeyDown={async (e) => {
           //   if (e.key === "Enter" || e.key === ",") {
           if (e.key === "Enter" && e.ctrlKey) {
             // e.preventDefault();
-            handleInputChange();
+            await handleInputChange();
           }
         }}
         helperText="Press Ctrl + Enter to search"

@@ -13,6 +13,7 @@ import {
   Paper,
   Stack,
   TextField,
+  Typography,
 } from "@mui/material";
 import {
   FC,
@@ -92,6 +93,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const [availOrgs, setAvailOrgs] = useState<string[]>([]);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isOpen1, setIsOpen1] = useState(false);
 
   useHandleDrop();
 
@@ -190,7 +192,9 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     if (!formState.plants.length)
       newErrors.plants = "Select either JDI RDO or Available Orgs";
 
-    await searchPartsRef.current?.handleInputChange?.();
+    const res = await searchPartsRef.current?.handleInputChange?.();
+
+    console.log("res.........................", res);
 
     setErrors((prev) => ({ ...prev, ...newErrors }));
 
@@ -276,6 +280,22 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
               sourceOrg={formState.sourceOrg}
               selectedItems={formState.parentParts?.map((item) => item.Title)}
             />
+          </Dialog>
+
+          <Dialog
+            isOpen={isOpen1}
+            title="Request ID Generated"
+            onSubmit={handleConfirmationSubmit}
+            cancelText="Okay"
+            onCancel={() => setIsOpen1(false)}
+            disabled={false}
+          >
+            <Typography variant="body1">
+              <strong>Request ID:</strong> {"REQ-91899497	"}
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 1 }}>
+              <strong>Submitted By:</strong> {"anand.kumar@emerson.com"}
+            </Typography>
           </Dialog>
 
           {isProcessed && <Loader />}

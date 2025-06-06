@@ -8,14 +8,17 @@ import { useFetchWithAuth } from "./useFetchWithAuth";
 // import { useHandleDrop } from "./useHandleDrop";
 import { env } from "../env";
 import { ClipboardEvent, KeyboardEvent, useState } from "react";
-import { useHandleDrop } from "./useHandleDrop";
+import { validTypes } from "./useHandleDrop";
+import { toast } from "react-toastify";
+import { MSG_INVALID_OBJECT_TYPE } from "src/utils/toastMessages";
+import { getErrorMessage } from "../slices/apis/types";
+import { useLazyGetObjectDetailsQuery } from "../slices/apis/dropped.api";
 
 export const useAdvancedSearch = () => {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
 
   const { fetchWithAuth } = useFetchWithAuth();
-  const { handleDrop, isFetching } = useHandleDrop();
 
   const extractAttribute = (result: SearchResult, attrName: string): string => {
     const attr = result?.attributes?.find((a) => a.name === attrName);
@@ -34,6 +37,8 @@ export const useAdvancedSearch = () => {
       created: extractAttribute(result, "ds6w:when/ds6w:created"), //ds6w:who/ds6w:responsible
     }));
   };
+
+  const [getDroppedObject, { isFetching }] = useLazyGetObjectDetailsQuery();
 
   const mutation = useMutation({
     mutationFn: async (chips: string[]) => {
@@ -113,14 +118,36 @@ export const useAdvancedSearch = () => {
 
       const resResult = res ? processResults(res) : [];
 
-      await handleDrop(
-        resResult?.map((item) => ({
-          objectId: item?.objectId,
-          objectType: item?.objectType,
-        })),
+      const validDataItems = resResult.filter((item) =>
+        validTypes.includes(item.objectType),
       );
 
-      return res;
+      if (validDataItems.length === 0) {
+        toast.error(MSG_INVALID_OBJECT_TYPE);
+        return;
+      }
+
+      // const processedItems = resResult?.map((item) => ({
+      //     objectId: item?.objectId,
+      //     objectType: item?.objectType,
+      //   }))
+
+      const results = await Promise.allSettled(
+        validDataItems.map((item) =>
+          getDroppedObject({ oid: item.objectId, type: item.objectType }),
+        ),
+      );
+
+      results.forEach((result) => {
+        if (result.status === "rejected" || result.value?.error) {
+          const error =
+            result.status === "rejected" ? result.reason : result?.value?.error;
+
+          toast.error(getErrorMessage(error));
+        }
+      });
+
+      return results;
     },
   });
 
@@ -144,7 +171,7 @@ export const useAdvancedSearch = () => {
   //   });
   // };
 
-  const handleInputChange = () => {
+  const handleInputChange = async () => {
     if (inputValue) {
       const terms = splitTerms(inputValue);
       // const newOnes = terms?.filter((v) => v && !chips.includes(v));
@@ -154,9 +181,7 @@ export const useAdvancedSearch = () => {
         setChips(terms);
         // setChips((prev) => [...prev, ...newOnes]);
         // setInputValue("");
-        mutation.mutate(terms);
-
-        return terms;
+        return await mutation.mutateAsync(terms);
       }
 
       // setInputValue("");
