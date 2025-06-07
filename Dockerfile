@@ -1,26 +1,26 @@
-# Use an official Node.js runtime as a parent image
+# Use official Node.js 22 Alpine image
 FROM node:22-alpine
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Enable and activate pnpm using corepack
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy only the necessary files for installing dependencies
+# Copy only package.json first (for better Docker cache layering)
 COPY package.json ./
 
-# Install project dependencies
+# Install dependencies without a lockfile
 RUN pnpm install --no-lockfile
 
-# Copy the rest of the application source code
+# Copy the rest of the app source
 COPY . .
 
 # Build the application
 RUN pnpm run build
 
-# Expose the port the app runs on
+# Expose application port
 EXPOSE 3000
 
-# Command to run the application
+# Start the application
 CMD ["pnpm", "run", "start"]

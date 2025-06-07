@@ -2,7 +2,7 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { LoadingScreen } from "./LoadingScreen";
-import { ReactNode, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 
 export function Dialog({
   children,
@@ -12,27 +12,28 @@ export function Dialog({
   disabled,
   title,
   cancelText,
+  closeOnOutsideClick,
 }: IDialog) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // useEffect(() => {
-  //   const controller = new AbortController();
-  //   const { signal } = controller;
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
 
-  //   function handleClickOutside(event: MouseEvent) {
-  //     if (
-  //       dialogRef.current &&
-  //       !dialogRef.current.contains(event.target as Node)
-  //     ) {
-  //       onCancel();
-  //     }
-  //   }
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dialogRef.current &&
+        !dialogRef.current.contains(event.target as Node)
+      ) {
+        onCancel();
+      }
+    }
 
-  //   if (isOpen)
-  //     window.addEventListener("mousedown", handleClickOutside, { signal });
+    if (isOpen && closeOnOutsideClick)
+      window.addEventListener("mousedown", handleClickOutside, { signal });
 
-  //   return () => controller.abort();
-  // }, [isOpen, onCancel]);
+    return () => controller.abort();
+  }, [isOpen, onCancel]);
 
   return (
     <div className="">
@@ -140,4 +141,6 @@ interface IDialog {
 
   onSubmit?: () => void;
   onCancel: () => void;
+
+  closeOnOutsideClick?: boolean;
 }

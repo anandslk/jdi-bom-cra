@@ -144,48 +144,48 @@ export const useJdiBom = () => {
     enabled: !!collabSpaceId?.data && isDropped,
   });
 
+  const fetchPrevRev = async (objectDetails: IProductInfo[]) => {
+    const inWorkIds = objectIds?.filter(({ objectId }) => {
+      const detail = objectDetails?.find(
+        (obj) => obj["Dropped Revision ID"] === objectId,
+      );
+
+      return ["In Work", "Frozen"].includes(detail?.["Maturity State"]!);
+    });
+
+    if (inWorkIds.length === 0) return [];
+
+    const products = inWorkIds?.map(({ objectId, objectType }) => {
+      const detail = objectDetails?.find(
+        (obj) => obj?.["Dropped Revision ID"] === objectId,
+      );
+
+      const baseURL = new URL(detail?.imageURL!);
+      const source = `${baseURL?.protocol}//${baseURL?.hostname}/enovia`;
+
+      return {
+        id: objectId,
+        identifier: objectId,
+        type: objectType,
+        source,
+        relativePath: detail?.relativePath,
+      };
+    });
+
+    if (products.length === 0) return [];
+
+    const response = (await fetchWithAuth({
+      url: "/modeler/dslc/version/getGraph",
+      method: "POST",
+      body: { data: products },
+    })) as EngItemResponse;
+
+    return (response?.results as EngItemResult[]) || [];
+  };
+
   const prevRev = useQuery({
     queryKey: ["prevRev", objectIds, isDropped],
-
-    queryFn: async () => {
-      const inWorkIds = objectIds?.filter(({ objectId }) => {
-        const detail = objectDetails?.find(
-          (obj) => obj["Dropped Revision ID"] === objectId,
-        );
-
-        return ["In Work", "Frozen"].includes(detail?.["Maturity State"]!);
-      });
-
-      if (inWorkIds.length === 0) return [];
-
-      const products = inWorkIds?.map(({ objectId, objectType }) => {
-        const detail = objectDetails?.find(
-          (obj) => obj?.["Dropped Revision ID"] === objectId,
-        );
-
-        const baseURL = new URL(detail?.imageURL!);
-        const source = `${baseURL?.protocol}//${baseURL?.hostname}/enovia`;
-
-        return {
-          id: objectId,
-          identifier: objectId,
-          type: objectType,
-          source,
-          relativePath: detail?.relativePath,
-        };
-      });
-
-      if (products.length === 0) return [];
-
-      const response = (await fetchWithAuth({
-        url: "/modeler/dslc/version/getGraph",
-        method: "POST",
-        body: { data: products },
-      })) as EngItemResponse;
-
-      return (response?.results as EngItemResult[]) || [];
-    },
-
+    queryFn: () => fetchPrevRev(objectDetails),
     enabled: !!headers?.data && isDropped,
   });
 
@@ -203,12 +203,6 @@ export const useJdiBom = () => {
 
           const releasedId = released?.id;
           const alreadyExists = existingObjectIds?.includes(releasedId);
-
-          // const objectId = objectIds?.find((o) => o?.objectId === item?.id);
-
-          // const objectDetailsData = objectDetails?.find(
-          //   (o) => o?.["Dropped Revision ID"] === item?.identifier
-          // );
 
           if (!alreadyExists) {
             dispatch(
@@ -354,5 +348,12 @@ export const useJdiBom = () => {
   //   enabled: !!headers?.data && !!objectIds?.objectId && isDropped,
   // });
 
-  return { plants, prevRev, collabSpace, collabSpaceId, engRelease };
+  return {
+    plants,
+    prevRev,
+    collabSpace,
+    collabSpaceId,
+    engRelease,
+    fetchPrevRev,
+  };
 };

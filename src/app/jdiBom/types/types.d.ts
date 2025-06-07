@@ -21,6 +21,7 @@ declare global {
     organization: string;
     "Latest Revision": string;
     MFGCA: boolean;
+    HasMBOM: boolean;
   }
 
   interface IObjectId {

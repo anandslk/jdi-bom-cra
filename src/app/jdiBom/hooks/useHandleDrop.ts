@@ -6,6 +6,7 @@ import { useLazyGetObjectDetailsQuery } from "../slices/apis/dropped.api";
 import { getErrorMessage } from "../slices/apis/types";
 import {
   setInitialDroppedObjectData,
+  setIsDropped,
   setObjectIds,
 } from "../slices/reducers/jdiBom.reducer";
 import { store, useAppDispatch } from "../store";
@@ -17,22 +18,20 @@ export const useHandleDrop = () => {
   const [getDroppedObject, { isFetching }] = useLazyGetObjectDetailsQuery();
 
   const handleDrop = useCallback(
-    async (newItems: ISelectedItem[]): Promise<void> => {
+    async (newItems: ISelectedItem[]): Promise<IProductInfo[]> => {
       const currentState = store.getState().jdiBom.initialDraggedData || [];
 
       if (newItems.length === 0) {
         toast.error("No data items to process.");
-        return;
+        return [] as IProductInfo[];
       }
 
       const uniqueItemsMap = new Map<string, ISelectedItem>();
 
-      // Add existing items first
       currentState.forEach((item) => {
         uniqueItemsMap.set(item.objectId, item);
       });
 
-      // Add or overwrite with new items
       newItems.forEach((item) => {
         uniqueItemsMap.set(item.objectId, item);
       });
@@ -53,13 +52,14 @@ export const useHandleDrop = () => {
         );
       }
 
+      const validTypes = ["VPMReference", "Raw_Material"];
       const validDataItems = newItems.filter((item) =>
         validTypes.includes(item.objectType),
       );
 
       if (validDataItems.length === 0) {
         toast.error(MSG_INVALID_OBJECT_TYPE);
-        return;
+        return [] as IProductInfo[];
       }
 
       dispatch(setObjectIds(validDataItems));
@@ -70,14 +70,21 @@ export const useHandleDrop = () => {
         ),
       );
 
-      results.forEach((result) => {
-        if (result.status === "rejected" || result.value?.error) {
-          const error =
-            result.status === "rejected" ? result.reason : result?.value?.error;
+      results.forEach((r) => {
+        if (r.status === "rejected" || r.value?.error) {
+          const error = r.status === "rejected" ? r.reason : r?.value?.error;
 
           toast.error(getErrorMessage(error));
         }
       });
+
+      const productInfos = results
+        ?.filter((r) => r?.status === "fulfilled")
+        ?.map((r) => r?.value?.data);
+
+      dispatch(setIsDropped(true));
+
+      return productInfos as IProductInfo[];
     },
     [dispatch, getDroppedObject],
   );
@@ -115,5 +122,3 @@ export const useHandleDrop = () => {
 
   return { handleDrop, isFetching };
 };
-
-export const validTypes = ["VPMReference", "Raw_Material"];

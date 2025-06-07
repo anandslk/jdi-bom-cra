@@ -31,7 +31,7 @@ export const withDroppable = <P extends object, T extends unknown>(
 
       const initializeDroppableArea = (
         droppableContainer: any,
-        handleDrop: (dataItems: ISelectedItem[]) => Promise<void>,
+        handleDrop: (dataItems: ISelectedItem[]) => Promise<IProductInfo[]>,
       ) => {
         try {
           window.require(

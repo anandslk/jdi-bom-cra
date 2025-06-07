@@ -83,6 +83,8 @@ const droppedObjectSlice = createSlice({
     builder.addMatcher(
       droppedApiSlice.endpoints.getObjectDetails.matchFulfilled,
       (state, action) => {
+        if (state.isDropped) return;
+
         const payload = action.payload as IProductInfo;
 
         // if (payload?.["Maturity State"] !== "Released") {
@@ -91,8 +93,6 @@ const droppedObjectSlice = createSlice({
         //   );
         //   return;
         // }
-
-        state.isDropped = true;
 
         const alreadyExists = state.objectDetails.some(
           (detail) =>

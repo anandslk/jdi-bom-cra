@@ -8,17 +8,14 @@ import { useFetchWithAuth } from "./useFetchWithAuth";
 // import { useHandleDrop } from "./useHandleDrop";
 import { env } from "../env";
 import { ClipboardEvent, KeyboardEvent, useState } from "react";
-import { validTypes } from "./useHandleDrop";
-import { toast } from "react-toastify";
-import { MSG_INVALID_OBJECT_TYPE } from "src/utils/toastMessages";
-import { getErrorMessage } from "../slices/apis/types";
-import { useLazyGetObjectDetailsQuery } from "../slices/apis/dropped.api";
+import { useHandleDrop } from "./useHandleDrop";
 
 export const useAdvancedSearch = () => {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
 
   const { fetchWithAuth } = useFetchWithAuth();
+  const { handleDrop, isFetching } = useHandleDrop();
 
   const extractAttribute = (result: SearchResult, attrName: string): string => {
     const attr = result?.attributes?.find((a) => a.name === attrName);
@@ -37,8 +34,6 @@ export const useAdvancedSearch = () => {
       created: extractAttribute(result, "ds6w:when/ds6w:created"), //ds6w:who/ds6w:responsible
     }));
   };
-
-  const [getDroppedObject, { isFetching }] = useLazyGetObjectDetailsQuery();
 
   const mutation = useMutation({
     mutationFn: async (chips: string[]) => {
@@ -118,36 +113,14 @@ export const useAdvancedSearch = () => {
 
       const resResult = res ? processResults(res) : [];
 
-      const validDataItems = resResult.filter((item) =>
-        validTypes.includes(item.objectType),
+      const fetchedProducts = await handleDrop(
+        resResult?.map((item) => ({
+          objectId: item?.objectId,
+          objectType: item?.objectType,
+        })),
       );
 
-      if (validDataItems.length === 0) {
-        toast.error(MSG_INVALID_OBJECT_TYPE);
-        return;
-      }
-
-      // const processedItems = resResult?.map((item) => ({
-      //     objectId: item?.objectId,
-      //     objectType: item?.objectType,
-      //   }))
-
-      const results = await Promise.allSettled(
-        validDataItems.map((item) =>
-          getDroppedObject({ oid: item.objectId, type: item.objectType }),
-        ),
-      );
-
-      results.forEach((result) => {
-        if (result.status === "rejected" || result.value?.error) {
-          const error =
-            result.status === "rejected" ? result.reason : result?.value?.error;
-
-          toast.error(getErrorMessage(error));
-        }
-      });
-
-      return results;
+      return fetchedProducts as IProductInfo[];
     },
   });
 
@@ -181,7 +154,8 @@ export const useAdvancedSearch = () => {
         setChips(terms);
         // setChips((prev) => [...prev, ...newOnes]);
         // setInputValue("");
-        return await mutation.mutateAsync(terms);
+
+        return (await mutation.mutateAsync(terms)) as IProductInfo[];
       }
 
       // setInputValue("");

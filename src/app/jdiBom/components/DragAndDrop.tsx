@@ -13,9 +13,9 @@ import ReplyIcon from "@mui/icons-material/Reply";
 import { AdvancedSearch } from "./AdvancedSearch";
 
 export const DragAndDropComponent = ({
-  handleDrop = async (_: ISelectedItem[]) => {},
+  handleDrop = async (_: ISelectedItem[]) => [],
 }: {
-  handleDrop: (payload: ISelectedItem[]) => Promise<void>;
+  handleDrop: (payload: ISelectedItem[]) => Promise<IProductInfo[]>;
 }) => {
   const { performSearch } = useInterComSearch();
   const dispatch = useAppDispatch();

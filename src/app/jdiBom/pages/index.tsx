@@ -55,6 +55,8 @@ import {
   SearchParts,
   SearchPartsHandlers,
 } from "../components/home/SearchParts";
+import { useMutation } from "@tanstack/react-query";
+import { AddCircleOutline } from "@mui/icons-material";
 
 export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
@@ -64,9 +66,10 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   const navigate = useNavigate();
 
-  const searchPartsRef = useRef<{ handleInputChange?: () => void }>({});
+  const searchPartsRef = useRef<SearchPartsHandlers>(null);
 
-  const { plants, prevRev, engRelease, collabSpace } = useJdiBom();
+  const { plants, fetchPrevRev, prevRev, engRelease, collabSpace } =
+    useJdiBom();
 
   // Form fields and error state
   const [errors, setErrors] = useState<IFormErrors>({
@@ -98,6 +101,16 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   useHandleDrop();
 
   const { data, isFetching: isOrgs } = useDestOrgsQuery({});
+
+  const mutateParts = useMutation({
+    mutationFn: async () => {
+      const res = await searchPartsRef.current?.handleInputChange?.();
+
+      const prevr = await fetchPrevRev(res!);
+
+      return { products: res, prevr };
+    },
+  });
 
   useEffect(() => {
     if (!data?.data) return;
@@ -145,6 +158,16 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   }, [objectDetails]);
 
   useEffect(() => {
+    setFormState((prev) => ({
+      ...prev,
+      parentParts:
+        mutateParts?.data?.products?.filter(
+          (item) => item["Maturity State"]?.toLowerCase() === "released",
+        ) ?? [],
+    }));
+  }, [mutateParts.data]);
+
+  useEffect(() => {
     if (formState.rdo?.trim()) {
       setErrors((prev) => ({ ...prev, rdo: "" }));
     }
@@ -183,6 +206,15 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     e.preventDefault();
     const newErrors: Partial<IFormErrors> = {};
 
+    if (!!objectDetails?.length) {
+      if (!!!formState.parentParts.length)
+        newErrors.parentParts = "Minimum 1 part is required";
+    } else {
+      if (!searchPartsRef?.current?.inputValue) {
+        newErrors.parentParts = "Minimum 1 part is required";
+      }
+    }
+
     if (!formState.sourceOrg?.trim())
       newErrors.sourceOrg = "Source org is required";
 
@@ -192,17 +224,17 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     if (!formState.plants.length)
       newErrors.plants = "Select either JDI RDO or Available Orgs";
 
-    const res = await searchPartsRef.current?.handleInputChange?.();
-
-    console.log("res.........................", res);
-
     setErrors((prev) => ({ ...prev, ...newErrors }));
 
     const hasErrors = Object.values({ ...errors, ...newErrors }).some(
       (val) => !!val,
     );
 
-    if (!hasErrors) setIsOpen(true);
+    if (!hasErrors) {
+      !!!objectDetails?.length && (await mutateParts.mutateAsync());
+
+      setIsOpen(true);
+    }
   };
 
   // --- Cancel Handler ---
@@ -257,6 +289,10 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
     engRelease.isFetching ||
     isLoading ||
     isOrgs;
+
+  const PartSearchIcon = !!objectDetails.length
+    ? AddCircleOutline
+    : ManageSearchIcon;
 
   return (
     <>
@@ -336,7 +372,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                         arrow
                         slotProps={{ tooltip: { sx: { fontSize: "14px" } } }}
                       >
-                        <ManageSearchIcon
+                        <PartSearchIcon
                           sx={{
                             color: "#1976d2",
                             fontSize: 26,
@@ -347,15 +383,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                       </Tooltip>
                     </InputLabel>
 
-                    {true && (
-                      <SearchParts
-                        onSearchParts={(fns: SearchPartsHandlers) => {
-                          searchPartsRef.current = fns;
-                        }}
-                        formState={formState}
-                      />
-                    )}
-                    {true && (
+                    {!!objectDetails?.length ? (
                       <Autocomplete
                         multiple
                         disableCloseOnSelect
@@ -470,6 +498,15 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                             },
                           },
                         }}
+                      />
+                    ) : (
+                      <SearchParts
+                        onSearchParts={(fns: SearchPartsHandlers) => {
+                          searchPartsRef.current = fns;
+                        }}
+                        formState={formState}
+                        requiredError={errors?.parentParts!}
+                        setErrors={setErrors}
                       />
                     )}
                   </>

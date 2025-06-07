@@ -1,11 +1,16 @@
 import { TextField } from "@mui/material";
-import { useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { useAdvancedSearch } from "../../hooks/useAdvancedSearch";
 import Loader from "src/components/Loader/Loader";
 import { useAppSelector } from "../../store";
+import { IFormErrors } from "../../pages";
 
-export const SearchParts = ({ onSearchParts, formState }: SearchPartsProps) => {
-  const { objectDetails } = useAppSelector((state) => state.jdiBom);
+export const SearchParts = ({
+  onSearchParts,
+  requiredError,
+  setErrors,
+}: SearchPartsProps) => {
+  const { objectDetails: _ddd } = useAppSelector((state) => state.jdiBom);
 
   const {
     // chips,
@@ -18,25 +23,25 @@ export const SearchParts = ({ onSearchParts, formState }: SearchPartsProps) => {
 
   useEffect(() => {
     if (onSearchParts) {
-      onSearchParts({ handleInputChange });
+      onSearchParts({ handleInputChange, inputValue });
     }
   }, [onSearchParts]);
 
-  useEffect(() => {
-    if (objectDetails?.length === 0) return setInputValue("");
+  // useEffect(() => {
+  //   if (objectDetails?.length === 0) return setInputValue("");
 
-    const partsTitles = objectDetails?.map((part) => part.Title) || [];
+  //   const partsTitles = objectDetails?.map((part) => part.Title) || [];
 
-    setInputValue(partsTitles.join("\n"));
-  }, [objectDetails]);
+  //   setInputValue(partsTitles.join("\n"));
+  // }, [objectDetails]);
 
-  useEffect(() => {
-    if (formState?.parentParts) {
-      setInputValue(
-        formState.parentParts?.map((part: any) => part.Title).join("\n"),
-      );
-    }
-  }, [formState?.parentParts]);
+  // useEffect(() => {
+  //   if (formState?.parentParts) {
+  //     setInputValue(
+  //       formState.parentParts?.map((part: any) => part.Title).join("\n"),
+  //     );
+  //   }
+  // }, [formState?.parentParts]);
 
   return (
     <>
@@ -50,7 +55,13 @@ export const SearchParts = ({ onSearchParts, formState }: SearchPartsProps) => {
         variant="outlined"
         placeholder="Enter or paste text"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) => {
+          setErrors((prev) => ({
+            ...prev,
+            parentParts: "",
+          }));
+          setInputValue(e.target.value);
+        }}
         onKeyDown={async (e) => {
           //   if (e.key === "Enter" || e.key === ",") {
           if (e.key === "Enter" && e.ctrlKey) {
@@ -58,7 +69,8 @@ export const SearchParts = ({ onSearchParts, formState }: SearchPartsProps) => {
             await handleInputChange();
           }
         }}
-        helperText="Press Ctrl + Enter to search"
+        error={!!requiredError}
+        helperText={requiredError}
         // onPaste={handlePaste}
         sx={{
           minWidth: 200,
@@ -92,10 +104,13 @@ export const SearchParts = ({ onSearchParts, formState }: SearchPartsProps) => {
 };
 
 export type SearchPartsHandlers = {
-  handleInputChange: () => void;
+  handleInputChange: () => Promise<IProductInfo[] | null>;
+  inputValue: string;
 };
 
 type SearchPartsProps = {
   onSearchParts?: (handlers: SearchPartsHandlers) => void;
   formState: any;
+  setErrors: Dispatch<SetStateAction<IFormErrors>>;
+  requiredError: string;
 };
