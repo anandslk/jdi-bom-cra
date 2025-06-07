@@ -117,6 +117,12 @@ const useFetchDocumentData = (initialOperationType) => {
           nls: "Collaborative Space",
           groupNLS: "DocumentsAttributes",
         },
+        {
+          name:"File",
+          nls: "File",
+          groupNLS: "DocumentsAttributes",
+        }
+
       ];
 
       // Extract dropdown options only if extensionAttributes exists

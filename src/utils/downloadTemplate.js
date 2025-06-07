@@ -19,6 +19,10 @@ export const downloadTemplate = (showErrorToast) => (operationChoice) => {
       url =
         "https://khanfarzan17.github.io/mass-upload-testing/PhysicalProduct-DocumentSpreadSheetTemplate.xlsx";
       break;
+    case "5": // Manufacturing Equalent Product
+      url =
+        "https://theWhiteChamaleon.github.io/mep_massupload/mep-template.xlsx";
+      break;
     default:
       showErrorToast(MSG_DROPDOWN_NOT_SELECTED);
       return;

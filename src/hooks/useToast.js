@@ -15,6 +15,7 @@ const useToast = () => {
     draggable = true,
     theme = "light",
     transition = Bounce,
+    progress = undefined,
     ...otherOptions
   }) => {
     const toastFunction = toast[type] || toast;
@@ -28,6 +29,7 @@ const useToast = () => {
       draggable,
       theme,
       transition,
+      progress,
       ...otherOptions,
     });
   };
@@ -51,5 +53,39 @@ const useToast = () => {
   return { showToast, showSuccessToast, showErrorToast, showInfoToast, showWarningToast };
 };
 
+// New function that wraps useToast and adds progress
+const useToastWithProgress = () => {
+  const { showToast, showSuccessToast, showErrorToast, showInfoToast, showWarningToast } = useToast();
 
+  const showToastWithProgress = (message, options = {}) => {
+    showToast({ message, progress: 1, ...options }); // Add progress property
+  };
+
+  const showSuccessToastWithProgress = (message, options = {}) => {
+    showSuccessToast(message, { progress: 1, ...options });
+  };
+
+  const showErrorToastWithProgress = (message, options = {}) => {
+    showErrorToast(message, { progress: 1, ...options });
+  };
+
+  const showInfoToastWithProgress = (message, options = {}) => {
+    showInfoToast(message, { progress: 1, ...options });
+  };
+
+  const showWarningToastWithProgress = (message, options = {}) => {
+    showWarningToast(message, { progress: 1, ...options });
+  };
+
+  return {
+    showToastWithProgress,
+    showSuccessToastWithProgress,
+    showErrorToastWithProgress,
+    showInfoToastWithProgress,
+    showWarningToastWithProgress,
+  };
+};
+
+// export { useToast, useToastWithProgress };
 export default useToast;
+export { useToastWithProgress };

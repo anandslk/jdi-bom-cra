@@ -63,7 +63,7 @@ export const fetchProductChildren = async (headers, objectId, type) => {
         await Promise.all(
           childs.map(async (child) => {
             if (child.state.toLowerCase() === "released") {
-              let classesurl = `${ENOVIA_BASE_URL}/resources/v1/modeler/dslib/dslib:ClassifiedItem/${child.id}?$mask=dslib:ClassificationAttributesMask`;
+              let classesurl = `${ENOVIA_BASE_URL}/resources/v1/modeler/dslib/dslib:CategorizationClassifiedItem/${child.id}?$mask=dslib:ClassificationAttributesMask`;
               const classResponse = await fetchData(classesurl, "GET", "");
               console.log("classResponse->", classResponse);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./massupload.css";
 import { Form, Stack } from "react-bootstrap";
 import CustomButton from "../../components/Button/Button";
@@ -10,7 +10,7 @@ import validateFile from "./validateFile";
 import CustomSelect from "../../components/Select/customSelect";
 import {
   globalCollabSpaceTitles,
-  // globalCollabSpaceNames,
+  globalCollabSpaceNames,
 } from "../../services/api/droppableService";
 import ContentErrorsModal from "../../components/Modals/ContentErrorsModal";
 import ConfirmationModal from "../../components/Modals/ConfirmationModal";
@@ -33,12 +33,14 @@ import {
   MSG_UPLOAD_SUCCESS,
   MSG_OPERATION_CHNAGED,
 } from "../../utils/toastMessages";
+import { use } from "react";
+import useMEPMassUpload from "../../hooks/Mass-Upload/useMEPMassupload";
 
 const API_ENDPOINTS = {
   1: "/massUpload/uploadItems",
   2: "/massUpload/uploadItemStructure",
   3: "/massUpload/documents",
-  4: "/massUpload/uploadProductDocument",
+  4: "/massUpload/connectItemDocuments",
 };
 
 const transformSheetDataWithMappings = (
@@ -144,6 +146,9 @@ const transformSheetDataWithMappings = (
               `No mapping found for collabspace title: ${collabspaceTitle}`
             );
           }
+        } else if (backendFieldName === "File") {
+          // Place File at root level
+          rootData["File"] = value;
         } else if (backendFieldName === "Document Name") {
           dataelements["name"] = value;
         }
@@ -202,6 +207,161 @@ const transformSheetDataWithMappings = (
       isDocumentPayload: true,
       documents: documentItems,
     };
+  }
+  // Add this as a new condition in transformSheetDataWithMappings after operation 3 but before the else branch
+  else if (operationType === "4") {
+    console.log("Processing Physical Product-Document data for operation 4");
+
+    // Transform each row into the required format for connectItemDocuments
+    const connectItemDocuments = sheetData.map((row) => {
+      // Create base item structure
+      const item = {
+        PartType: "",
+        PartNumber: "",
+        PartRevision: "",
+        DocumentType: "",
+        DocumentName: "",
+        DocumentRevision: "",
+        RelationshipType: "",
+        BOSAttributes: {},
+      };
+      // Helper function to normalize field names for comparison
+      const normalizeFieldName = (name) => {
+        if (!name) return "";
+        return name.toLowerCase().replace(/\s+/g, "");
+      };
+
+      // Root-level field mapping
+      const rootFieldMapping = {
+        parttype: "PartType",
+        part_type: "PartType",
+        einnumber: "PartNumber",
+        ein_number: "PartNumber",
+        partnumber: "PartNumber",
+        part_number: "PartNumber",
+        partrevision: "PartRevision",
+        part_revision: "PartRevision",
+        documenttype: "DocumentType",
+        document_type: "DocumentType",
+        documentname: "DocumentName",
+        document_name: "DocumentName",
+        documentrevision: "DocumentRevision",
+        document_revision: "DocumentRevision",
+        relationshiptype: "RelationshipType",
+        relationship_type: "RelationshipType",
+      };
+
+      // Map row data to item properties
+      Object.entries(row).forEach(([columnName, value]) => {
+        if (excludedColumns.includes(columnName)) return;
+        if (!columnMappings[columnName]) return;
+        if (value === undefined || value === null || value === "") return;
+
+        const uiLabelBackendName = columnMappings[columnName];
+        const attribute = mappedData.find(
+          (attr) =>
+            attr.uiLabel === uiLabelBackendName ||
+            attr.backendName === uiLabelBackendName
+        );
+
+        const backendName = attribute?.backendName || uiLabelBackendName;
+        const group = attribute?.group;
+
+        console.log(
+          `Processing column ${columnName} -> ${backendName} (${group})`
+        );
+
+        // First check if it maps to a root-level field
+        const normalizedName = normalizeFieldName(backendName);
+        if (rootFieldMapping[normalizedName]) {
+          const fieldName = rootFieldMapping[normalizedName];
+          item[fieldName] = value;
+          console.log(`Mapped to root field: ${fieldName} = "${value}"`);
+          return;
+        }
+
+        // Handle BOS attributes
+        const bosSpecialAttrs = [
+          "Print On Purchase Order Required",
+          "Print On Work Order Required",
+          "Work Order Document Required",
+          "Print On report Order Required",
+        ];
+
+        // Check if it's a BOS attribute by name
+        if (
+          bosSpecialAttrs.some(
+            (attr) => normalizeFieldName(attr) === normalizedName
+          )
+        ) {
+          // Find the original name format
+          const originalAttr =
+            bosSpecialAttrs.find(
+              (attr) => normalizeFieldName(attr) === normalizedName
+            ) || backendName;
+
+          item.BOSAttributes[originalAttr] = value;
+          console.log(`Added BOS attribute: ${originalAttr} = "${value}"`);
+          return;
+        }
+
+        // If it has BOS Attributes group, add it to BOSAttributes
+        if (group === "BOS Attributes") {
+          item.BOSAttributes[backendName] = value;
+          console.log(
+            `Added group-based BOS attribute: ${backendName} = "${value}"`
+          );
+          return;
+        }
+
+        // For anything else, try to find a match in root fields
+        for (const [rootKey, fieldName] of Object.entries(rootFieldMapping)) {
+          if (normalizedName.includes(rootKey.toLowerCase())) {
+            item[fieldName] = value;
+            console.log(
+              `Partial match to root field: ${fieldName} = "${value}"`
+            );
+            return;
+          }
+        }
+
+        // Last resort - add to root level
+        console.log(
+          `Unmatched field added at root level: ${backendName} = "${value}"`
+        );
+        item[backendName] = value;
+      });
+
+      // Log the final item for debugging
+      console.log("Final processed item:", JSON.stringify(item, null, 2));
+      return item;
+    });
+
+    // Create chunks for batched processing
+    const CHUNK_SIZE = 1000;
+    const chunks = [];
+
+    for (let i = 0; i < connectItemDocuments.length; i += CHUNK_SIZE) {
+      chunks.push(connectItemDocuments.slice(i, i + CHUNK_SIZE));
+    }
+
+    // Log a sample item for verification
+    if (connectItemDocuments.length > 0) {
+      console.log(
+        "Sample connectItemDocument structure:",
+        JSON.stringify(connectItemDocuments[0], null, 2)
+      );
+    }
+
+    return {
+      chunks,
+      totalChunks: chunks.length,
+      totalItems: connectItemDocuments.length,
+      originalData: sheetData,
+      mappings: columnMappings,
+      isConnectItemDocumentsPayload: true,
+      connectItemDocuments: connectItemDocuments,
+    };
   } else {
     // KEEP EXISTING CODE FOR PHYSICAL PRODUCTS (operations 1, 2, 4)
     console.log(
@@ -254,6 +414,14 @@ const transformSheetDataWithMappings = (
       if (operationType === "1" && backendName === "title") {
         console.log("Operation type 1: title placed inside attributes");
         return "attributes.title";
+      }
+      // Add this special case for dimensionType
+      if (
+        operationType === "1" &&
+        (backendName === "dimensionType" || backendName === "Dimension")
+      ) {
+        console.log("Operation type 1: dimensionType placed inside attributes");
+        return "attributes.dimensionType";
       }
 
       if (
@@ -313,162 +481,304 @@ const transformSheetDataWithMappings = (
       }
     };
 
-    const transformedItems = sheetData.map((row) => {
-      const transformedRow = {};
+    // Define the constant for MBOM attributes group key
+    const MBOM_GROUP_KEY = "MBOMAttributes__b0e36f7ffa8f4e42b8be46904dad3047";
 
-      // Add instanceAttributes object for operation 2
-      if (operationType === "2") {
-        transformedRow.instanceAttributes = {};
-      }
-
-      // The rest of your existing transformation code...
-      Object.entries(row).forEach(([columnName, value]) => {
-        if (excludedColumns.includes(columnName)) {
-          // console.log(`Skipping excluded column "${columnName}" in payload`);
-          return;
-        }
-        if (!columnMappings[columnName]) return;
-
-        const uiLabelBackendName = columnMappings[columnName];
-
-        const systemAttributeMappings = {
-          Title: "title",
-          Description: "description",
-          "Collaborative Space": "collabSpaceTitle",
-          "Collab Space": "collabSpaceTitle",
-          Type: "type",
+    // Modify the existing transformation logic for operation type 2
+    if (operationType === "2") {
+      const transformedItems = sheetData.map((row) => {
+        const transformedRow = {
+          instanceAttributes: {
+            customerAttributes: {
+              [MBOM_GROUP_KEY]: {},
+            },
+          },
         };
 
-        const backendName =
-          systemAttributeMappings[uiLabelBackendName] ||
-          mappedData.find((attr) => attr.uiLabel === uiLabelBackendName)
-            ?.backendName ||
-          uiLabelBackendName;
+        // Handle type first based on Physical Product/Raw Material column
+        const productTypeColumn = Object.keys(row).find(
+          (key) =>
+            key.toLowerCase().includes("physical product") ||
+            key.toLowerCase().includes("raw material")
+        );
 
-        // **MOVE THIS CODE BLOCK UP HERE**
-        // Handle collabspace title and name mapping immediately
-        if (
-          (operationType === "1" || operationType === "2") &&
-          backendName === "collabSpaceTitle"
-        ) {
-          // Set the title as usual
-          transformedRow["collabSpaceTitle"] = value;
+        if (productTypeColumn && row[productTypeColumn]) {
+          const productType = row[productTypeColumn].toLowerCase().trim();
+          transformedRow.type = productType.includes("physical product")
+            ? "VPMReference"
+            : productType.includes("raw material")
+            ? "Raw_Material"
+            : "VPMReference"; // Default to VPMReference
+        }
 
-          // Also set the collabspace name using the mapping
-          if (collabMapping && collabMapping[value]) {
-            transformedRow["collabSpace"] = collabMapping[value];
+        Object.entries(row).forEach(([columnName, value]) => {
+          if (excludedColumns.includes(columnName)) return;
+          if (!columnMappings[columnName]) return;
+
+          const uiLabelBackendName = columnMappings[columnName];
+          const attribute = mappedData.find(
+            (attr) =>
+              attr.uiLabel === uiLabelBackendName ||
+              attr.backendName === uiLabelBackendName
+          );
+          const backendName = attribute?.backendName || uiLabelBackendName;
+          const group = attribute?.group;
+
+          // Handle different types of attributes
+          if (backendName === "Level") {
+            // Level goes to root
+            transformedRow["level"] = value;
+          } else if (backendName === "collabSpaceTitle") {
+            // Handle collabspace mapping
+            transformedRow["collabSpaceTitle"] = value;
+            if (collabMapping && collabMapping[value]) {
+              transformedRow["collabSpace"] = collabMapping[value];
+            }
+          } else if (backendName === "classificationType") {
+            transformedRow["classificationType"] = value;
+          } else if (group === "EBOM Attributes") {
+            // Special handling for EBOM attributes
+            if (backendName === "name" || backendName === "quantity") {
+              // These go directly in instanceAttributes
+              transformedRow.instanceAttributes[backendName] = value;
+            } else {
+              // Other EBOM attributes go into the customerAttributes.MBOMAttributes group
+              transformedRow.instanceAttributes.customerAttributes[
+                MBOM_GROUP_KEY
+              ][backendName] = value;
+            }
+          } else if (backendName === "title" || backendName === "description") {
+            // Initialize attributes object if not exists
+            if (!transformedRow.attributes) {
+              transformedRow.attributes = {};
+            }
+            transformedRow.attributes[backendName] = value;
+          }
+
+          // Add this new condition for dimensionType
+          else if (
+            backendName === "dimensionType" ||
+            backendName === "Dimension"
+          ) {
+            // Initialize attributes object if not exists
+            if (!transformedRow.attributes) {
+              transformedRow.attributes = {};
+            }
+            transformedRow.attributes["dimensionType"] = value;
             console.log(
-              `Mapped collabspace title "${value}" to name "${collabMapping[value]}"`
+              `Placed dimensionType directly in attributes: ${value}`
             );
+          } else if (
+            columnName === "EIN Number" ||
+            backendName === "Part Number"
+          ) {
+            // Handle EIN Number/Part Number
+            if (!transformedRow.attributes) {
+              transformedRow.attributes = {};
+            }
+            if (!transformedRow.attributes["dseng:EnterpriseReference"]) {
+              transformedRow.attributes["dseng:EnterpriseReference"] = {};
+            }
+            transformedRow.attributes["dseng:EnterpriseReference"].partNumber =
+              value;
           } else {
-            console.warn(`No mapping found for collabspace title: ${value}`);
+            // Handle other enterprise attributes
+            if (!transformedRow.attributes) {
+              transformedRow.attributes = {};
+            }
+            if (!transformedRow.attributes["dseno:EnterpriseAttributes"]) {
+              transformedRow.attributes["dseno:EnterpriseAttributes"] = {};
+            }
+            transformedRow.attributes["dseno:EnterpriseAttributes"][
+              backendName
+            ] = value;
           }
-          // Continue to the next attribute
-          return;
-        }
+        });
 
-        const path = getPathForAttribute(backendName, columnName);
-
-        if (
-          backendName === "title" ||
-          backendName === "description" ||
-          backendName.toLowerCase() === "collabspace"
-        ) {
-          console.log(`Placing ${backendName} at path: ${path}`);
-        }
-
-        if (!path) return;
-
-        const pathParts = path.split(".");
-        let current = transformedRow;
-
-        for (let i = 0; i < pathParts.length - 1; i++) {
-          const part = pathParts[i];
-          if (!current[part]) {
-            current[part] = {};
-          }
-          current = current[part];
-        }
-
-        current[pathParts[pathParts.length - 1]] = value;
-
-        // Special handling for collabspace in operation 2
+        return transformedRow;
       });
 
-      if (operationType === "1") {
-        const productTypeColumn = Object.keys(row).find(
-          (key) =>
-            key.toLowerCase().includes("physical product") ||
-            key.toLowerCase().includes("raw material")
+      // Rest of your existing chunking logic...
+      if (transformedItems.length > 0) {
+        console.log(
+          "Sample transformed item structure:",
+          JSON.stringify(transformedItems[0], null, 2)
         );
-
-        if (productTypeColumn && row[productTypeColumn]) {
-          const productType = row[productTypeColumn].toLowerCase().trim();
-          transformedRow["type"] = productType.includes("physical product")
-            ? "VPMReference"
-            : productType.includes("raw material")
-            ? "Raw_Material"
-            : "";
-
-          console.log(
-            `Product type determined: ${transformedRow["type"]} from value: ${row[productTypeColumn]}`
-          );
-        }
       }
 
-      // Special handling for operation 2 default values
-      if (operationType === "2") {
-        // Set default type for Product Structure if not specified
-        const productTypeColumn = Object.keys(row).find(
-          (key) =>
-            key.toLowerCase().includes("physical product") ||
-            key.toLowerCase().includes("raw material")
-        );
+      const CHUNK_SIZE = 1000;
+      const chunks = [];
 
-        if (productTypeColumn && row[productTypeColumn]) {
-          const productType = row[productTypeColumn].toLowerCase().trim();
-          transformedRow["type"] = productType.includes("physical product")
-            ? "VPMReference"
-            : productType.includes("raw material")
-            ? "Raw_Material"
-            : "";
+      for (let i = 0; i < transformedItems.length; i += CHUNK_SIZE) {
+        chunks.push(transformedItems.slice(i, i + CHUNK_SIZE));
+      }
 
-          console.log(
-            `Product type determined: ${transformedRow["type"]} from value: ${row[productTypeColumn]}`
-          );
-        }
+      return {
+        chunks,
+        totalChunks: chunks.length,
+        totalItems: transformedItems.length,
+        originalData: sheetData,
+        mappings: columnMappings,
+        isDocumentPayload: false,
+      };
+    } else {
+      const transformedItems = sheetData.map((row) => {
+        const transformedRow = {};
 
-        // Make sure instanceAttributes exists even if no EBOM attributes were found
-        if (!transformedRow.instanceAttributes) {
+        // Add instanceAttributes object for operation 2
+        if (operationType === "2") {
           transformedRow.instanceAttributes = {};
         }
+
+        // The rest of your existing transformation code...
+        Object.entries(row).forEach(([columnName, value]) => {
+          if (excludedColumns.includes(columnName)) {
+            // console.log(`Skipping excluded column "${columnName}" in payload`);
+            return;
+          }
+          if (!columnMappings[columnName]) return;
+
+          const uiLabelBackendName = columnMappings[columnName];
+
+          const systemAttributeMappings = {
+            Title: "title",
+            Description: "description",
+            "Collaborative Space": "collabSpaceTitle",
+            "Collab Space": "collabSpaceTitle",
+            Type: "type",
+          };
+
+          const backendName =
+            systemAttributeMappings[uiLabelBackendName] ||
+            mappedData.find((attr) => attr.uiLabel === uiLabelBackendName)
+              ?.backendName ||
+            uiLabelBackendName;
+
+          // **MOVE THIS CODE BLOCK UP HERE**
+          // Handle collabspace title and name mapping immediately
+          if (
+            (operationType === "1" || operationType === "2") &&
+            backendName === "collabSpaceTitle"
+          ) {
+            // Set the title as usual
+            transformedRow["collabSpaceTitle"] = value;
+
+            // Also set the collabspace name using the mapping
+            if (collabMapping && collabMapping[value]) {
+              transformedRow["collabSpace"] = collabMapping[value];
+              console.log(
+                `Mapped collabspace title "${value}" to name "${collabMapping[value]}"`
+              );
+            } else {
+              console.warn(`No mapping found for collabspace title: ${value}`);
+            }
+            // Continue to the next attribute
+            return;
+          }
+
+          const path = getPathForAttribute(backendName, columnName);
+
+          if (
+            backendName === "title" ||
+            backendName === "description" ||
+            backendName.toLowerCase() === "collabspace"
+          ) {
+            console.log(`Placing ${backendName} at path: ${path}`);
+          }
+
+          if (!path) return;
+
+          const pathParts = path.split(".");
+          let current = transformedRow;
+
+          for (let i = 0; i < pathParts.length - 1; i++) {
+            const part = pathParts[i];
+            if (!current[part]) {
+              current[part] = {};
+            }
+            current = current[part];
+          }
+
+          current[pathParts[pathParts.length - 1]] = value;
+
+          // Special handling for collabspace in operation 2
+        });
+
+        if (operationType === "1") {
+          const productTypeColumn = Object.keys(row).find(
+            (key) =>
+              key.toLowerCase().includes("physical product") ||
+              key.toLowerCase().includes("raw material")
+          );
+
+          if (productTypeColumn && row[productTypeColumn]) {
+            const productType = row[productTypeColumn].toLowerCase().trim();
+            transformedRow["type"] = productType.includes("physical product")
+              ? "VPMReference"
+              : productType.includes("raw material")
+              ? "Raw_Material"
+              : "";
+
+            console.log(
+              `Product type determined: ${transformedRow["type"]} from value: ${row[productTypeColumn]}`
+            );
+          }
+        }
+
+        // Special handling for operation 2 default values
+        if (operationType === "2") {
+          // Set default type for Product Structure if not specified
+          const productTypeColumn = Object.keys(row).find(
+            (key) =>
+              key.toLowerCase().includes("physical product") ||
+              key.toLowerCase().includes("raw material")
+          );
+
+          if (productTypeColumn && row[productTypeColumn]) {
+            const productType = row[productTypeColumn].toLowerCase().trim();
+            transformedRow["type"] = productType.includes("physical product")
+              ? "VPMReference"
+              : productType.includes("raw material")
+              ? "Raw_Material"
+              : "";
+
+            console.log(
+              `Product type determined: ${transformedRow["type"]} from value: ${row[productTypeColumn]}`
+            );
+          }
+
+          // Make sure instanceAttributes exists even if no EBOM attributes were found
+          if (!transformedRow.instanceAttributes) {
+            transformedRow.instanceAttributes = {};
+          }
+        }
+
+        return transformedRow;
+      });
+
+      if (transformedItems.length > 0) {
+        console.log(
+          "Sample transformed item structure:",
+          JSON.stringify(transformedItems[0], null, 2)
+        );
       }
 
-      return transformedRow;
-    });
+      const CHUNK_SIZE = 1000;
+      const chunks = [];
 
-    if (transformedItems.length > 0) {
-      console.log(
-        "Sample transformed item structure:",
-        JSON.stringify(transformedItems[0], null, 2)
-      );
+      for (let i = 0; i < transformedItems.length; i += CHUNK_SIZE) {
+        chunks.push(transformedItems.slice(i, i + CHUNK_SIZE));
+      }
+
+      return {
+        chunks,
+        totalChunks: chunks.length,
+        totalItems: transformedItems.length,
+        originalData: sheetData,
+        mappings: columnMappings,
+        isDocumentPayload: false,
+      };
     }
-
-    const CHUNK_SIZE = 1000;
-    const chunks = [];
-
-    for (let i = 0; i < transformedItems.length; i += CHUNK_SIZE) {
-      chunks.push(transformedItems.slice(i, i + CHUNK_SIZE));
-    }
-
-    return {
-      chunks,
-      totalChunks: chunks.length,
-      totalItems: transformedItems.length,
-      originalData: sheetData,
-      mappings: columnMappings,
-      isDocumentPayload: false,
-    };
   }
 };
 
@@ -602,7 +912,7 @@ const MassUpload = () => {
     mappedAttributes: documentMappedAttributes,
     refreshMapping: refreshDocumentMapping,
   } = useFetchDocumentData(operationChoice);
-
+  
   const getActiveData = () => {
     console.log("Getting active data for operation:", operationChoice);
 
@@ -686,56 +996,56 @@ const MassUpload = () => {
   // Update the existing useEffect to handle collabspace names
 
   // Update the existing useEffect to create the title-to-name mapping
-  // useEffect(() => {
-  //   console.log(
-  //     "[MassUpload.jsx] Global collabSpaceTitles:",
-  //     globalCollabSpaceTitles
-  //   );
-  //   console.log(
-  //     "[MassUpload.jsx] Global collabSpaceNames:",
-  //     globalCollabSpaceNames
-  //   );
+  useEffect(() => {
+    console.log(
+      "[MassUpload.jsx] Global collabSpaceTitles:",
+      globalCollabSpaceTitles
+    );
+    console.log(
+      "[MassUpload.jsx] Global collabSpaceNames:",
+      globalCollabSpaceNames
+    );
 
-  //   // Set titles and names arrays
-  //   if (Array.isArray(globalCollabSpaceTitles)) {
-  //     setCollabTitles([...globalCollabSpaceTitles]);
-  //   } else {
-  //     console.error(
-  //       "[MassUpload.jsx] globalCollabSpaceTitles is not an array!",
-  //       globalCollabSpaceTitles
-  //     );
-  //   }
+    // Set titles and names arrays
+    if (Array.isArray(globalCollabSpaceTitles)) {
+      setCollabTitles([...globalCollabSpaceTitles]);
+    } else {
+      console.error(
+        "[MassUpload.jsx] globalCollabSpaceTitles is not an array!",
+        globalCollabSpaceTitles
+      );
+    }
 
-  //   if (Array.isArray(globalCollabSpaceNames)) {
-  //     setCollabNames([...globalCollabSpaceNames]);
-  //   } else {
-  //     console.error(
-  //       "[MassUpload.jsx]  globalCollabSpaceNames is not an array!",
-  //       globalCollabSpaceNames
-  //     );
-  //   }
+    if (Array.isArray(globalCollabSpaceNames)) {
+      setCollabNames([...globalCollabSpaceNames]);
+    } else {
+      console.error(
+        "[MassUpload.jsx]  globalCollabSpaceNames is not an array!",
+        globalCollabSpaceNames
+      );
+    }
 
-  //   // Create a mapping object from titles to names
-  //   if (
-  //     Array.isArray(globalCollabSpaceTitles) &&
-  //     Array.isArray(globalCollabSpaceNames) &&
-  //     globalCollabSpaceTitles.length === globalCollabSpaceNames.length
-  //   ) {
-  //     const mapping = {};
-  //     for (let i = 0; i < globalCollabSpaceTitles.length; i++) {
-  //       mapping[globalCollabSpaceTitles[i]] = globalCollabSpaceNames[i];
-  //     }
+    // Create a mapping object from titles to names
+    if (
+      Array.isArray(globalCollabSpaceTitles) &&
+      Array.isArray(globalCollabSpaceNames) &&
+      globalCollabSpaceTitles.length === globalCollabSpaceNames.length
+    ) {
+      const mapping = {};
+      for (let i = 0; i < globalCollabSpaceTitles.length; i++) {
+        mapping[globalCollabSpaceTitles[i]] = globalCollabSpaceNames[i];
+      }
 
-  //     setCollabMapping(mapping);
-  //     console.log(
-  //       "[MassUpload.jsx] Collabspace title-to-name mapping:",
-  //       mapping
-  //     );
-  //   }
+      setCollabMapping(mapping);
+      console.log(
+        "[MassUpload.jsx] Collabspace title-to-name mapping:",
+        mapping
+      );
+    }
 
-  //   console.log("[MassUpload.jsx] Retrieved collabSpaceTitles:", collabTitles);
-  //   console.log("[MassUpload.jsx] Retrieved collabSpaceNames:", collabNames);
-  // }, []);
+    console.log("[MassUpload.jsx] Retrieved collabSpaceTitles:", collabTitles);
+    console.log("[MassUpload.jsx] Retrieved collabSpaceNames:", collabNames);
+  }, []);
 
   // Add this after the existing console.log
   // console.log("getUserDetails function", getUserDetails);
@@ -803,36 +1113,42 @@ const MassUpload = () => {
         setFormattedData({ originalData: sheetData });
 
         await handleRefreshForCurrentOperation(operationChoice);
-
-        setTimeout(() => {
+        setTimeout(async () => {
           console.log(
             "Applying automatic column mapping with:",
             mappedAttributes
           );
-          if (mappedAttributes && Object.keys(mappedAttributes).length > 0) {
-            const { simplifiedMappings } = generateColumnMappings(
-              headers,
-              mandatoryAttributes,
-              mappedAttributes
-            );
-
-            console.log("Auto-generated mappings:", simplifiedMappings);
-
-            if (Object.keys(simplifiedMappings).length > 0) {
-              const transformedData = transformSheetDataWithMappings(
-                sheetData,
-                simplifiedMappings,
-                operationChoice,
-                mappedAttributes,
-                collabMapping // Add this parameter
+          console.log("operationChoice in  :", operationChoice);
+          if (operationChoice === "5") {
+            // Custom logic for MEP operation
+            console.log("Sheet Data", sheetData);
+            await handleMEPMassupload(sheetData);
+          } else {
+            if (mappedAttributes && Object.keys(mappedAttributes).length > 0) {
+              const { simplifiedMappings } = generateColumnMappings(
+                headers,
+                mandatoryAttributes,
+                mappedAttributes
               );
 
-              setFormattedData(transformedData);
-              showSuccessToast(
-                `Data automatically mapped with ${
-                  Object.keys(simplifiedMappings).length
-                } columns`
-              );
+              console.log("Auto-generated mappings:", simplifiedMappings);
+
+              if (Object.keys(simplifiedMappings).length > 0) {
+                const transformedData = transformSheetDataWithMappings(
+                  sheetData,
+                  simplifiedMappings,
+                  operationChoice,
+                  mappedAttributes,
+                  collabMapping // Add this parameter
+                );
+
+                setFormattedData(transformedData);
+                showSuccessToast(
+                  `Data automatically mapped with ${
+                    Object.keys(simplifiedMappings).length
+                  } columns`
+                );
+              }
             }
           }
         }, 500);
@@ -901,6 +1217,36 @@ const MassUpload = () => {
     }
   };
 
+  // =============== MEP MAss Upload Related ===============
+  const {
+    updateItems,
+    createItems,
+    handleMEPMassupload,
+    loading: isUploading,
+    updateMassupload,
+  } = useMEPMassUpload();
+  useEffect(() => {
+    if (updateItems.length > 0 || createItems.length > 0) {
+      console.log("Update Items:", updateItems);
+      console.log("Create Items:", createItems);
+    }
+  }, [updateItems, createItems]);
+  const handleClick = useCallback(() => {
+    if (operationChoice === "5") {
+       console.log("Update Items in Click:", updateItems);
+      console.log("Create Items in Click:", createItems);
+      updateMassupload(createItems, updateItems, handleReset);
+    } else {
+      setModalShow(true);
+    }
+  }, [
+    operationChoice,
+    createItems,
+    updateItems,
+    updateMassupload,
+    handleReset,
+  ]);
+  // =============== MEP MAss Upload Related ===============
   const handleOpenSpreadsheetModal = () => {
     setShowContentErrors(false);
     setShowSpreadsheetModal(true);
@@ -1013,53 +1359,107 @@ const MassUpload = () => {
             : {}),
         };
 
-        for (let i = 0; i < chunks.length; i++) {
-          try {
-            const chunk = chunks[i];
+        // Check if this is a connectItemDocuments payload (operation 4)
+        const { isConnectItemDocumentsPayload, connectItemDocuments } =
+          formattedData;
 
-            // For operation 2, validate that instanceAttributes exist in each item
-            if (operationChoice === "2") {
-              chunk.forEach((item, idx) => {
-                if (!item.instanceAttributes) {
-                  item.instanceAttributes = {};
-                }
+        if (operationChoice === "4" && isConnectItemDocumentsPayload) {
+          // User info for operation 4
+          const userInfo = {
+            ...(userDetails?.email ? { email: userDetails.email } : {}),
+            ...(userDetails?.login ? { userId: userDetails.login } : {}),
+            ...(securityContext ? { securityContext: securityContext } : {}),
+          };
+
+          for (let i = 0; i < chunks.length; i++) {
+            try {
+              const chunk = chunks[i];
+
+              // Use connectItemDocuments as the key for the API payload
+              const response = await api.post(endpoint, {
+                ...userInfo,
+                connectItemDocuments: chunk,
               });
+
+              console.log(`Chunk ${i + 1} response for operation 4:`, response);
+
+              // Process response data (same as other operations)
+              if (response.data) {
+                if (response.data.success === true) {
+                  successCount++;
+                  if (Array.isArray(response.data.responses)) {
+                    allResponses = [
+                      ...allResponses,
+                      ...response.data.responses,
+                    ];
+                  }
+                } else {
+                  hasErrors = true;
+                  failureCount++;
+                  console.error(
+                    `Operation 4 API returned success: false`,
+                    response.data
+                  );
+                }
+              }
+            } catch (error) {
+              hasErrors = true;
+              failureCount++;
+              console.error(`Chunk ${i + 1} failed for operation 4:`, error);
             }
+          }
+        } else {
+          for (let i = 0; i < chunks.length; i++) {
+            try {
+              const chunk = chunks[i];
 
-            const response = await api.post(endpoint, {
-              ...userInfo,
-              items: chunk,
-            });
+              // For operation 2, validate that instanceAttributes exist in each item
+              if (operationChoice === "2") {
+                chunk.forEach((item, idx) => {
+                  if (!item.instanceAttributes) {
+                    item.instanceAttributes = {};
+                  }
+                });
+              }
 
-            console.log(`Chunk ${i + 1} response:`, response);
+              const response = await api.post(endpoint, {
+                ...userInfo,
+                items: chunk,
+              });
 
-            // Process response data
-            if (response.data) {
-              if (response.data.success === true) {
-                successCount++;
-                if (Array.isArray(response.data.responses)) {
-                  allResponses = [...allResponses, ...response.data.responses];
+              console.log(`Chunk ${i + 1} response:`, response);
+
+              // Process response data
+              if (response.data) {
+                if (response.data.success === true) {
+                  successCount++;
+                  if (Array.isArray(response.data.responses)) {
+                    allResponses = [
+                      ...allResponses,
+                      ...response.data.responses,
+                    ];
+                  }
+                } else {
+                  hasErrors = true;
+                  failureCount++;
+                  console.error(
+                    `Operation ${operationChoice} API returned success: false`,
+                    response.data
+                  );
                 }
               } else {
                 hasErrors = true;
                 failureCount++;
-                console.error(
-                  `Operation ${operationChoice} API returned success: false`,
-                  response.data
-                );
+                console.error("Empty response data received");
               }
-            } else {
+            } catch (error) {
               hasErrors = true;
               failureCount++;
-              console.error("Empty response data received");
+              console.error(
+                `Chunk ${i + 1} failed for operation ${operationChoice}:`,
+                error
+              );
             }
-          } catch (error) {
-            hasErrors = true;
-            failureCount++;
-            console.error(
-              `Chunk ${i + 1} failed for operation ${operationChoice}:`,
-              error
-            );
           }
         }
       }
@@ -1089,7 +1489,7 @@ const MassUpload = () => {
   // console.log("Errors in Massupload.jsx:", errors);
 
   const isFileUploadDisabled = !operationChoice;
-
+  console.log("operationChoice in Massupload", operationChoice);
   return (
     <>
       <div
@@ -1119,9 +1519,19 @@ const MassUpload = () => {
                     { value: "2", label: "Physical Product Structure" },
                     { value: "3", label: "Document" },
                     { value: "4", label: "Physical Product-Document" },
+                    { value: "5", label: "MEP" },
                   ],
                 }}
               />
+              {operationChoice === "3" && (
+                <Form.Group controlId="formFileMultiple">
+                  <Form.Control
+                    type="file"
+                    multiple
+                    // Attach the ref to the file input
+                  />
+                </Form.Group>
+              )}
               <div className="ms-auto">
                 <CustomButton
                   variant="link"
@@ -1153,6 +1563,8 @@ const MassUpload = () => {
             {/* Add this where you want the loader to appear */}
             {isSubmitting && <Loader />}
 
+            {isUploading && <Loader />}
+
             <Stack direction="horizontal" gap={2}>
               {/* <Form.Check
             type="checkbox"
@@ -1167,20 +1579,24 @@ const MassUpload = () => {
                     text={`Content Errors (${errors.length})`}
                   />
                 )}
-
-                <CustomButton
-                  variant={manageSpreadsheetDisabled ? "secondary" : "info"}
-                  onClick={handleOpenSpreadsheetModal}
-                  text="Manage Spreadsheet Columns"
-                  disabled={manageSpreadsheetDisabled}
-                />
+                {operationChoice === "5" ? null : (
+                  <CustomButton
+                    variant={manageSpreadsheetDisabled ? "secondary" : "info"}
+                    onClick={handleOpenSpreadsheetModal}
+                    text="Manage Spreadsheet Columns"
+                    disabled={manageSpreadsheetDisabled}
+                  />
+                )}
 
                 <CustomButton
                   variant={submitDisabled ? "secondary" : "primary"}
                   disabled={submitDisabled}
                   size="lg"
-                  onClick={() => setModalShow(true)}
-                  text="Submit"
+                  onClick={handleClick}
+                  // text="Submit"
+                  text={
+                    operationChoice === "5" ? "Create/ Update MEP" : "Submit"
+                  }
                 />
               </div>
             </Stack>
@@ -1199,41 +1615,44 @@ const MassUpload = () => {
         onHide={() => setModalShow(false)}
         onConfirm={handleConfirmSubmit}
       />
-
-      <ColumnMappingModal
-        show={showSpreadsheetModal}
-        onHide={() => setShowSpreadsheetModal(false)}
-        columnHeaders={columnHeaders}
-        mandatoryAttributes={mandatoryAttributes}
-        existingMappings={formattedData?.mappings ? formattedData.mappings : {}}
-        dropdownOptions={mappedAttributes?.dropdownOptions}
-        allNLSValues={mappedAttributes?.allNLSValues}
-        operationChoice={operationChoice}
-        onColumnsMapped={(mappings, finalMapping) => {
-          console.log("Column mappings received:", mappings);
-
-          const columnMappings = mappings;
-
-          if (formattedData && formattedData.originalData) {
-            const transformedData = transformSheetDataWithMappings(
-              formattedData.originalData,
-              columnMappings,
-              operationChoice,
-              mappedAttributes,
-              collabMapping
-            );
-
-            setFormattedData(transformedData);
-            showSuccessToast(
-              `Data mapped successfully with ${
-                Object.keys(mappings).length
-              } columns`
-            );
-          } else {
-            showErrorToast(MSG_NO_SHEET_DATA);
+      {operationChoice === "5" ? null : (
+        <ColumnMappingModal
+          show={showSpreadsheetModal}
+          onHide={() => setShowSpreadsheetModal(false)}
+          columnHeaders={columnHeaders}
+          mandatoryAttributes={mandatoryAttributes}
+          existingMappings={
+            formattedData?.mappings ? formattedData.mappings : {}
           }
-        }}
-      />
+          dropdownOptions={mappedAttributes?.dropdownOptions}
+          allNLSValues={mappedAttributes?.allNLSValues}
+          operationChoice={operationChoice}
+          onColumnsMapped={(mappings, finalMapping) => {
+            console.log("Column mappings received:", mappings);
+
+            const columnMappings = mappings;
+
+            if (formattedData && formattedData.originalData) {
+              const transformedData = transformSheetDataWithMappings(
+                formattedData.originalData,
+                columnMappings,
+                operationChoice,
+                mappedAttributes,
+                collabMapping
+              );
+
+              setFormattedData(transformedData);
+              showSuccessToast(
+                `Data mapped successfully with ${
+                  Object.keys(mappings).length
+                } columns`
+              );
+            } else {
+              showErrorToast(MSG_NO_SHEET_DATA);
+            }
+          }}
+        />
+      )}
 
       <SuccessModal
         show={showSuccessModal}

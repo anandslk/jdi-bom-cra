@@ -6,7 +6,9 @@ import {
   CellMeasurerCache,
 } from "react-virtualized";
 import "./ErrorPopup.css";
+import { handleExportExcel } from "../../utils/helpers";
 import ReusableAlert from "../Alert/ReusableAlert";
+import CustomButton from "../Button/Button";
 
 const ErrorPopup = ({ errors }) => {
   const processedErrors = useMemo(() => {
@@ -48,6 +50,17 @@ const ErrorPopup = ({ errors }) => {
     defaultHeight: 50,
   });
 
+  const handleExportErrors = () => {
+    // Transform processedErrors into a format suitable for Excel
+    const exportData = processedErrors.map((error) => ({
+      "Row Number": error.rowNumber,
+      "Column Names": error.columns.join(", "),
+      "Error Description": error.errors.join("; "),
+    }));
+
+    // Call the handleExportExcel function with the transformed data
+    handleExportExcel(exportData, "validation-errors.xlsx");
+  };
   const rowRenderer = ({ key, index, style, parent }) => {
     const error = processedErrors[index];
     return (
@@ -81,6 +94,16 @@ const ErrorPopup = ({ errors }) => {
 
   return (
     <div className="error-popup-container">
+      <div className="error-header-container">
+        <div></div>
+        <CustomButton
+          variant="success"
+          onClick={handleExportErrors}
+          className="mb-3"
+          text="Export to Excel"
+          size="lg"
+        />
+      </div>
       <ReusableAlert
         variant="danger"
         message={

@@ -1,6 +1,193 @@
 import axios from "axios";
-import { loadWAFData } from "../../../utils/helpers";
+import { fetchData, loadWAFData } from "../../../utils/helpers";
+ 
+// Function to extract IDs from titles
+const extractIdsFromTitles = (data, allPlants) => {
+  console.log("Data Received for ID Extraction:", data);
+  console.log("[PlantAssignment] All Plants Data:", allPlants);
+ 
+  const newClasses = data
+    .map((item) => {
+      const itemTitle = item.title.replace(/\s+/g, "").replace(/plant/i, "");
+ 
+      const matchedPlant = allPlants.find((plant) => {
+        const plantTitle = plant.title
+          .replace(/\s+/g, "")
+          .replace(/plant/i, "");
+        return plantTitle.toLowerCase() === itemTitle.toLowerCase();
+      });
+ 
+      return matchedPlant ? matchedPlant.id : null;
+    })
+    .filter((id) => id !== null);
+  // Remove null values (non-matching titles)
+ 
+  console.log("Extracted IDs (newClasses):", newClasses);
+  return newClasses;
+};
+ 
+export const handleRemoveData = async (
+  allPlants,
+  removedTitles,
+  productId,
+  type
+) => {
+  console.log("allPlants", allPlants);
+  console.log("removedTitles", removedTitles);
+  const rowstoDelete = extractIdsFromTitles(removedTitles, allPlants);
+  // console.log("newClasses handleRemoveData",newClasses);
+ 
+  if (rowstoDelete.length > 0) {
+    let declassifyUrl =
+      "https://saasimplementationserverdev.azurewebsites.net/plantAssignment/declassifyProductToClass";
+ 
+    let classifybody = {
+      id: productId,
+      type: type,
+      classes: rowstoDelete,
+    };
+    const declassifyResponse = await fetchData(
+       "POST",
+      declassifyUrl,
+      classifybody,
+     
+    );
+    console.log("declassifyResponse:", JSON.stringify(declassifyResponse));
+  }
+};
+ 
+// Updated handleAddData function
+export const handleAddData = async (
+  data,
+  allPlants,
+  objectId,
+  type,
+  proposedChanges,
+  productChilds,
+  hasMBOM
+) => {
+  console.log("Data Received for handleAddData:", data);
+ 
+  // Step 1: Convert incoming data (titles) to class IDs
+  const newClasses = extractIdsFromTitles(data, allPlants);
+  console.log("newClasses before filtering:", newClasses);
+  console.log("productChilds", productChilds);
+ 
+  // Step 2: Filter productChilds that are released but not being modified
+  const NotPropagableChilds = productChilds.filter((prodChild) => {
+    if (prodChild.state.toLowerCase() === "released") {
+      const change = proposedChanges.find(
+        (change) =>
+          change.identifier === prodChild.id &&
+          change.action.toLowerCase() === "modify"
+      );
+      return !change;
+    }
+    return false;
+  });
+ 
+  console.log("NotPropagableChilds ARE:", NotPropagableChilds);
+ 
+  // Step 3: Prepare Error Object
+  const ErrorObject = [];
+ 
+  newClasses.forEach((classId) => {
+    const missingIn = NotPropagableChilds.filter(
+      (child) => !child.classes.includes(classId)
+    )
+      .map((child) => child.name)
+      .join(", ");
+ 
+    if (missingIn !== "" && missingIn !== "Undefined") {
+      ErrorObject.push({ ClassID: classId, Childs: missingIn });
+    }
+  });
+  console.log("error object savetable", ErrorObject);
+ 
+  // Step 4: Generate Final Messages
+  let Finalmessage = "";
+  ErrorObject.forEach((item) => {
+    const classTitle = allPlants.find(
+      (plant) => plant.id === item.ClassID
+    )?.title;
+    const message = `Unable to classify product in ${classTitle} due to unclassified child items: ${item.Childs}`;
+    Finalmessage += `${message}\n`;
+  });
+ 
+  console.log("Final Message:\n", Finalmessage);
+ 
+  // Step 5: Filter out newClasses that are present in ErrorObject
+  const filteredNewClasses = newClasses.filter(
+    (id) => !ErrorObject.some((item) => item.ClassID === id)
+  );
+  console.log(
+    "Filtered New Classes (excluding errored ones):",
+    filteredNewClasses
+  );
+ 
+  // Make the API call if newClasses is not empty
+  if (filteredNewClasses.length > 0) {
+    const classifyUrl =
+      "https://saasimplementationserverdev.azurewebsites.net/plantAssignment/classifyProductToClass";
+ 
+    const classifybody = {
+      id: objectId, // Use objectId from Redux
+      type: type, // Use type from Redux
+      classes: filteredNewClasses,
+      mode: "classifyParent",
+    };
+ 
+    console.log("Classify API Body:", classifybody);
+ 
+    try {
+      const classifyResponse = await fetchData(
+        "POST",
+        classifyUrl,
+        classifybody,
+       
+      );
+      console.log("Classify Response:", JSON.stringify(classifyResponse));
+    } catch (error) {
+      console.error("Error in Classify API Call:", error);
+    }
+  }
 
+  if (
+    filteredNewClasses.length > 0 &&
+    productChilds.length > 0 &&
+    type === "VPMReference" &&
+    hasMBOM
+  ) {
+    let classifyUrl =
+      "https://saasimplementationserverdev.azurewebsites.net/plantAssignment/classifyProductToClass";
+
+    let classifybody = {
+      id: objectId,
+      type: type,
+      classes: filteredNewClasses,
+      childs: productChilds,
+      mode: "classifychilds",
+    };
+    const childclassifyResponse = await fetchData(
+       "POST",
+      classifyUrl,
+      classifybody,
+     
+    );
+    console.log(
+      "child classifyResponse:",
+      JSON.stringify(childclassifyResponse)
+    );
+  }
+ 
+  return {
+    success: true,
+    message: "Data saved successfully",
+    ErrorObject: ErrorObject,
+    Finalmessage: Finalmessage,
+  };
+};
+ 
 export const saveData = async (
   updatedItems,
   classesToBeClassified,
@@ -25,7 +212,7 @@ export const saveData = async (
     const fetchOOTBData = async (url, body, method) => {
       console.log("Fetching URL:", url);
       console.log("Request Body:", JSON.stringify(body, null, 2));
-
+ 
       return new Promise((resolve, reject) => {
         WAFData.authenticatedRequest(url, {
           method,
@@ -46,50 +233,27 @@ export const saveData = async (
         });
       });
     };
-
-    const fetchData = async (
-      url,
-      body = null,
-      method = "GET"
-      // headers = {}
-    ) => {
-      console.log("Fetching URL:", url);
-      console.log("Method is:");
-      console.log("Request Body:", JSON.stringify(body, null, 2));
-
-      try {
-        const response = await axios({
-          url,
-          method,
-          headers: {
-            ...headers,
-            "Content-Type": "application/json",
-          },
-          data: body, // Include body only if provided
-        });
-
-        console.log("Response received:", response.data);
-        return response.data;
-      } catch (error) {
-        console.error("Request failed:", error);
-        throw error; // Propagate the error to the caller
-      }
-    };
-
+ 
+ 
+ 
     // released childs but not present in CA Proposed Changes
     let NotPropagableChilds = productChilds.filter((prodChild) => {
+      console.log("Processing prodChild:", prodChild);
       if (prodChild.state.toLowerCase() === "released") {
+        console.log("Released prodChild:", prodChild);
         const change = proposedChanges.find(
           (change) =>
             change.identifier === prodChild.id &&
             change.action.toLowerCase() === "modify"
         );
+        console.log("Matching change for prodChild:", change);
         return !change;
       }
+      console.log("prodChild state is not 'released':", prodChild.state);
       return false;
     });
     console.log("NotPropagableChilds ARE :", NotPropagableChilds);
-
+ 
     let ErrorObj = [];
     finalArray.forEach((classItem) => {
       //if (classItem.Type === "New" || classItem.Type === "Update" ) {
@@ -117,7 +281,7 @@ export const saveData = async (
     console.log("ErrorObj IS", ErrorObj);
     ErrorObj.forEach((item) => {
       let message = "";
-
+ 
       // Check if item.childs is an array and contains valid objects with titles
       if (
         Array.isArray(item.childs) &&
@@ -137,13 +301,13 @@ export const saveData = async (
         // Handle case where childs is invalid or missing titles
         message = `Invalid child data for ${item.title}.`;
       }
-
+ 
       //  item.message = message;
       Finalmessage += `${message}\n`; // Using '\n' to separate each message with a new line
     });
     console.log(ErrorObj);
     console.log("Concatenated Messages:\n", Finalmessage);
-
+ 
     let newClasses = finalArray
       .filter(
         (classItem) =>
@@ -166,7 +330,7 @@ export const saveData = async (
       }
     });
     console.log("Update body is:", updateBody);
-
+ 
     let propagateClasses = finalArray
       .filter(
         (classItem) =>
@@ -174,12 +338,12 @@ export const saveData = async (
           !ErrorObj.some((errorItem) => errorItem.id === classItem.id)
       )
       .map((classItem) => classItem.id);
-
+ 
     console.log("Propogateable classes are", propagateClasses);
-
+ 
     if (newClasses.length > 0) {
       let classifyUrl =
-        "https://emr-product-datahub-server-sap-stage.azurewebsites.net/plantAssignment/classifyProductToClass";
+        "https://saasimplementationserverdev.azurewebsites.net/plantAssignment/classifyProductToClass";
       let classifybody = {
         id: productId,
         type: type,
@@ -187,33 +351,34 @@ export const saveData = async (
         mode: "classifyParent",
       };
       const classifyResponse = await fetchData(
+        "POST",
         classifyUrl,
         classifybody,
-        "POST"
+       
       );
       console.log("classifyResponse:", JSON.stringify(classifyResponse));
     }
-
+ 
     if (Object.keys(updateBody).length > 0) {
       const nextApiUrl = `${ENOVIA_BASE_URL}/resources/v1/modeler/dslib/dslib:ClassifiedItem/${productId}`;
       const response = await fetchOOTBData(nextApiUrl, "", "GET");
       console.log("CStamp Response:", response);
       let cestamp = response.member[0]?.cestamp || "";
       updateBody["cestamp"] = cestamp;
-
-      const patchUrl = `https://emr-product-datahub-server-sap-stage.azurewebsites.net/plantAssignment/updateClassificationAttribute?id=${productId}`;
-      await fetchData(patchUrl, updateBody, "PATCH");
+ 
+      const patchUrl = `https://saasimplementationserverdev.azurewebsites.net/plantAssignment/updateClassificationAttribute?id=${productId}`;
+      await fetchData("PATCH",patchUrl, updateBody, );
       console.log("Updated database successfully.");
     }
-
+ 
     if (
       propagateClasses.length > 0 &&
       productChilds.length > 0 &&
       type === "VPMReference"
     ) {
       let classifyUrl =
-        "https://emr-product-datahub-server-sap-stage.azurewebsites.net/plantAssignment/classifyProductToClass";
-
+        "https://saasimplementationserverdev.azurewebsites.net/plantAssignment/classifyProductToClass";
+ 
       let classifybody = {
         id: productId,
         type: type,
@@ -222,9 +387,10 @@ export const saveData = async (
         mode: "classifychilds",
       };
       const childclassifyResponse = await fetchData(
+         "POST",
         classifyUrl,
         classifybody,
-        "POST"
+       
       );
       console.log(
         "child classifyResponse:",
@@ -233,23 +399,24 @@ export const saveData = async (
     }
     if (rowstoDelete.length > 0) {
       let declassifyUrl =
-        "https://emr-product-datahub-server-sap-stage.azurewebsites.net/plantAssignment/declassifyProductToClass";
-
+        "https://saasimplementationserverdev.azurewebsites.net/plantAssignment/declassifyProductToClass";
+ 
       let classifybody = {
         id: productId,
         type: type,
         classes: rowstoDelete,
       };
       const declassifyResponse = await fetchData(
+        "POST",
         declassifyUrl,
         classifybody,
-        "POST"
+       
       );
       console.log("declassifyResponse:", JSON.stringify(declassifyResponse));
     }
-
+ 
     console.log("All classification API calls completed successfully.");
-
+ 
     return {
       success: true,
       message: "Data saved successfully",

@@ -17,7 +17,9 @@
         "Drawing Required",
         "1st Article Required",
         "Release Phase",
-        "Long Description"
+        "Long Description",
+        "Dimension",
+        "Revision"
       ],
       "mandatoryAttributes": [
         "Type",
@@ -36,7 +38,9 @@
         "Document Name",
         "Description",
         "PDF File Required",
-        "Agency Approval Review Required"
+        "Agency Approval Review Required",
+        "File",
+        "Revision"
       ],
       "mandatoryAttributes": [
         "Document Type",
@@ -46,7 +50,7 @@
         "Description"
       ]
     },
-  "Physical Product Structure": {
+    "Physical Product Structure": {
       "fileHeaders": [
         "Level",
         "Type",
@@ -59,37 +63,48 @@
         "Quantity",
         "Reference Designator",
         "Component Location",
-        "Unit Of Measure"
+        "Unit Of Measure",
+        "Dimension",
+        "Revision"
       ],
-      "mandatoryAttributes": [
-        "Level",
-        "EIN Number",
-        "Find Number",
-        "Quantity"
-      ]
+      "mandatoryAttributes": ["Level", "EIN Number", "Find Number", "Quantity","Revision"]
     },
     "Physical Product-Document": {
       "fileHeaders": [
         "Part Type",
         "EIN Number",
         "Part Revision",
-        "New/Existing Document",
         "Document Type",
         "Document Name",
-        "Document Description",
-        "PDF File Required",
-        "Relationship Type"
+        "Document Revision",
+        "Relationship Type",
+        "Print On Purchase Order Required",
+        "Print On Work Order Required",
+        "Work Order Document Required",
+        "Print On report Order Required",
+        "Revision"
       ],
       "mandatoryAttributes": [
         "Part Type",
         "EIN Number",
         "Part Revision",
-        "New/Existing Document",
         "Document Type",
         "Document Name",
-        "Document Description",
-        "PDF File Required",
-        "Relationship Type"
+        "Document Revision",
+        "Relationship Type",
+        "Revision"
+      ]
+    },
+    "MEP": {
+      "fileHeaders": [
+        "Description",
+        "Part Source",
+        "Part Source URL"
+      ],
+      "mandatoryAttributes": [
+        "Title",
+        "Manufacturer Part Number",
+        "Manufacturer"
       ]
     }
   }

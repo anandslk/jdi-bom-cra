@@ -6,16 +6,20 @@ import store from "../../store";
 
 // 1. Export a global variable to hold the collabSpaceTitle
 export let globalCollabSpaceTitles = [];
+export let globalCollabSpaceNames = []; // New global variable for names
 
-// 2. Create a function to process and store the collabSpaceTitle
+// 2. Create a function to process and store the collabSpaceTitle and CollabSpaceName
 export function processCollabSpace(collabspace) {
   if (!collabspace || !collabspace.title) {
-    console.warn("[droppableService] ❌ No collabspace found.");
+    console.warn("[droppableService]  No collabspace found.");
     return;
   }
   // Extract and trim the title from the collabspace object
   const collabSpaceTitle = collabspace.title.trim();
-  console.log("[droppableService] collabSpaceTitle:", collabSpaceTitle);
+  const collabSpaceName = collabspace.name.trim(); // Extract the name
+
+  // console.log("[droppableService] collabSpaceTitle:", collabSpaceTitle);
+  // console.log("[droppableService] collabSpaceName:", collabSpaceName); // Log the name
 
   if (!Array.isArray(globalCollabSpaceTitles)) {
     globalCollabSpaceTitles = []; // Reset if somehow changed to a string
@@ -24,10 +28,18 @@ export function processCollabSpace(collabspace) {
   if (!globalCollabSpaceTitles.includes(collabSpaceTitle)) {
     globalCollabSpaceTitles.push(collabSpaceTitle);
   }
-  console.log(
-    "[droppableService] Updated collabSpaceTitles array:",
-    globalCollabSpaceTitles
-  );
+
+  // Same logic for names
+  if (!Array.isArray(globalCollabSpaceNames)) {
+    globalCollabSpaceNames = []; // Reset if somehow changed to a string
+  }
+  // Store multiple collabSpaceNames in an array
+  if (!globalCollabSpaceNames.includes(collabSpaceName)) {
+    globalCollabSpaceNames.push(collabSpaceName);
+  }
+
+  // console.log("[droppableService] Updated collabSpaceTitles array:", globalCollabSpaceTitles);
+  // console.log("[droppableService] Updated collabSpaceNames array:", globalCollabSpaceNames);
 }
 
 export const initializeDroppableArea = (
@@ -88,7 +100,9 @@ export const initializeDroppableArea = (
         });
       }
     );
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error initializeDroppableArea : ", error)
+  }
 };
 
 // export const fetchCsrfTokenAndDependencies = async ({
@@ -143,8 +157,11 @@ export const getDroppedObjectDetails = async ({ dataItems }) => {
       throw new Error("[Object Details] Missing or invalid object ID or type");
     }
 
+    // Sanitize the type by removing spaces
+    const sanitizedType = type.replace(/\s+/g, "");
+
     // Use the axios instance to make the GET request
-    const objectDetailsURL = `/revFloat/getDroppedObjectDetails?oid=${objectId}&type=${type}`;
+    const objectDetailsURL = `/revFloat/getDroppedObjectDetails?oid=${objectId}&type=${sanitizedType}`;
     const response = await api.get(objectDetailsURL);
 
     // Use response.status instead of response.ok

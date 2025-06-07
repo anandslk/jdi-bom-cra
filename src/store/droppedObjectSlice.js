@@ -15,6 +15,13 @@ const initialState = {
     CAName: false,
     headers: {},
     proposedChanges: [],
+    CAData: {},
+  },
+  CAItemObjectDetails: {
+    CAItemDetails: [],
+    CAallPlants: [],
+    CAisMFGCA: false,
+    CAheaders: {},
   },
   BOSObjectData: {
     specDocument: [],
@@ -25,7 +32,7 @@ const initialState = {
   loading: false,
   selectedTableRows: [],
 };
-
+ 
 const droppedObjectSlice = createSlice({
   name: "droppedObject",
   initialState,
@@ -46,6 +53,12 @@ const droppedObjectSlice = createSlice({
         ...action.payload,
       };
     },
+    setCAItemObjectDetails: (state, action) => {
+      state.CAItemObjectDetails = {
+        ...state.CAItemObjectDetails,
+        ...action.payload,
+      };
+    },
     setProductChildren: (state, action) => {
       state.plantObjectData.productChildren = action.payload;
     },
@@ -58,13 +71,25 @@ const droppedObjectSlice = createSlice({
     setCAName: (state, action) => {
       state.plantObjectData.CAName = action.payload;
     },
+    setCAItemDetails: (state, action) => {
+      state.CAItemObjectDetails.CAItemDetails = action.payload;
+    },
+    setCAAllPlants: (state, action) => {
+      state.CAItemObjectDetails.CAallPlants = action.payload;
+    },
+    setIsMFGCA: (state, action) => {
+      state.CAItemObjectDetails.CAisMFGCA = action.payload;
+    },
+    setCAHeaders: (state, action) => {
+      state.CAItemObjectDetails.CAheaders = action.payload;
+    },
     setSpecDocument: (state, action) => {
       state.BOSObjectData.specDocument = action.payload;
     },
     setChildData: (state, action) => {
       state.BOSObjectData.childData = action.payload;
     },
-
+ 
     setParentDetailsLoading: (state, action) => {
       state.loadingParentDetails = action.payload;
     },
@@ -77,9 +102,12 @@ const droppedObjectSlice = createSlice({
     setSelectedTableRows: (state, action) => {
       state.selectedTableRows = action.payload;
     },
+    setCAData: (state, action) =>{
+      state.plantObjectData.CAData = action.payload;
+    },
   },
 });
-
+ 
 export const {
   setInitialDroppedObjectData,
   setDroppedObjectData,
@@ -87,6 +115,10 @@ export const {
   setProductChildren,
   setCAName,
   setHeaders,
+  setCAItemDetails,
+  setCAAllPlants,
+  setIsMFGCA,
+  setCAHeaders,
   setParentDetailsLoading,
   setIsDropped,
   setLoading,
@@ -94,5 +126,7 @@ export const {
   setChildData,
   setSelectedTableRows,
   setProposedChanges,
+  setCAData,
+  setCAItemObjectDetails,
 } = droppedObjectSlice.actions;
 export default droppedObjectSlice.reducer;

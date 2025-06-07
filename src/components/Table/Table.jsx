@@ -44,7 +44,11 @@ const ReusableTable = ({
   data,
   editable = false,
   meta,
+  type,
   widgetType,
+  latestRevision,
+  droppedRevision,
+  onSelectableRowsChange,
 }) => {
   const dispatch = useDispatch();
   const [tableData, setTableData] = useState(data);
@@ -52,7 +56,7 @@ const ReusableTable = ({
   const [lastSelectedId, setLastSelectedId] = useState(null); // Track last clicked row
   const tableRef = useRef(null);
   const [isScrolled, setIsScrolled] = useState(false);
-
+    
   useEffect(() => {
     const handleScroll = (e) => {
       setIsScrolled(e.target.scrollTop > 0);
@@ -70,7 +74,7 @@ const ReusableTable = ({
     };
   }, []);
 
-  if (widgetType !== "Revision_FLoat_Widget") {
+  if (widgetType !== "Revision_FLoat_Widget" && widgetType !== "Plant_Assignment_Widget") {
     var { updateTableData } = meta; // Need to work on this
   }
 
@@ -165,15 +169,24 @@ const ReusableTable = ({
           onChange={table.getToggleAllRowsSelectedHandler()}
         />
       ),
-      cell: ({ row }) => (
-        <input
-          type="checkbox"
-          {...{
-            checked: row.getIsSelected(),
-            onChange: row.getToggleSelectedHandler(),
-          }}
-        />
-      ),
+      cell: ({ row }) => {
+        const isSelectable = enableRowSelection(row.original); // Get row's selectability status
+
+        return (
+          <input
+            type="checkbox"
+            disabled={!isSelectable} // Disable non-selectable rows
+            style={{
+              cursor: isSelectable ? "pointer" : "not-allowed", // Block cursor for non-selectable rows
+              opacity: isSelectable ? 1 : 0.5, // Make disabled checkboxes faded
+            }}
+            {...{
+              checked: row.getIsSelected(),
+              onChange: row.getToggleSelectedHandler(),
+            }}
+          />
+        );
+      },
     };
 
     const baseColumns = editable
@@ -215,6 +228,14 @@ const ReusableTable = ({
     useSensor(KeyboardSensor, {})
   );
 
+  // Jatin added this for testing, if needs to change and make it work in the parent component, then will change this.
+  useEffect(() => {
+    if (widgetType === "Bos_Attribute_Widget") {
+      const selectableRows = tableData.filter(enableRowSelection);
+      onSelectableRowsChange(selectableRows); // Notify parent
+    }
+  }, [widgetType, tableData, onSelectableRowsChange]);
+
   // Modified handleDragEnd to save to localStorage
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -230,6 +251,15 @@ const ReusableTable = ({
       }
     }
   };
+  const enableRowSelection = (row) => {
+    if (widgetType === "Bos_Attribute_Widget" && type === "Document") {
+      return row.IsLatest === "TRUE";
+    }
+    if (widgetType === "Bos_Attribute_Widget") {
+      return !latestRevision || latestRevision === droppedRevision;
+    }
+    return true;
+  };
 
   const table = useReactTable({
     data: tableData,
@@ -243,9 +273,14 @@ const ReusableTable = ({
     onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    enableRowSelection: true,
+
+    // Earlier it was
+    //  enableRowSelection: true,
+
+    enableRowSelection: (row) => enableRowSelection(row.original),
+
     defaultColumn: {
-      size: 165,
+      size: 170,
       minSize: 50,
       maxSize: 500,
     },

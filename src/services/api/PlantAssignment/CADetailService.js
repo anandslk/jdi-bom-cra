@@ -3,16 +3,18 @@ export const fetchCADetails = async (headers, objectID, state) => {
   const ENOVIA_BASE_URL = process.env.REACT_APP_ENOVIA_BASE_URL;
   let resObejct = false;
   let proposedChangesArray = [];
+  let CADetails = {"CAName":"", "CAStatus":""};
+  const patternsToCheck = ['caproposedwhere_from', 'carealizedwhere_from'];
   const URLCADetails =
     `${ENOVIA_BASE_URL}/resources/enorelnav/v2/navigate/setPreferences`;
-
+ 
   let body = {
     widgetId: "ENORIPE_Relations_Preview_2751_2038-15:33:22",
     relations: ["caproposedwhere_from"],
     allRelationsMode: false,
     publicationsMode: false,
     computeWithInstances: false,
-    attributesForView: ["ds6w:status", "ds6w:type", "ds6w:identifier"],
+    attributesForView: ["ds6w:status", "ds6w:type", "ds6w:identifier","ds6w:label"],
     label: "ENXENG_AP-e1331143-1734517777960",
     lang: "en",
     ghostMode: false,
@@ -25,12 +27,12 @@ export const fetchCADetails = async (headers, objectID, state) => {
     label: "ENXENG_AP-e1331143-1734517780491",
     ids: [objectID],
   };
-
+ 
   try {
     console.log("[Get CA Details] Product ID:", objectID);
-
+ 
     const WAFData = await loadWAFData();
-
+ 
     const response = await new Promise((resolve, reject) => {
       WAFData.authenticatedRequest(URLCADetails, {
         method: "POST",
@@ -44,9 +46,9 @@ export const fetchCADetails = async (headers, objectID, state) => {
         onFailure: reject,
       });
     });
-
+ 
     console.log("[Get CA Details Service] Data received:", response);
-
+ 
     if (response.status === "OK") {
       const response2 = await new Promise((resolve, reject) => {
         WAFData.authenticatedRequest(url2, {
@@ -61,57 +63,76 @@ export const fetchCADetails = async (headers, objectID, state) => {
           onFailure: reject,
         });
       });
-
+ 
       console.log("[Get CA Details Service] Data received:", response2);
-      if (response2.objectsByPatterns.caproposedwhere_from) {
-        await Promise.all(
-          response2.objectsByPatterns.caproposedwhere_from.map(async (itm) => {
-            const status = itm["ds6w:status"].slice(14);
-
-            if (status !== "Complete") {
-              let url3 = `${ENOVIA_BASE_URL}/resources/v1/modeler/dslc/changeaction/${itm.id}?$fields=proposedChanges,flowDown`;
-
-              const response3 = await new Promise((resolve, reject) => {
-                WAFData.authenticatedRequest(url3, {
-                  method: "GET",
-                  headers,
-                  type: "json",
-                  onComplete: resolve,
-                  onFailure: reject,
-                });
-              });
-
-              if (Array.isArray(response3.proposedChanges)) {
-                response3.proposedChanges.forEach((proposedChange) => {
-                  proposedChangesArray.push({
-                    identifier: proposedChange.where.identifier,
-                    action: proposedChange.whats[0].what,
+      for (const pattern of patternsToCheck) {
+        if (response2.objectsByPatterns[pattern]) {
+          await Promise.all(
+            response2.objectsByPatterns[pattern].map(async (itm) => {
+              const status = itm["ds6w:status"].slice(14);
+              const CAName = itm["ds6w:label"];
+     
+              if (status !== "Complete") {
+                const url3 = `${ENOVIA_BASE_URL}/resources/v1/modeler/dslc/changeaction/${itm.id}?$fields=proposedChanges,realizedChanges,flowDown`;
+     
+                const response3 = await new Promise((resolve, reject) => {
+                  WAFData.authenticatedRequest(url3, {
+                    method: "GET",
+                    headers,
+                    type: "json",
+                    onComplete: resolve,
+                    onFailure: reject,
                   });
                 });
+     
+                if (pattern === 'caproposedwhere_from') {
+                  if (Array.isArray(response3.proposedChanges)) {
+                    response3.proposedChanges.forEach((proposedChange) => {
+                      proposedChangesArray.push({
+                        identifier: proposedChange.where.identifier,
+                        action: proposedChange.whats[0].what,
+                      });
+                    });
+                  }
+                } else {
+                  if (Array.isArray(response3.realizedChanges)) {
+                      response3.realizedChanges.forEach((realizedChange) => {
+                        proposedChangesArray.push({
+                          identifier: realizedChange.where.identifier,
+                          action: realizedChange.whats[0].what,
+                        });
+                      });
+                    }
+                }
+     
+                  if (state.toLowerCase() === "released") {
+                    resObejct = proposedChangesArray.some(
+                      (change) =>
+                        change.identifier === objectID &&
+                        change.action === "Modify"
+                    );
+                  } else {
+                    resObejct = true;
+                  }
+                if (resObejct) {
+                  CADetails["CAName"] = CAName;
+                  CADetails["CAStatus"] = status;
+                }
               }
-
-              if (state.toLowerCase() === "released") {
-                resObejct = proposedChangesArray.some(
-                  (proposedChange) =>
-                    proposedChange.identifier === objectID &&
-                    proposedChange.action === "Modify"
-                );
-              } else {
-                resObejct = true;
-              }
-            }
-          })
-        );
+            })
+          );
+        }
       }
     } else {
       console.error("Unable to Fetch the ");
     }
     console.log("Status is coming inside 7");
     console.log("Response Object is:", resObejct);
-
+ 
     return {
       success: true,
       data: resObejct,
+      CAData : CADetails,
       proposedChanges: proposedChangesArray,
     };
   } catch (error) {
@@ -121,7 +142,7 @@ export const fetchCADetails = async (headers, objectID, state) => {
       body,
       error,
     });
-
+ 
     throw error;
   }
 };

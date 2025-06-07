@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
-import { useDispatch } from "react-redux";
-import { setDroppedObjectData } from "../store/droppedObjectSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { setDroppedObjectData, setLoading } from "../store/droppedObjectSlice";
 import { setIsDropped as setIsDroppedAction } from "../store/droppedObjectSlice";
 // Custom hook
 import usePlantAssignment from "./usePlantAssignment";
@@ -19,9 +19,9 @@ import useBOSWidget from "./useBOSWidget";
 const useBOSDropableArea = () => {
   const { showErrorToast } = useToast();
   const { handleBOSWidget } = useBOSWidget();
+  const isDropped = useSelector((state) => state.droppedObject.isDropped);
 
-  // const [csrfHeaders, setCsrfHeaders] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const loading = useSelector((state) => state.droppedObject.loading);
   const dispatch = useDispatch();
 
   const fetchObjectDetails = useCallback(
@@ -72,7 +72,7 @@ const useBOSDropableArea = () => {
         console.error("[FetchObjectDetails] Error fetching details:", error);
         showErrorToast(MSG_FETCH_OBJECT_DETAILS_FAILED);
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     },
     [dispatch, handleBOSWidget]
@@ -101,7 +101,16 @@ const useBOSDropableArea = () => {
   );
   // Initialize droppable area
   const initializeDroppableArea = useCallback(() => {
-    dispatch(setIsDroppedAction(false));
+    if (!isDropped) {
+      console.log(
+        "[initializeDroppableArea] 🚀 Resetting isDropped to false..."
+      );
+      dispatch(setIsDroppedAction(false)); // ✅ Reset only if necessary
+    } else {
+      console.log(
+        "[initializeDroppableArea] ⏳ isDropped is already true. Skipping reset."
+      );
+    }
     const interval = setInterval(() => {
       const droppableContainer = document.querySelector(".droppable-container");
       if (droppableContainer) {
@@ -109,7 +118,7 @@ const useBOSDropableArea = () => {
         initDroppable(droppableContainer, handleDrop, dispatch, showErrorToast);
       }
     }, 100); // Check every 100ms
-
+ 
     return () => clearInterval(interval); // Cleanup interval on unmount
   }, [handleDrop, dispatch]);
 

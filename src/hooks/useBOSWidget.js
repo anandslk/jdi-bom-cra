@@ -137,7 +137,7 @@ const useBOSWidget = () => {
         let getUrl;
         if (type === "Document") {
           getUrl =
-            "https://emr-product-datahub-server-sap-stage.azurewebsites.net/bosAttribute/getLatestSpecItemDetails";
+            "https://saasimplementationserverdev.azurewebsites.net/bosAttribute/getLatestSpecItemDetails";
           requestBody = {
             SpecName: parentName, // Replace with actual SpecName if dynamic
             SpecRevision: parentRevision, // Replace with actual SpecRevision if dynamic
@@ -148,7 +148,7 @@ const useBOSWidget = () => {
           };
         } else {
           getUrl =
-            "https://emr-product-datahub-server-sap-stage.azurewebsites.net/bosAttribute/getLatestItemSpecDetails";
+            "https://saasimplementationserverdev.azurewebsites.net/bosAttribute/getLatestItemSpecDetails";
           requestBody = {
             ItemName: parentName, // Replace with actual ItemName if dynamic
             ItemRevision: parentRevision, // Replace with actual revision if dynamic
@@ -180,6 +180,7 @@ const useBOSWidget = () => {
               childLatest: matchingDoc?.isLatestRevision || "FALSE",
               childName: spec.SpecName,
               childRevision: spec.SpecRevision,
+              childId: matchingDoc?.id || "",
               PrintOnPurchaseOrderRequired: spec.PrintOnPurchaseOrderRequired,
               PrintOnWorkOrderRequired: spec.PrintOnWorkOrderRequired,
               WorkOrderDocumentRequired: spec.WorkOrderDocumentRequired,
@@ -203,6 +204,7 @@ const useBOSWidget = () => {
               childName: item.ItemName,
               childRevision: item.ItemRevision,
               childLatest: matchingDoc?.isLatestRevision || "FALSE",
+              childId: matchingDoc?.id || "",
               PrintOnPurchaseOrderRequired: item.PrintOnPurchaseOrderRequired,
               PrintOnWorkOrderRequired: item.PrintOnWorkOrderRequired,
               WorkOrderDocumentRequired: item.WorkOrderDocumentRequired,

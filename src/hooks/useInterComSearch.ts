@@ -60,7 +60,9 @@ const useInterComSearch = (): UseInterComSearchReturn => {
         socket.disconnect();
       }
 
-      const socketName = `socket_${Date.now()}`;
+      const socketName =
+        "socket" + new Date().toISOString().replace(/[-:]/g, "");
+
       const newSocket = new InterCom.Socket(socketName, {
         dispatchRetryInternal: 0,
       });
@@ -74,10 +76,10 @@ const useInterComSearch = (): UseInterComSearchReturn => {
       // Base payload that your server expects
       const widgetId = window.widget?.id;
       const baseContext = {
+        ...searchOpts,
         widget_id: widgetId,
         app_socket_id: socketName,
         default_search_criteria: searchText,
-        ...searchOpts,
       };
 
       // Merge in any extra fields you want to send

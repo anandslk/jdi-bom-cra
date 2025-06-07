@@ -109,12 +109,29 @@ const useMassUpload = (initialOperationChoice) => {
           groupNLS: "System Attributes",
         },
         {
-          name:"Physical Product/Raw Material",
+          name: "Physical Product/Raw Material",
           nls: "Physical Product/Raw Material",
           groupNLS: "System Attributes",
-        
+        },
+        {
+          name:"dimensionType",
+          nls: "Dimension",
+          groupNLS: "System Attributes",
         }
-       
+        
+      ];
+
+      const controlCenterAttributes = [
+        {
+          name: "EMR_hasMBOM", // Change from backendName to name
+          nls: "Has MBOM",
+          groupNLS: "Object Attributes",
+        },
+        {
+          name: "EMR_Phase", // Change from backendName to name
+          nls: "Phase",
+          groupNLS: "Object Attributes",
+        },
       ];
 
       // Define EBOM attributes for Product Structure operation
@@ -145,6 +162,86 @@ const useMassUpload = (initialOperationChoice) => {
             group: "EBOM Attributes",
             groupNLS: "EBOM Attributes",
           },
+          {
+            name: "quantity",
+            nls: "Quantity",
+            group: "EBOM Attributes",
+            groupNLS: "EBOM Attributes",
+          },
+          // {
+          //   name: "PartType",
+          //   nls: "PartType",
+          //   group: "EBOM Attributes",
+          //   groupNLS: "EBOM Attributes",
+          // },
+        ];
+      }
+
+      // Define BOS attributes for Physical Product-Document operation (operation 4)
+      let bosAttributes = [];
+      if (effectiveOperation === "4") {
+        bosAttributes = [
+          {
+            name: "Print On Purchase Order Required",
+            nls: "Print On Purchase Order Required",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Print On Work Order Required",
+            nls: "Print On Work Order Required",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Work Order Document Required",
+            nls: "Work Order Document Required",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Print On report Order Required",
+            nls: "Print On report Order Required",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Part Type",
+            nls: "Part Type",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+
+          {
+            name: "Part Revision",
+            nls: "Part Revision",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Document Type",
+            nls: "Document Type",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Document Name",
+            nls: "Document Name",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Document Revision",
+            nls: "Document Revision",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
+          {
+            name: "Relationship Type",
+            nls: "Relationship Type",
+            group: "BOS Attributes",
+            groupNLS: "BOS Attributes",
+          },
         ];
       }
 
@@ -157,6 +254,14 @@ const useMassUpload = (initialOperationChoice) => {
         !attributeGroups.includes("EBOM Attributes")
       ) {
         attributeGroups.push("EBOM Attributes");
+      }
+
+      // Add BOS Attributes group for operation 4
+      if (
+        effectiveOperation === "4" &&
+        !attributeGroups.includes("BOS Attributes")
+      ) {
+        attributeGroups.push("BOS Attributes");
       }
 
       // Get NLS values from API response
@@ -173,10 +278,21 @@ const useMassUpload = (initialOperationChoice) => {
         ebomNlsValues = ebomAttributes.map((item) => item.nls);
         console.log("EBOM NLS Values:", ebomNlsValues);
       }
+      // / Get NLS values from BOS attributes when operation is 4
+      let bosNlsValues = [];
+      if (effectiveOperation === "4") {
+        bosNlsValues = bosAttributes.map((item) => item.nls);
+        console.log("BOS NLS Values:", bosNlsValues);
+      }
 
       // Combine all NLS values including EBOM attributes if operation is 2
       const allNLSValues = [
-        ...new Set([...apiNlsValues, ...systemNlsValues, ...ebomNlsValues]),
+        ...new Set([
+          ...apiNlsValues,
+          ...systemNlsValues,
+          ...ebomNlsValues,
+          ...bosNlsValues,
+        ]),
       ];
       console.log("all nls value with Hardcode :", allNLSValues);
 
@@ -192,7 +308,7 @@ const useMassUpload = (initialOperationChoice) => {
       );
 
       // Then merge non-system API attributes with hardcoded ones and EBOM attributes
-      let mergeAttributes = [...filteredGroupData, ...systemAttributes];
+      let mergeAttributes = [...filteredGroupData, ...systemAttributes,...controlCenterAttributes];
       if (effectiveOperation === "2") {
         mergeAttributes = [...mergeAttributes, ...ebomAttributes];
         console.log(
@@ -200,6 +316,15 @@ const useMassUpload = (initialOperationChoice) => {
           mergeAttributes
         );
       }
+      if (effectiveOperation === "4") {
+        mergeAttributes = [...mergeAttributes, ...bosAttributes];
+        console.log(
+          "Added BOS attributes to merged attributes for operation 4",
+          mergeAttributes
+        );
+      }
+
+      console.log("Final merged attributes including Control Center:", mergeAttributes);
 
       // Then continue with your other filtering if needed
       const relevantAttributes =
@@ -274,8 +399,6 @@ const useMassUpload = (initialOperationChoice) => {
           )
         );
       }
-
-      
 
       setMappedAttributes({
         allNLSValues: allNLSValues,

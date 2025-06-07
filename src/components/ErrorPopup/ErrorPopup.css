@@ -51,7 +51,7 @@
   background: rgba(211, 47, 47, 0.1);
   padding: 8px;
   color: #d32f2f;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .error-popup-container {
@@ -121,14 +121,14 @@
   padding: 8px 15px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  /* white-space: nowrap; */
   align-items: flex-start;
 }
 
-.cell-content {
+/* .cell-content {
   padding: 8px 16px;
   line-height: 1.5;
-}
+} */
 
 .center-aligned {
   text-align: center;
@@ -158,3 +158,12 @@
 .error-list li:last-child {
   margin-bottom: 0;
 }
+
+
+.error-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+

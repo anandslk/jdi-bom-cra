@@ -22,6 +22,7 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
       2: "Physical Product Structure",
       3: "Document",
       4: "Physical Product-Document",
+      5: "MEP",
     };
 
     const matchedOperation = operationNames[selectedOperation];
@@ -67,7 +68,6 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
       const headerMismatch = !expectedHeaders.every((header) =>
         uploadedHeaders.includes(header)
       );
-      
 
       if (headerMismatch) {
         console.error(" Template mismatch detected!");
@@ -101,7 +101,7 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
         });
         return;
       }
-
+      console.log("allSheetData", allSheetData);
       const chunks = processDataInChunks(allSheetData, 1000);
       const validationErrors = [];
       const invalidPrefixes = ["MMI-", "RS-", "DAN-", "RSC-", "TF-", "ROXA-"];
@@ -151,6 +151,23 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
               );
             }
           });
+
+          // New validation: For Operation 1 - Dimension is mandatory when type is Raw Material
+          if (matchedOperation === "Physical Product") {
+            const physicalProductType =
+              row["Physical Product/Raw Material"]?.toString().trim() || "";
+            if (physicalProductType.toLowerCase() === "raw material") {
+              const dimension = row["Dimension"]?.toString().trim() || "";
+              if (dimension === "") {
+                validationErrors.push(
+                  `Row ${
+                    globalRowIndex + 2
+                  }: "Dimension" is required when  the column Name in the template "Physical Product/Raw Material" value is  "Raw Material"`
+                );
+              }
+            }
+          }
+
           // Collaborative Space validation
           if (
             matchedOperation === "Physical Product" ||
@@ -266,6 +283,27 @@ const validateFile = (file, collabSpaceTitles, selectedOperation) => {
                 );
               }
             }
+          }
+          // NEW: Validate that for MEP, all mandatory fields are present
+          if (matchedOperation === "MEP") {
+            console.log(
+              "Mondatory fields validation for MEP",
+              mandatoryAttributes
+            );
+            mandatoryAttributes.forEach((field) => {
+              if (
+                row[field] === undefined ||
+                row[field] === null ||
+                (row[field].toString().trim() === "" && row[field] !== 0)
+              ) {
+                errorStats.mandatory++;
+                validationErrors.push(
+                  `Row ${
+                    globalRowIndex + 2
+                  }: "${field}" is required but is empty`
+                );
+              }
+            });
           }
         });
 

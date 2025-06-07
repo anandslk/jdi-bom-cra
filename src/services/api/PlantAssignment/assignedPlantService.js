@@ -1,5 +1,6 @@
 import { loadWAFData } from "../../../utils/helpers";
 import { SearchCA } from "./searchCAService";
+import {GetFlowDownCADetails} from "./getRouteDetails";
 
 export const fetchAssignedPlants = async (
   allPlants,
@@ -10,7 +11,7 @@ export const fetchAssignedPlants = async (
     const ENOVIA_BASE_URL = process.env.REACT_APP_ENOVIA_BASE_URL;
     console.log("[Assigned Plant Service] Plant Members:", allPlants);
 
-    const libraryDataURL = `${ENOVIA_BASE_URL}/resources/v1/modeler/dslib/dslib:ClassifiedItem/${objectId}?$mask=dslib:ClassificationAttributesMask`;
+    const libraryDataURL = `${ENOVIA_BASE_URL}/resources/v1/modeler/dslib/dslib:CategorizationClassifiedItem/${objectId}?$mask=dslib:ClassificationAttributesMask`;
 
     const WAFData = await loadWAFData();
 
@@ -47,7 +48,7 @@ export const fetchAssignedPlants = async (
                 eachAttribute.name.includes("FlowDownCA") &&
                 eachAttribute.value
               ) {
-                return SearchCA(eachAttribute.value, headers).then(
+                return GetFlowDownCADetails(eachAttribute.value, headers).then(
                   (flowDownCADetails) => {
                     if (flowDownCADetails) {
                       console.log(flowDownCADetails);

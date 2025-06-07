@@ -101,7 +101,7 @@ export const tableColumns = (type, latestRevision, droppedRevision) => {
           className="appearance-none bg-transparent border-none cursor-pointer focus:outline-none"
           style={{
             width: "70%",
-            padding: "5px",
+            padding: "5px 0",
             fontSize: "14px",
             background: "none",
             border: "none",

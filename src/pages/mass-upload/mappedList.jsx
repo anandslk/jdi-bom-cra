@@ -180,6 +180,30 @@ const MappedList = ({
       return groupedOptions;
     }
 
+    // For operation 4, return only the 4 specific BOS Attributes
+    if (operationChoice === "4") {
+      // List of only the 4 attributes we want to show
+      const allowedBosAttributes = [
+        "Print On Purchase Order Required",
+        "Print On Work Order Required",
+        "Work Order Document Required",
+        "Print On report Order Required",
+      ];
+
+      // Return a flat array of only the 4 specific BOS Attributes
+      return dropdownOptions
+        .filter(
+          (attr) =>
+            attr.group === "BOS Attributes" &&
+            allowedBosAttributes.includes(attr.uiLabel) &&
+            !selectedValues.includes(attr.uiLabel)
+        )
+        .map((attr) => ({
+          value: attr.uiLabel,
+          label: attr.uiLabel,
+        }));
+    }
+
     // For other operations, return flat list with the same filtering logic
     const filteredOptions = dropdownOptions
       .filter((attr) => {

@@ -27,6 +27,7 @@ const BOSWidget = () => {
   const [screenLoader, setScreenLoader] = useState(false);
   const [isCardDataAvailable, setIsCardDataAvailable] = useState(false);
   const [specData, setSpecData] = useState([]);
+  const [selectableRows, setSelectableRows] = useState([]);
   const dispatch = useDispatch();
   const { showSuccessToast, showErrorToast } = useToast();
 
@@ -43,21 +44,33 @@ const BOSWidget = () => {
     let parentData = [];
     let ChildNameKey;
     let ChildRevKey;
+    let ChildStateKey;
+    let ChildIdKey;
     if (type === "Document") {
       parentData = {
         SpecName: droppedObjectData.cardData.Name,
         SpecRevision: droppedObjectData.cardData["Dropped Revision"],
+        SpecState: droppedObjectData.cardData["Maturity State"],
+        SpecID: droppedObjectData.cardData["Dropped Revision ID"], // NEED TO CHECK CARD DATA
+        // SpecState need to be added.
       };
       ChildNameKey = "ItemName";
       ChildRevKey = "ItemRevision";
+      ChildStateKey = "ItemState";
+      ChildIdKey = "ItemID";
     } else {
       console.log("It's a physical Product");
       parentData = {
         ItemName: droppedObjectData.cardData.Name,
         ItemRevision: droppedObjectData.cardData["Dropped Revision"],
+        ItemState: droppedObjectData.cardData["Maturity State"],
+        ItemID: droppedObjectData.cardData["Dropped Revision ID"], // NEED TO CHECK THIS
+        // need to add Maturity State as Item State and ItemId is Dropped Revision Id.
       };
       ChildNameKey = "SpecName";
       ChildRevKey = "SpecRevision";
+      ChildStateKey = "SpecState";
+      ChildIdKey = "SpecID";
     }
 
     const formattedData = tableData.map((item) => {
@@ -70,6 +83,10 @@ const BOSWidget = () => {
       return {
         [ChildNameKey]: matchingData ? matchingData.childName : null, // Use found childName
         [ChildRevKey]: item.Revision, // Dynamic key based on type
+        [ChildStateKey]: matchingData ? matchingData.childState : null, // need to check this
+        [ChildIdKey]: matchingData ? matchingData.childId : null, //
+        // something needs to be done here
+        // [ChildStateKey]:
         ...parentData, // Merge Parent Data
         PrintOnPurchaseOrderRequired: item["Print On Purchase Order Required"],
         PrintOnWorkOrderRequired: item["Print On Work Order Required"],
@@ -88,7 +105,7 @@ const BOSWidget = () => {
 
     console.log("Formatted Data:", formattedData);
     const saveURL =
-      "https://emr-product-datahub-server-sap-stage.azurewebsites.net/bosAttribute/createORupdateDetails";
+      "https://saasimplementationserverdev.azurewebsites.net/bosAttribute/createORupdateDetails";
     const response = await fetchData("POST", saveURL, formattedData);
 
     console.log("the response from node API is:", response);
@@ -228,7 +245,7 @@ const BOSWidget = () => {
     () =>
       tableColumns(
         type,
-        droppedObjectData?.cardData["Latest Released Revision"],
+        droppedObjectData?.cardData["Latest Revision"],
         droppedObjectData?.cardData["Dropped Revision"]
       ),
     [type, droppedObjectData?.cardData]
@@ -270,7 +287,10 @@ const BOSWidget = () => {
       {!isDropped && !loading && !isTableLoading && <DragAndDropComponent />}
       {loading && <Loader />}
       {isDropped && (
+
         <>
+         {/* Show initial loader when loading is true */}
+         {loading && <Loader />}
           <div className="content-wrapper py-3 border-bottom">
             <div className="d-flex ">
               <div className=" p-0 pt-4">
@@ -281,7 +301,9 @@ const BOSWidget = () => {
                   onClick={handleHomeClick}
                 />
               </div>
-              {cardData && <CardWithDragAndDrop data={cardData} />}
+              {cardData && (
+                <CardWithDragAndDrop data={cardData} widgetType="bosWidget" />
+              )}
             </div>
           </div>
 
@@ -296,14 +318,14 @@ const BOSWidget = () => {
                   onSave={handleSave}
                   type={type}
                   latestRevision={
-                    droppedObjectData?.cardData["Latest Released Revision"]
+                    droppedObjectData?.cardData["Latest Revision"]
                   }
                   droppedRevision={
                     droppedObjectData?.cardData["Dropped Revision"]
                   }
                   selectedRows={selectedTableRows}
                   state={state}
-                  tableData={tableData}
+                  tableData={selectableRows}
                   onMassUpdate={handleMassUpdate}
                 />
                 <ReusableTable
@@ -311,7 +333,15 @@ const BOSWidget = () => {
                   data={tableData}
                   columns={columns}
                   meta={{ updateTableData }}
+                  type={type}
+                  latestRevision={
+                    droppedObjectData?.cardData["Latest Revision"]
+                  }
+                  droppedRevision={
+                    droppedObjectData?.cardData["Dropped Revision"]
+                  }
                   widgetType="Bos_Attribute_Widget"
+                  onSelectableRowsChange={setSelectableRows}
                 />
               </div>
             </>

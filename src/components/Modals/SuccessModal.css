@@ -126,12 +126,86 @@
 
 /* Cell */
 .virtualized-cell {
+  position: relative;
+  padding-right: 30px; /* Make room for the button */
   padding: 0 0.75rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: black;
   font-size: 1.2rem; /* Changed from 'small' */
+}
+
+/* Button styling */
+.cell-copy-button {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.2s ease, color 0.3s ease;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+/* Show button on hover */
+.virtualized-cell:hover .cell-copy-button {
+  opacity: 1;
+  background-color: inherit !important;
+}
+
+/* Button hover state */
+.cell-copy-button:hover {
+  background-color: inherit !important;
+  color: #050505;
+}
+
+/* Handle the two icons */
+.cell-copy-button .copy-icon,
+.cell-copy-button .copied-icon {
+  position: absolute;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.cell-copy-button .copy-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cell-copy-button .copied-icon {
+  opacity: 0;
+  transform: scale(0.5);
+  color: #16a34a;
+}
+
+/* When copied */
+.cell-copy-button.copied .copy-icon {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.cell-copy-button.copied .copied-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Make the copied button visible */
+.cell-copy-button.copied {
+  opacity: 1;
+  color: #16a34a;
+}
+
+/* Remove the tooltip style "Copied" text */
+.virtualized-cell.copied::after {
+  content: none;
 }
 
 /* Status styling */
@@ -145,4 +219,129 @@
 
 .status-cell.failed {
   color: #dc2626;
+}
+
+.custom-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 3px !important;
+  height: 100%;
+  cursor: col-resize;
+  background: #a2a5a6de !important;
+  opacity: 0.7;
+  z-index: 2;
+  border-radius: 2px;
+}
+
+/* Add these styles to your existing CSS file */
+
+/* Cell click-to-copy styling */
+.virtualized-cell.copyable {
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.virtualized-cell.copyable:hover {
+  background-color: #f0f9ff;
+}
+
+.virtualized-cell.copyable:hover::after {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.virtualized-cell.copied {
+  background-color: inherit !important; /* Keep original background */
+  animation: none; /* Remove pulse animation */
+}
+
+.virtualized-cell.copied .cell-copy-button {
+  opacity: 1;
+}
+
+/* Replace the checkmark with "Copied" text */
+.virtualized-cell.copied::after {
+  content: "Copied";
+  position: absolute;
+  right: 30px; /* Position before the button */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 12px;
+  background: none;
+  padding: 2px 4px;
+}
+
+/* Remove other after content that might be showing */
+.virtualized-cell.copyable:hover::after {
+  content: none;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(22, 163, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
+}
+
+/* Update the copied state styling for a more subtle, attractive effect */
+.virtualized-cell.copied {
+  background-color: inherit !important; /* Keep original background */
+}
+
+/* Make "Copied" text smaller and more attractive */
+.virtualized-cell.copied::after {
+  content: "Copied";
+  position: absolute;
+  right: 32px; /* Position before the button */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981; /* Slightly softer green */
+  font-size: 10px;
+  font-weight: 500;
+  background-color: #ecfdf5; /* Light mint background */
+  padding: 1px 5px;
+  border-radius: 10px; /* Pill shape */
+  opacity: 0.9;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  animation: fadeInOut 1.5s ease forwards;
+}
+
+/* Add fade in/out animation */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(5px, -50%);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-5px, -50%);
+  }
+}
+
+/* Keep button visible when copied */
+.virtualized-cell.copied .cell-copy-button {
+  opacity: 1;
+  color: #10b981; /* Match the text color */
+  background-color: #ecfdf5; /* Match the text background */
 }

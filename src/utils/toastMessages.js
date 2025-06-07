@@ -30,6 +30,8 @@ export const MSG_NO_ROWS = "No rows selected.";
 // export const MSG_NO_REPLACE = "No rows with 'To-Be child connected' selected.";
 export const MSG_NO_REPLACE =
   "Latest Revision already connected to selected parents";
+export const MSG_BOS_SAVE =
+  "BOS Attribute can be updated only for Latest Items.";
 
 // Validate object type [VPMReference, Document, Raw_Material]//
 export const MSG_INVALID_OBJECT_TYPE =
@@ -62,3 +64,7 @@ export const MSG_UPLOAD_SUCCESS = "Upload successful!";
 // Mass Upload Info Message
 
 export const MSG_OPERATION_CHNAGED="Operation changed, please re-upload the file";
+
+
+export const MSG_OPRATION_HANDLE_ON_STATE_ERROR =
+  "CA should be in In Work/Draft State to perform this operation";

@@ -2,10 +2,21 @@ import React, { useEffect, useRef } from "react";
 import "./DragAndDrop.css"; // Import styles for the component
 import { Image } from "react-bootstrap";
 import useDroppableArea from "../../hooks/useDroppableArea";
+import usePlantDropableArea from "../../hooks/usePlantDropableArea";
+import useBOSDropableArea from "../../hooks/useBOSDropableArea";
 // import usePlantDropableArea from "../../hooks/usePlantDropableArea";
 
-const DragAndDropStandAlone = () => {
-  const { initializeDroppableArea } = useDroppableArea();
+const DragAndDropStandAlone = ({ widgetType }) => {
+  const plantDroppable = usePlantDropableArea();
+  const bosDropable = useBOSDropableArea();
+  const defaultDroppable = useDroppableArea();
+
+  const { initializeDroppableArea } =
+    widgetType === "PlantAssignment"
+      ? plantDroppable
+      : widgetType === "bosWidget"
+      ? bosDropable
+      : defaultDroppable;
   const hasInitializedDroppable = useRef(false);
 
   useEffect(() => {
@@ -17,10 +28,8 @@ const DragAndDropStandAlone = () => {
   }, []);
 
   return (
-    <> 
-      <div
-        className="droppable-container mt-4"
-      >
+    <>
+      <div className="droppable-container mt-4">
         <Image
           style={{ width: "90px", height: "90px" }}
           src="https://thewhitechamaleon.github.io/testrapp/images/drag.png"

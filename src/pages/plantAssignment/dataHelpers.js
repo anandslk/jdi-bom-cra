@@ -1,5 +1,46 @@
 // pages/revisionFloat/dataHelpers.js
 import { FaRegCopy } from "react-icons/fa";
+import { AiOutlineClose } from "react-icons/ai"; // Ant Design Icons (React Icons)
+
+export const PlantRenderer = ({
+  plants = [],
+  itemId,
+  isRemoveMode,
+  handleRemovePlant,
+  isMFGCA
+}) => {
+  console.log("PlantRenderer received plants:", plants); // Debugging
+  if (!plants?.length) return "N/A";
+
+  return (
+    <>
+      {plants.map((plant) => (
+        <span
+          key={plant.PlantID}
+          style={{
+            marginRight: "8px",
+            display: "inline-flex",
+            alignItems: "center",
+            color: plant.color || "black", // Apply red or green based on color property
+            fontWeight: "bold", // Optional: Make it more visible
+          }}
+        >
+          {plant.PlantName}
+          {plant.color === "green" && " - Add"}
+          {plant.color === "red" && (isMFGCA ? " - Updated" : " - Removed")}
+          {isRemoveMode && plant.PlantERPStatus === "Pending" && (
+            <AiOutlineClose
+              size={16}
+              style={{ cursor: "pointer", color: "red", marginLeft: "4px" }}
+              onClick={() => handleRemovePlant(itemId, plant.PlantID)}
+            />
+          )}
+        </span>
+      ))}
+    </>
+  );
+};
+
 export const getCardData = (droppedObjectData) => {
   if (!droppedObjectData || !droppedObjectData.cardData) {
     return null;
@@ -29,24 +70,51 @@ export const getCardData = (droppedObjectData) => {
   return cardData;
 };
 
-export const getTableData = (asignedPlant) => {
-  if (!asignedPlant) return [];
-  return asignedPlant.map((plant) => ({
-    Plant: plant?.title || "N/A",
-    Seq: plant?.Seq || "1",
-    Status: "Current" || "N/A",
-    "MFG Change": plant?.MFGChange || "N/A",
-    "MFG Status": plant?.MFGStatus || "N/A",
-    Change: plant?.Change || "N/A",
-    "Change Status": plant?.ChangeStatus || "N/A",
-    "Oracle Template": plant.OracleTemplate || "N/A",
-    "ERP Status": "Active" || "N/A",
-    "ERP Export": "Yes" || "N/A",
-    "Lead Plant": false,
-    MBom: plant.MBOM ? "Make" : "Buy" || "N/A",
-    "Sort Value": "",
-  }));
+export const getTableData = (tableData, type, CAData) => {
+  console.log("cadata datahelpers",CAData );
+  
+  if (!tableData) return [];
+
+  // 🌟 Start Mapping Data
+  let mappedData = tableData.map((data) => {
+    if (type === "Change Action") {
+      return {
+        ItemName: data?.ItemTitle || "N/A",
+        Plant: data?.ItemPlants || [], // ✅ Ensure Plant data is correctly stored
+        ItemId: data?.ItemId || "N/A", // ✅ Added to be accessible in `tableColumns`
+      };
+    } else {
+      console.log("change data datahelper", data?.Change || CAData.CAName ||"N/A");
+       
+      return {
+        Plant: data?.title || "N/A",
+        Seq: data?.Seq || "1",
+        Status: data?.PlantStatus || "Pending",
+        "MFG Change": data?.MFGChange || "N/A",
+        "MFG Status": data?.MFGStatus || "N/A",
+        Change: data?.Change || CAData.CAName ||"N/A",
+        "Change Status": data?.ChangeStatus || CAData.CAStatus ||"N/A",
+        "Oracle Template": data.OracleTemplate || "N/A",
+        "ERP Status": "Active" || "N/A",
+        "ERP Export": "Yes" || "N/A",
+        "Lead Plant": false,
+        MBom: data.MBOM ? "Make" : "Buy" || "N/A",
+        "Sort Value": "",
+      };
+    }
+  });
+
+  // 🌟 ADD THIS SORT LOGIC — ensures sorting after every render/save
+  if (type === "Change Action") {
+    mappedData.sort((a, b) => a.ItemName.localeCompare(b.ItemName));
+  } else {
+    mappedData.sort((a, b) => a.Plant.localeCompare(b.Plant));
+  }
+
+  // 🌟 Return the final sorted array
+  return mappedData;
 };
+
 
 export const getUniqueTableData = (uniqueData) => {
   if (!uniqueData) return [];
@@ -55,68 +123,56 @@ export const getUniqueTableData = (uniqueData) => {
   }));
 };
 
-export const tableColumns = (CAName) => [
-  { accessorKey: "Plant", header: "Plant" },
-  { accessorKey: "Seq", header: "Seq" },
-  {
-    accessorKey: "MBom",
-    header: "MBom",
-    cell: ({ row, getValue, table }) => {
-      const handleDropdownChange = (e) => {
-        if (!CAName) return; // Prevent changes when disabled
-        const updatedValue = e.target.value;
-
-        // Update the table data state here
-        const updatedData = table
-          .getRowModel()
-          .rows.map((r) =>
-            r.id === row.id ? { ...r.original, MBom: updatedValue } : r.original
+export const tableColumns = (CAName, type, isRemoveMode, handleRemovePlant,isMFGCA) => {
+  console.log("type here is: ", type);
+  if (type === "Change Action") {
+    return [
+      { accessorKey: "ItemName", header: "Item Name" },
+      {
+        accessorKey: "Plant",
+        header: "Plant",
+        cell: ({ row }) => {
+          const plantList = row.original.Plant;
+          const tooltipText = Array.isArray(plantList)
+            ? plantList.map(p => p.PlantName || p.title || "").join(", ")
+            : "N/A";
+  
+          return (
+            <span title={tooltipText}>
+              <PlantRenderer
+                plants={plantList}
+                itemId={row.original.ItemId}
+                isRemoveMode={isRemoveMode}
+                handleRemovePlant={handleRemovePlant}
+                isMFGCA={isMFGCA}
+              />
+            </span>
           );
+        },
+      },
+    ];
+  }
 
-        table.options.meta?.updateTableData(updatedData); // Call custom table update function
-      };
-
-      return (
-        <select
-          value={getValue()}
-          onChange={handleDropdownChange}
-          disabled={!CAName} // Disable dropdown if CAName is false
-          className={`appearance-none bg-transparent border-none cursor-pointer focus:outline-none`}
-          style={{
-            ...(CAName === false && { appearance: "none" }), // Apply appearance: none only if CAName is false
-            width: "70%",
-            padding: "5px",
-            fontSize: "14px",
-            color: "#333",
-            background: "none",
-            border: "none",
-            textAlign: "left",
-          }}
-          onMouseOver={(e) => {
-            if (CAName) e.target.style.border = "1px solid #ccc";
-          }}
-          onMouseOut={(e) => {
-            if (CAName) e.target.style.border = "none";
-          }}
-        >
-          <option value="Make">Make</option>
-          <option value="Buy">Buy</option>
-        </select>
-      );
+  return [
+    { accessorKey: "Plant", header: "Plant"},
+    { accessorKey: "Seq", header: "Seq" },
+    { accessorKey: "Status", header: "Status" },
+    { accessorKey: "Change", header: "Change" },
+    { accessorKey: "Change Status", header: "Change Status" },
+    { accessorKey: "MFG Change", header: "MFG Change" },
+    { accessorKey: "MFG Status", header: "MFG Status" },
+    { accessorKey: "Oracle Template", header: "Oracle" },
+    {
+      accessorKey: "MBom",
+      header: "MBom",
+      
     },
-  },
-  { accessorKey: "Status", header: "Status" },
-  { accessorKey: "MFG Change", header: "MFG Change" },
-  { accessorKey: "MFG Status", header: "MFG Status" },
-  { accessorKey: "Change", header: "Change" },
-  { accessorKey: "Change Status", header: "Change Status" },
-  { accessorKey: "Oracle Template", header: "Oracle Template" },
-  { accessorKey: "ERP Status", header: "ERP Status" },
-  { accessorKey: "ERP Export", header: "ERP Export" },
-  { accessorKey: "Lead Plant", header: "Lead Plant" },
-
-  { accessorKey: "Sort Value", header: "Sort Value" },
-];
+    { accessorKey: "ERP Status", header: "ERP Status" },
+    { accessorKey: "ERP Export", header: "ERP Export" },
+    { accessorKey: "Lead Plant", header: "Lead Plant" },
+    { accessorKey: "Sort Value", header: "Sort Value" },
+  ];
+};
 
 export const uniqueColumns = [
   { accessorKey: "Available Plant", header: "Available Plant" },

@@ -12,6 +12,8 @@ import ReusableAlert from "../Alert/ReusableAlert";
 import { handleExportExcel } from "../../utils/helpers";
 import CustomButton from "../Button/Button";
 import Pagination from "../Pagination/Pagination";
+import { ResizableBox } from "react-resizable";
+import "react-resizable/css/styles.css";
 
 const SuccessModal = ({
   show = false,
@@ -20,6 +22,8 @@ const SuccessModal = ({
 }) => {
   const itemsPerPage = 15;
   const [currentPage, setCurrentPage] = useState(1);
+  const [columnWidths, setColumnWidths] = useState({});
+  const [copiedCell, setCopiedCell] = useState(null); // Change to: {rowIndex: null, colIndex: null}
 
   // Memoized CellMeasurer cache
   const cache = useMemo(() => {
@@ -29,14 +33,36 @@ const SuccessModal = ({
     });
   }, []);
 
-  // Dynamically generate columns based on the response data
-  const columns = useMemo(() => {
-    if (!responseData || responseData.length === 0) return [];
+  // Preprocess response data to flatten nested arrays
+  const flattenedData = useMemo(() => {
+    // Function to flatten nested arrays
+    const flatten = (data) => {
+      if (!data || !Array.isArray(data)) return [];
 
-    // Collect all unique keys from ALL items in the response data
+      // First, check if we have an array of arrays
+      const isNestedArray = data.some((item) => Array.isArray(item));
+
+      if (isNestedArray) {
+        // Flatten one level of arrays
+        return data.flatMap((item) => (Array.isArray(item) ? item : [item]));
+      }
+
+      return data;
+    };
+
+    return flatten(responseData);
+  }, [responseData]);
+
+  // Dynamically generate columns based on the flattened response data
+  const columns = useMemo(() => {
+    if (!flattenedData || flattenedData.length === 0) return [];
+
+    // Collect all unique keys from ALL items in the flattened data
     const allKeys = new Set();
-    responseData.forEach((item) => {
-      Object.keys(item).forEach((key) => allKeys.add(key));
+    flattenedData.forEach((item) => {
+      if (typeof item === "object" && item !== null) {
+        Object.keys(item).forEach((key) => allKeys.add(key));
+      }
     });
 
     // Helper function to format header text
@@ -58,22 +84,13 @@ const SuccessModal = ({
 
     // Convert keys to column definitions
     return Array.from(allKeys).map((key) => {
-      // Set appropriate widths based on column type
-      let width = "20%";
-      if (
-        key.toLowerCase().includes("message") ||
-        key.toLowerCase().includes("description")
-      ) {
-        width = "40%";
+      let width = columnWidths[key] || 120;
+
+      // Set different widths based on the column content type
+      if (key.toLowerCase().includes("message")) {
+        width = columnWidths[key] || 200; // Message columns are wider
       } else if (key.toLowerCase().includes("status")) {
-        width = "15%";
-      } else if (key.toLowerCase().includes("revision")) {
-        width = "10%";
-      } else if (
-        key.toLowerCase().includes("ein") ||
-        key.toLowerCase().includes("number")
-      ) {
-        width = "25%";
+        width = columnWidths[key] || 100;
       }
 
       return {
@@ -83,16 +100,20 @@ const SuccessModal = ({
         tooltip: formatHeaderText(key), // Update tooltip too
       };
     });
-  }, [responseData]);
+  }, [flattenedData, columnWidths]);
+
+  const handleResize = (key, newWidth) => {
+    setColumnWidths((prev) => ({ ...prev, [key]: newWidth }));
+  };
 
   // Paginate response data
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return responseData.slice(start, start + itemsPerPage);
-  }, [currentPage, responseData]);
+    return flattenedData.slice(start, start + itemsPerPage);
+  }, [currentPage, flattenedData]);
 
   const handleExport = () => {
-    handleExportExcel(responseData, "upload-results.xlsx");
+    handleExportExcel(flattenedData, "upload-results.xlsx");
   };
 
   console.log("SuccessModal received response data:", responseData);
@@ -124,6 +145,35 @@ const SuccessModal = ({
     return "-";
   };
 
+  // Function to copy a single cell value
+  const handleCopyCellValue = (value, rowIndex, colIndex, buttonElement) => {
+    if (!value || value === "-") return;
+
+    // Convert objects or arrays to JSON string before copying
+    const textToCopy =
+      typeof value === "object" ? JSON.stringify(value) : String(value);
+
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        // Add the copied class to the button itself
+        if (buttonElement) {
+          buttonElement.classList.add("copied");
+
+          // Remove the class after 1.5 seconds
+          setTimeout(() => {
+            buttonElement.classList.remove("copied");
+          }, 1000);
+        }
+
+        // We can keep this for tracking which cell was copied if needed
+        setCopiedCell({ rowIndex, colIndex });
+        setTimeout(() => setCopiedCell(null), 1500);
+      })
+      .catch((err) => {
+        console.error("Failed to copy cell value:", err);
+      });
+  };
   const rowRenderer = ({ key, index, style, parent }) => {
     const item = paginatedData[index];
     if (!item) return null;
@@ -140,6 +190,18 @@ const SuccessModal = ({
           {columns.map((column, colIndex) => {
             const value = getItemValue(item, column.key);
 
+            // Convert any object/array values to string for display
+            const displayValue =
+              typeof value === "object" && value !== null
+                ? JSON.stringify(value)
+                : String(value);
+
+            // Check if this specific cell position is copied
+            const isCopied =
+              copiedCell &&
+              copiedCell.rowIndex === index &&
+              copiedCell.colIndex === colIndex;
+
             // Special handling for status field
             if (column.key.toLowerCase().includes("status")) {
               const statusValue = String(value).toLowerCase();
@@ -152,11 +214,68 @@ const SuccessModal = ({
               return (
                 <div
                   key={colIndex}
-                  className={`virtualized-cell status-cell ${statusClass}`}
-                  style={{ width: column.width }}
-                  title={String(value)}
+                  className={`virtualized-cell status-cell ${statusClass} ${
+                    isCopied ? "copied" : ""
+                  }`}
+                  style={{ width: column.width, position: "relative" }}
+                  title={displayValue}
                 >
-                  {value}
+                  {displayValue}
+                  <button
+                    className="cell-copy-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Pass the button element reference to the handler
+                      handleCopyCellValue(
+                        value,
+                        index,
+                        colIndex,
+                        e.currentTarget
+                      );
+                    }}
+                    aria-label="Copy cell value"
+                    title="Copy to clipboard"
+                  >
+                    {/* Copy icon (visible by default) */}
+                    <svg
+                      className="copy-icon"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect
+                        x="9"
+                        y="9"
+                        width="13"
+                        height="13"
+                        rx="2"
+                        ry="2"
+                      ></rect>
+                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                    </svg>
+
+                    {/* Checkmark icon (initially hidden) */}
+                    <svg
+                      className="copied-icon"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                  </button>
                 </div>
               );
             }
@@ -165,11 +284,42 @@ const SuccessModal = ({
             return (
               <div
                 key={colIndex}
-                className="virtualized-cell"
-                style={{ width: column.width }}
-                title={String(value)}
+                className={`virtualized-cell ${isCopied ? "copied" : ""}`}
+                style={{ width: column.width, position: "relative" }}
+                title={displayValue}
               >
-                {String(value)}
+                {displayValue}
+                <button
+                  className="cell-copy-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCopyCellValue(value, index, colIndex);
+                  }}
+                  aria-label="Copy cell value"
+                  title="Copy to clipboard"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="9"
+                      y="9"
+                      width="13"
+                      height="13"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                  </svg>
+                </button>
               </div>
             );
           })}
@@ -208,8 +358,8 @@ const SuccessModal = ({
           variant="success"
           message={
             <p className="success-message-text">
-              ✅ <strong>Success:</strong> {responseData.length} item
-              {responseData.length > 1 ? "s" : ""} processed.
+              ✅ <strong>Success:</strong> {flattenedData.length} item
+              {flattenedData.length > 1 ? "s" : ""} processed.
             </p>
           }
           className="mb-3"
@@ -218,16 +368,53 @@ const SuccessModal = ({
         {columns.length > 0 ? (
           <>
             <div className="virtualized-table-container">
-              <div className="virtualized-header">
-                {columns.map((column, index) => (
-                  <div
-                    key={index}
-                    className="virtualized-header-cell"
-                    style={{ width: column.width }}
-                    title={column.header} // Added tooltip
+              <div className="virtualized-header" style={{ display: "flex" }}>
+                {columns.map((column, idx) => (
+                  <ResizableBox
+                    key={column.key}
+                    width={column.width}
+                    height={30}
+                    axis="x"
+                    resizeHandles={["e"]}
+                    handle={
+                      <span
+                        className="custom-resizer"
+                        style={{
+                          cursor: "col-resize",
+                          width: 8,
+                          height: "100%",
+                          display: "inline-block",
+                          position: "absolute",
+                          right: 0,
+                          top: 0,
+                        }}
+                      />
+                    }
+                    onResizeStop={(e, data) =>
+                      handleResize(column.key, data.size.width)
+                    }
+                    minConstraints={[90, 30]}
+                    maxConstraints={[200, 30]}
                   >
-                    {column.header}
-                  </div>
+                    <div
+                      className="virtualized-header-cell"
+                      style={{
+                        width: column.width,
+                        minWidth: 90,
+                        maxWidth: 200,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        position: "relative",
+                        userSelect: "none",
+                        paddingRight: 8,
+                        boxSizing: "border-box",
+                      }}
+                      title={column.header}
+                    >
+                      {column.header}
+                    </div>
+                  </ResizableBox>
                 ))}
               </div>
 
@@ -251,7 +438,7 @@ const SuccessModal = ({
             {/* Pagination Controls */}
             <Pagination
               currentPage={currentPage}
-              totalItems={responseData.length}
+              totalItems={flattenedData.length}
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
             />
