@@ -113,7 +113,7 @@ const DateRange = ({ filters, handleFilters }: IDateRange) => {
             moveRangeOnFirstSelection={false}
             editableDateInputs={true}
             retainEndDateOnFirstSelection={true}
-            maxDate={dayjs().add(1, "day").toDate()}
+            maxDate={dayjs().toDate()}
           />
 
           <Box
@@ -141,8 +141,11 @@ const DateRange = ({ filters, handleFilters }: IDateRange) => {
               color="primary"
               sx={{ width: "48%", fontSize: 15 }}
               onClick={() => {
-                handleFilters("startDate", startDate?.toISOString()!);
-                handleFilters("endDate", endDate?.toISOString()!);
+                handleFilters(
+                  "startDate",
+                  dayjs(startDate).format("YYYY-MM-DD"),
+                );
+                handleFilters("endDate", dayjs(endDate).format("YYYY-MM-DD"));
                 handleFilters("page", 0);
 
                 setAnchorEl(null);

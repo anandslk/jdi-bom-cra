@@ -42,6 +42,7 @@ import {
 } from "../../slices/apis/jdiBom.api";
 import { setIsDropped } from "../../slices/reducers/jdiBom.reducer";
 import { useAppDispatch, useAppSelector } from "../../store";
+import dayjs from "dayjs";
 
 export type Status = "In Process" | "Processing" | "Completed" | "Failed";
 
@@ -286,11 +287,7 @@ export default function BomCommoningStatusTable() {
             <Typography sx={{ fontSize: 18 }}>
               <strong>Submitted At:</strong>{" "}
               {/* {new Date(selectedItem.timestamp).toLocaleString()} */}
-              {new Date(selectedItem.timestamp).toLocaleDateString("en-GB", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              })}
+              {dayjs(selectedItem.timestamp).format("DD/MM/YYYY")}
             </Typography>
             <Typography sx={{ fontSize: 18 }}>
               <strong>Submitted By:</strong>{" "}
@@ -519,11 +516,7 @@ export default function BomCommoningStatusTable() {
                   </TableCell>
                   <TableCell sx={{ fontSize: 15 }}>
                     {/* {new Date(item.timestamp).toLocaleString()} */}
-                    {new Date(item.timestamp).toLocaleDateString("en-GB", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                    })}
+                    {dayjs(item.timestamp).format("DD/MM/YYYY")}
                   </TableCell>
                   <TableCell sx={{ fontSize: 15 }}>{item.userEmail}</TableCell>
                   <TableCell align="right">
