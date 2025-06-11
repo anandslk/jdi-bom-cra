@@ -1,80 +1,37 @@
-import { useOktaAuth } from "@okta/okta-react";
+import { AppBar, Toolbar, Typography, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { route } from "../constants";
 
 export const Navbar = () => {
-  const { authState, oktaAuth } = useOktaAuth();
-
-  const loginWithRedirect = async () => {
-    const { pathname, search } = window.location;
-    const originalUri = pathname + search;
-
-    oktaAuth.signInWithRedirect({ originalUri });
-  };
-
-  const logOut = () => {
-    const { origin, pathname, search } = window.location;
-    const postLogoutPath = origin + pathname + search;
-
-    oktaAuth.signOut({
-      postLogoutRedirectUri: postLogoutPath,
-    });
-  };
-
-  const buttonText = authState?.isAuthenticated ? "Logout" : "Login";
-  const onClick = authState?.isAuthenticated ? logOut : loginWithRedirect;
-
-  // const login = async () => {
-  //   try {
-  //     await oktaAuth.signInWithRedirect();
-  //   } catch (error: any) {
-  //     if (error.name === "AuthApiError") {
-  //       // Handle AuthApiError
-  //       console.error("Authentication failed:", error.message);
-  //       // Display an error message to the user
-  //     } else {
-  //       // Handle other errors
-  //       console.error("An unexpected error occurred:", error);
-  //       // Display a generic error message to the user
-  //     }
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (!authState) return;
-
-  //   if (!authState?.isAuthenticated) {
-  //     const originalUri = toRelativeUrl(
-  //       window.location.href,
-  //       window.location.origin
-  //     );
-
-  //     oktaAuth.setOriginalUri(originalUri);
-  //     // oktaAuth.signInWithRedirect();
-
-  //     // login();
-  //   }
-  // }, [oktaAuth, !!authState, authState?.isAuthenticated]);
+  const navigate = useNavigate();
 
   return (
-    <>
-      {/* <AppBar position="static" sx={{ backgroundColor: "#3f51b5" }}>
-        <Toolbar>
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{
-              fontWeight: "bold",
-              textAlign: "center",
-              display: "flex",
-              justifyContent: "center",
-              margin: "auto",
-            }}
-          >
-            Assign BOM Structure to Specific Orgs
-          </Typography>
-        </Toolbar>
-      </AppBar> */}
+    <AppBar
+      position="static"
+      sx={{ backgroundColor: "#3f51b5", marginBottom: 2 }}
+    >
+      <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Typography
+          component="div"
+          sx={{
+            fontSize: 20,
+            textAlign: "center",
+            margin: "auto",
+            flex: 1,
+          }}
+        >
+          Assign BOM Structure to Specific Orgs
+        </Typography>
 
-      <button onClick={onClick}>{buttonText}</button>
-    </>
+        <Button
+          variant="outlined"
+          color="inherit"
+          sx={{ marginLeft: "auto", fontSize: 12 }}
+          onClick={() => navigate(route.status)}
+        >
+          Check BOM Status
+        </Button>
+      </Toolbar>
+    </AppBar>
   );
 };

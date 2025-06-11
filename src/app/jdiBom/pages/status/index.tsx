@@ -41,8 +41,7 @@ import {
   useJdiBomsQuery,
   useUpdateJdiBomMutation,
 } from "../../slices/apis/jdiBom.api";
-import { setIsDropped } from "../../slices/reducers/jdiBom.reducer";
-import { useAppDispatch, useAppSelector } from "../../store";
+import { useAppSelector } from "../../store";
 import dayjs from "dayjs";
 
 export type Status = "In Process" | "Processing" | "Completed" | "Failed";
@@ -97,8 +96,6 @@ export default function BomCommoningStatusTable() {
   });
 
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const objectDetails = useAppSelector((state) => state.jdiBom.objectDetails);
 
   const { data, isFetching } = useJdiBomsQuery({
     userId,
@@ -355,10 +352,7 @@ export default function BomCommoningStatusTable() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Button
             variant="outlined"
-            onClick={() => {
-              if (!!!objectDetails?.length) dispatch(setIsDropped(false));
-              navigate(route.index);
-            }}
+            onClick={() => navigate(route.index)}
             sx={{
               fontSize: 16,
               display: "flex",

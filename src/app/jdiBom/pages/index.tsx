@@ -57,6 +57,7 @@ import {
 } from "../components/home/SearchParts";
 import { useMutation } from "@tanstack/react-query";
 import { AddCircleOutline } from "@mui/icons-material";
+import { Navbar } from "../components/Navbar";
 
 export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
@@ -354,6 +355,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                 boxShadow: 3,
               }}
             >
+              <Navbar />
+
               <form noValidate onSubmit={handleFormSubmit}>
                 <Stack spacing={3}>
                   <>
