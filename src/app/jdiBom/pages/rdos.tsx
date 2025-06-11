@@ -20,18 +20,19 @@ import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
 import { route } from "../constants";
 import ExcelImporter from "./readFile";
+import { availOrgsList, RDO_ORGS } from "../utils";
 
 type RdoKey =
   | "Daniel"
   | "Micro Motion"
-  | "Rosmount Leve"
+  | "Rosmount Level"
   | "Roxar"
   | "Ultrasonic";
 
 const RDO_KEYS: RdoKey[] = [
   "Daniel",
   "Micro Motion",
-  "Rosmount Leve",
+  "Rosmount Level",
   "Roxar",
   "Ultrasonic",
 ];
@@ -52,15 +53,11 @@ const RdoOrgSelector: React.FC = () => {
     );
   }, [data]);
 
-  const [_createDestOrgs] = useCreateDestOrgsMutation();
+  const [createDestOrgs] = useCreateDestOrgsMutation();
 
-  // useEffect(() => {
-  //   const get = async () => {
-  //     await createDestOrgs({ ...RDO_ORGS, availOrgs: availOrgsList });
-  //   };
-
-  //   // get();
-  // }, []);
+  const createDests = async () => {
+    await createDestOrgs({ ...RDO_ORGS, availOrgs: availOrgsList });
+  };
 
   return (
     <Box p={3} sx={{ height: "100vh" }}>
@@ -89,6 +86,8 @@ const RdoOrgSelector: React.FC = () => {
         </Typography>
 
         <ExcelImporter />
+
+        {false && <Button onClick={createDests}>Create</Button>}
       </Box>
 
       {isFetching && <Loader />}

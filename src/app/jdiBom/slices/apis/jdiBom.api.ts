@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
   createGetQuery,
   createGetWithParamsQuery,
+  createMutationParamQuery,
   createMutationQuery,
   headers,
 } from "./config";
@@ -45,6 +46,14 @@ export const jdiBomApiSlice = createApi({
       invalidatesTags: ["JdiBom"],
     }),
 
+    deleteJdi: builder.mutation<void, { params: { id: string } }>({
+      ...createMutationParamQuery<void, { id: string }>(
+        "/jdiBom/:id",
+        "DELETE",
+      ),
+      invalidatesTags: ["JdiBom"],
+    }),
+
     deleteAll: builder.mutation<{}, {}>({
       ...createMutationQuery("/jdiBom", "DELETE"),
       invalidatesTags: ["JdiBom"],
@@ -81,9 +90,19 @@ export const {
 
 export const {
   useCreateJdiBomMutation,
+  useDeleteJdiMutation,
   useDeleteAllMutation,
   useUpdateJdiBomMutation, // ✅ export the new hook
 } = jdiBomApiSlice;
+
+interface IStatusDetail {
+  status: "FAILED" | "SUCCESS";
+  message: string;
+  processedItem: string;
+  sourceOrg: string;
+  targetOrg: string;
+  creationDate: string;
+}
 
 export interface BomItem {
   id: string;
@@ -93,6 +112,7 @@ export interface BomItem {
   targetOrgs: string[];
   userEmail: string;
   processedItems: IProductInfo[];
+  statusDetails: IStatusDetail[];
 }
 
 export interface BomResponse {

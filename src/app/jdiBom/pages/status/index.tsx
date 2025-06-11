@@ -37,6 +37,7 @@ import {
   BomResponse,
   useCreateJdiBomMutation,
   useDeleteAllMutation,
+  useDeleteJdiMutation,
   useJdiBomsQuery,
   useUpdateJdiBomMutation,
 } from "../../slices/apis/jdiBom.api";
@@ -111,6 +112,8 @@ export default function BomCommoningStatusTable() {
       timestampTo: filters.endDate,
     }),
   }) as { data?: BomResponse; isFetching: boolean };
+
+  const [deleteJdi, {}] = useDeleteJdiMutation();
 
   const [_mutate] = useCreateJdiBomMutation();
   const [deleteAllJdi] = useDeleteAllMutation();
@@ -253,16 +256,16 @@ export default function BomCommoningStatusTable() {
         {selectedItem && (
           <Stack spacing={2} sx={{ paddingY: 2 }}>
             <Typography sx={{ fontSize: 18 }}>
-              <strong>Request ID:</strong> {selectedItem.id}
+              <strong>Request ID:</strong> {selectedItem?.id}
             </Typography>
             <Typography sx={{ fontSize: 18 }}>
-              <strong>Source Org:</strong> {selectedItem.sourceOrg}
+              <strong>Source Org:</strong> {selectedItem?.sourceOrg}
             </Typography>
             <Typography sx={{ fontSize: 18 }}>
               <strong>Processed Items:</strong>
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {selectedItem.processedItems.map((p, idx) => (
+              {selectedItem?.processedItems?.map((p, idx) => (
                 <Chip key={idx} label={p.Title} sx={{ fontSize: 15 }} />
               ))}
             </Box>
@@ -270,7 +273,7 @@ export default function BomCommoningStatusTable() {
               <strong>Target Orgs:</strong>
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {selectedItem.targetOrgs.map((org, idx) => (
+              {selectedItem?.targetOrgs?.map((org, idx) => (
                 <Chip key={idx} label={org} sx={{ fontSize: 15 }} />
               ))}
             </Box>
@@ -279,20 +282,70 @@ export default function BomCommoningStatusTable() {
             </Typography>
             <Box>
               <Chip
-                label={selectedItem.status}
-                color={getStatusColor(selectedItem.status as Status)}
+                label={selectedItem?.status}
+                color={getStatusColor(selectedItem?.status as Status)}
                 sx={{ fontSize: 15 }}
               />
             </Box>
+
+            {selectedItem?.status === "Failed" &&
+              selectedItem?.statusDetails?.length > 0 && (
+                <>
+                  <Typography sx={{ fontSize: 18, marginTop: 2 }}>
+                    <strong>Failure Details:</strong>
+                  </Typography>
+                  <Table size="small" sx={{ backgroundColor: "#f9f9f9" }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>
+                          <strong>Part</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Source Org</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Target Org</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Status</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Reason</strong>
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedItem?.statusDetails.map((detail, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{detail?.processedItem || "—"}</TableCell>
+                          <TableCell>{detail?.sourceOrg || "—"}</TableCell>
+                          <TableCell>{detail?.targetOrg || "—"}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={detail?.status}
+                              color={
+                                detail?.status === "SUCCESS"
+                                  ? "success"
+                                  : "error"
+                              }
+                              sx={{ fontSize: 13 }}
+                            />
+                          </TableCell>
+                          <TableCell>{detail?.message || "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+
             <Typography sx={{ fontSize: 18 }}>
               <strong>Submitted At:</strong>{" "}
-              {/* {new Date(selectedItem.timestamp).toLocaleString()} */}
-              {dayjs(selectedItem.timestamp).format("DD/MM/YYYY")}
+              {dayjs(selectedItem?.timestamp).format("DD/MM/YYYY")}
             </Typography>
+
             <Typography sx={{ fontSize: 18 }}>
-              <strong>Submitted By:</strong>{" "}
-              {/* {new Date(selectedItem.timestamp).toLocaleString()} */}
-              {selectedItem.userEmail}
+              <strong>Submitted By:</strong> {selectedItem?.userEmail}
             </Typography>
           </Stack>
         )}
@@ -531,13 +584,22 @@ export default function BomCommoningStatusTable() {
                     </Button>
 
                     {false && (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => update(item.id)}
-                      >
-                        Update
-                      </Button>
+                      <>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => update(item.id)}
+                        >
+                          Update
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => deleteJdi({ params: { id: item.id } })}
+                        >
+                          Delete
+                        </Button>
+                      </>
                     )}
 
                     {/* {item.status === "Failed" && (

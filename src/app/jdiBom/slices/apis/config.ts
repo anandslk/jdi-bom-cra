@@ -9,27 +9,34 @@ export const createMutationQuery = <T>(
   }),
 });
 
-export const createMutationParamQuery = <T, P extends Record<string, any>>(
+export const createMutationParamQuery = <
+  T = void,
+  P extends Record<string, any> = {},
+>(
   url: string,
   method: "POST" | "PUT" | "PATCH" | "DELETE" = "POST",
 ) => ({
-  query: ({ params, body }: { params?: P; body: T }) => {
+  query: (arg: { params?: P } & (T extends void ? {} : { body: T })) => {
     let resolvedUrl = url;
 
-    // Replace URL placeholders with actual parameters
-    if (params) {
-      resolvedUrl = Object.entries(params).reduce(
+    if (arg.params) {
+      resolvedUrl = Object.entries(arg.params).reduce(
         (acc, [key, value]) =>
           acc.replace(`:${key}`, encodeURIComponent(value)),
         url,
       );
     }
 
-    return {
+    const request: any = {
       url: resolvedUrl,
       method,
-      body,
     };
+
+    if ("body" in arg) {
+      request.body = arg.body;
+    }
+
+    return request;
   },
 });
 

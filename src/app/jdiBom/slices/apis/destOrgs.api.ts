@@ -46,7 +46,7 @@ export interface IDestOrgs {
 export interface IRDO_ORGS {
   Daniel: string[];
   "Micro Motion": string[];
-  "Rosmount Leve": string[];
+  "Rosmount Level": string[];
   Roxar: string[];
   Ultrasonic: string[];
   availOrgs: string[];
