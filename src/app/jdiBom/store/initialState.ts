@@ -17,6 +17,7 @@ export const initialState: IinitialState = {
     name: "",
     email: "",
     is_authorized: "",
+    email_verified: null,
     userinfo: [],
     updated_at: "",
     created_at: "",

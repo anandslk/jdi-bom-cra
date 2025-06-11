@@ -54,7 +54,8 @@ declare global {
     name: string;
     email: string;
     is_authorized: "Y" | "N" | "";
-    userinfo: ["admin", "Everyone", "Guest"] | [];
+    email_verified: boolean | null;
+    userinfo: ("admin" | "Everyone" | "Guest")[];
     updated_at: string;
     created_at: string;
     _rid: string;

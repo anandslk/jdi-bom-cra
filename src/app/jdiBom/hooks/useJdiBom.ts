@@ -189,86 +189,100 @@ export const useJdiBom = () => {
     enabled: !!headers?.data && isDropped,
   });
 
-  const engRelease = useQuery({
-    queryKey: ["engRelease", prevRev?.data],
+  const removeStateProduct = (released: EngItemVersion, itemId: string) => {
+    const releasedId = released?.id;
+    const alreadyExists = existingObjectIds?.includes(releasedId);
 
-    queryFn: async () => {
-      const responses = await Promise.allSettled(
-        (prevRev?.data ?? []).map((item) => {
-          const released = item?.versions?.find(
-            (v) => v?.maturityState === "RELEASED",
-          );
-
-          if (!released) return Promise.resolve(null);
-
-          const releasedId = released?.id;
-          const alreadyExists = existingObjectIds?.includes(releasedId);
-
-          if (!alreadyExists) {
-            dispatch(
-              updateObjectDetail({
-                droppedRevisionId: item?.id,
-                updates: {
-                  "Dropped Revision ID": released?.id,
-                  "Latest Released Revision ID": released?.id,
-                  "Maturity State": released?.maturityState,
-                  relativePath: released?.relativePath,
-                  "Dropped Revision": released?.revision,
-                },
-              }),
-            );
-
-            dispatch(
-              updateObjectId({
-                objectId: item?.id,
-                updates: { objectId: released?.id },
-              }),
-            );
-          } else {
-            dispatch(removeSingleObject(releasedId));
-            return Promise.resolve(null);
-          }
-
-          return fetchWithAuth({
-            url: `/modeler/dslib/dslib:ClassifiedItem/${releasedId}?$mask=dslib:ClassificationAttributesMask`,
-          }) as Promise<ClassifiedItemResponse>;
+    if (!alreadyExists) {
+      dispatch(
+        updateObjectDetail({
+          droppedRevisionId: itemId,
+          updates: {
+            "Dropped Revision ID": released?.id,
+            "Latest Released Revision ID": released?.id,
+            "Maturity State": released?.maturityState,
+            relativePath: released?.relativePath,
+            "Dropped Revision": released?.revision,
+          },
         }),
       );
 
-      return responses.map((res) =>
-        res.status === "fulfilled" ? res.value : null,
-      ) as ClassifiedItemResponse[];
-    },
+      dispatch(
+        updateObjectId({
+          objectId: itemId,
+          updates: { objectId: released?.id },
+        }),
+      );
+    } else {
+      dispatch(removeSingleObject(releasedId));
+      return Promise.resolve(null);
+    }
+  };
 
-    select: (data) => {
-      data?.forEach((product) => {
-        const classificationMembers =
-          product?.member?.[0]?.ClassificationAttributes?.member ?? [];
+  const updateMaturityState = (droppedRevisionId: string) => {
+    dispatch(
+      updateObjectDetail({
+        droppedRevisionId,
+        updates: {
+          "Maturity State": "frozen",
+        },
+      }),
+    );
+  };
 
-        const hasFalsePlantAssignment = classificationMembers?.some(
-          (classItem) =>
-            classItem?.Attributes?.some(
-              (attr) =>
-                attr?.name === "PlantAssignmentClass" && attr?.value !== true,
-            ),
+  const checkEngRelease = async (
+    prevRev: EngItemResult[],
+    removeStateProduct: (released: EngItemVersion, itemId: string) => void,
+    updateMaturityState: (id: string) => void,
+  ) => {
+    const responses = await Promise.allSettled(
+      (prevRev ?? []).map((item) => {
+        const released = item?.versions?.find(
+          (v) => v?.maturityState === "RELEASED",
         );
 
-        if (hasFalsePlantAssignment) {
-          const droppedRevisionId = product?.member?.[0]?.id;
+        if (!released) return Promise.resolve(null);
 
-          if (droppedRevisionId) {
-            dispatch(
-              updateObjectDetail({
-                droppedRevisionId,
-                updates: {
-                  "Maturity State": "frozen",
-                },
-              }),
-            );
-          }
+        removeStateProduct(released, item?.id);
+
+        return fetchWithAuth({
+          url: `/modeler/dslib/dslib:ClassifiedItem/${released?.id}?$mask=dslib:ClassificationAttributesMask`,
+        }) as Promise<ClassifiedItemResponse>;
+      }),
+    );
+
+    const classifRes = responses?.map((res) =>
+      res.status === "fulfilled" ? res.value : null,
+    ) as ClassifiedItemResponse[];
+
+    classifRes?.forEach((product) => {
+      const classificationMembers =
+        product?.member?.[0]?.ClassificationAttributes?.member ?? [];
+
+      const hasFalsePlantAssignment = classificationMembers?.some((classItem) =>
+        classItem?.Attributes?.some(
+          (attr) =>
+            attr?.name === "PlantAssignmentClass" && attr?.value !== true,
+        ),
+      );
+
+      if (hasFalsePlantAssignment) {
+        const droppedRevisionId = product?.member?.[0]?.id;
+
+        if (droppedRevisionId) {
+          updateMaturityState(droppedRevisionId);
         }
-      });
-    },
+      }
+    });
+
+    return classifRes;
+  };
+
+  const engRelease = useQuery({
+    queryKey: ["engRelease", prevRev?.data],
+
+    queryFn: () =>
+      checkEngRelease(prevRev?.data!, removeStateProduct, updateMaturityState),
 
     enabled: !!headers?.data && isDropped && !!prevRev?.data,
   });
@@ -355,5 +369,6 @@ export const useJdiBom = () => {
     collabSpaceId,
     engRelease,
     fetchPrevRev,
+    checkEngRelease,
   };
 };
