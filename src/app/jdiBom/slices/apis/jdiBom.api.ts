@@ -20,10 +20,6 @@ export const jdiBomApiSlice = createApi({
   tagTypes: ["JdiBom"],
 
   endpoints: (builder) => ({
-    getUser: builder.query<{}, { email: string }>(
-      createGetWithParamsQuery("/users/:email"),
-    ),
-
     jdiBoms: builder.query<
       BomResponse,
       {
@@ -81,7 +77,6 @@ export const jdiBomApiSlice = createApi({
 });
 
 export const {
-  useGetUserQuery,
   useJdiBomsQuery,
   useGetJdiBomQuery,
 

@@ -6,7 +6,7 @@ import useToast from "src/hooks/useToast";
 import { MSG_REFRESH_SUCCESS } from "src/utils/toastMessages";
 import { DragAndDropComponent } from "../components/DragAndDrop";
 import { store, useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
-import { useGetUserQuery } from "../slices/apis/jdiBom.api";
+import { useGetUserQuery } from "../slices/apis/users.api";
 import { useHandleDrop } from "../hooks/useHandleDrop";
 
 export const withDroppable = <P extends object, T extends unknown>(

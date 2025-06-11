@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { initialState } from "src/app/jdiBom/store/initialState";
-import { jdiBomApiSlice } from "../apis/jdiBom.api";
+import { usersApiSlice } from "../apis/users.api";
 
 const userSlice = createSlice({
   name: "user",
@@ -10,7 +10,7 @@ const userSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addMatcher(
-      jdiBomApiSlice.endpoints.getUser.matchFulfilled,
+      usersApiSlice.endpoints.getUser.matchFulfilled,
       (_, action) => {
         return (action.payload as any)?.data as IUser;
       },
