@@ -287,7 +287,7 @@ export const useJdiBom = () => {
     enabled: !!headers?.data && isDropped && !!prevRev?.data,
   });
 
-  console.log("prevRev................", engRelease?.data);
+  // console.log("prevRev................", engRelease?.data);
 
   // // Fetch classified item data
   // const associatedPlants = useQuery({

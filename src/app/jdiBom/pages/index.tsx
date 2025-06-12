@@ -197,6 +197,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
       const prevr = await fetchPrevRev(res!);
 
+      console.log('prevr................', prevr)
+
       await checkEngRelease(
         prevRev?.data!,
         removeStateProduct,
@@ -206,6 +208,9 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       return { products: res, prevr };
     },
   });
+
+
+  console.log('formState.................', formState)
 
   useEffect(() => {
     if (!data?.data) return;
