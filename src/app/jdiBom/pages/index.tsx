@@ -330,7 +330,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       (val) => !!val,
     );
 
-    if (!hasErrors) {
+    if (hasErrors) {
       !!!objectDetails?.length && (await mutateParts.mutateAsync());
 
       setIsOpen(true);
