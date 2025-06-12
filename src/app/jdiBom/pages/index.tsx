@@ -31,9 +31,7 @@ import { ResultsScreen } from "src/app/jdiBom/components/Result";
 import { InjectedDroppableProps } from "src/app/jdiBom/hoc/withDroppable";
 import {
   removeProduct,
-  removeSingleObject,
   setIsDropped,
-  updateObjectId,
 } from "src/app/jdiBom/slices/reducers/jdiBom.reducer";
 import { useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
 import { rdoList } from "src/app/jdiBom/utils";
@@ -71,14 +69,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   const searchPartsRef = useRef<SearchPartsHandlers>(null);
 
-  const {
-    plants,
-    fetchPrevRev,
-    prevRev,
-    engRelease,
-    collabSpace,
-    checkEngRelease,
-  } = useJdiBom();
+  const { plants, prevRev, engRelease, collabSpace } = useJdiBom();
 
   // Form fields and error state
   const [errors, setErrors] = useState<IFormErrors>({
@@ -111,101 +102,14 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   const { data, isFetching: isOrgs } = useDestOrgsQuery({});
 
-  const existingObjectIds = useAppSelector((state) =>
-    state.jdiBom.objectIds.map((obj) => obj.objectId),
-  );
-
-  const removeStateProduct = (released: EngItemVersion, itemId: string) => {
-    const releasedId = released?.id;
-    const alreadyExists = existingObjectIds?.includes(releasedId);
-
-    if (!alreadyExists) {
-      setFormState((prev) => {
-        const droppedRevisionId = itemId;
-
-        const updates = {
-          "Dropped Revision ID": released?.id,
-          "Latest Released Revision ID": released?.id,
-          "Maturity State": released?.maturityState,
-          relativePath: released?.relativePath,
-          "Dropped Revision": released?.revision,
-        };
-
-        const updatedObjectDetails = [...(prev.parentParts ?? [])];
-
-        const index = updatedObjectDetails.findIndex(
-          (item) => item["Dropped Revision ID"] === droppedRevisionId,
-        );
-
-        if (index !== -1) {
-          updatedObjectDetails[index] = {
-            ...updatedObjectDetails[index],
-            ...updates,
-          };
-        }
-
-        return {
-          ...prev,
-          parentParts: updatedObjectDetails,
-        };
-      });
-
-      dispatch(
-        updateObjectId({
-          objectId: itemId,
-          updates: { objectId: releasedId },
-        }),
-      );
-    } else {
-      setFormState((prev) => ({
-        ...prev,
-        parentParts: prev.parentParts.filter(
-          (item) => item["Dropped Revision ID"] !== releasedId,
-        ),
-      }));
-
-      dispatch(removeSingleObject(releasedId));
-      return Promise.resolve(null);
-    }
-  };
-
-  const updateMaturityState = (droppedRevisionId: string) => {
-    setFormState((prev) => {
-      const updatedParts = [...prev.parentParts];
-
-      const index = updatedParts.findIndex(
-        (item) => item["Dropped Revision ID"] === droppedRevisionId,
-      );
-
-      if (index !== -1) {
-        updatedParts[index] = {
-          ...updatedParts[index],
-          "Maturity State": "frozen",
-        };
-      }
-
-      return {
-        ...prev,
-        parentParts: updatedParts,
-      };
-    });
-  };
-
   const mutateParts = useMutation({
     mutationFn: async () => {
-      const res = await searchPartsRef.current?.handleInputChange?.();
+      const res =
+        await searchPartsRef.current?.handleInputChange?.(setFormState);
 
-      const prevr = await fetchPrevRev(res!);
+      setFormState((prev) => ({ ...prev, parentParts: res?.products! }));
 
-      // console.log("prevr................", prevr);
-
-      await checkEngRelease(
-        prevRev?.data!,
-        removeStateProduct,
-        updateMaturityState,
-      );
-
-      return { products: res, prevr };
+      return { products: res };
     },
   });
 
@@ -255,16 +159,6 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       ),
     }));
   }, [objectDetails]);
-
-  useEffect(() => {
-    setFormState((prev) => ({
-      ...prev,
-      parentParts:
-        mutateParts?.data?.products?.filter(
-          (item) => item["Maturity State"]?.toLowerCase() === "released",
-        ) ?? [],
-    }));
-  }, [mutateParts.data]);
 
   useEffect(() => {
     if (formState.rdo?.trim()) {

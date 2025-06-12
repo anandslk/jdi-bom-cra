@@ -5,15 +5,26 @@ import { useMutation } from "@tanstack/react-query";
 //   SearchResult,
 // } from "../components/AdvancedSearch";
 import { useFetchWithAuth } from "./useFetchWithAuth";
-// import { useHandleDrop } from "./useHandleDrop";
 import { env } from "../env";
-import { ClipboardEvent, KeyboardEvent, useState } from "react";
+import { ClipboardEvent, Dispatch, SetStateAction, useState } from "react";
 import { useHandleDrop } from "./useHandleDrop";
 import dayjs from "dayjs";
+import { useJdiBom } from "./useJdiBom";
+import { IFormState } from "../pages";
+import { useAppDispatch, useAppSelector } from "../store";
+import {
+  removeSingleObject,
+  updateObjectId,
+} from "../slices/reducers/jdiBom.reducer";
 
 export const useAdvancedSearch = () => {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
+
+  const [unreleasedItems, setUnreleasedItems] = useState<IProductInfo[]>([]);
+  const [isUnreleased, setIsUnreleased] = useState(false);
+
+  const dispatch = useAppDispatch();
 
   const { fetchWithAuth } = useFetchWithAuth();
   const { handleDrop, isFetching } = useHandleDrop();
@@ -278,30 +289,23 @@ export const useAdvancedSearch = () => {
       const filtered = res?.results?.filter((entry) =>
         entry.attributes.some(
           (attr) =>
-            attr.name === "ds6w:label" && chips?.includes(attr?.value as string)
-        )
+            attr.name === "ds6w:label" &&
+            chips?.includes(attr?.value as string),
+        ),
       );
 
-      console.log("filtered..........................", filtered);
-
       const resResult = filtered ? processResults(filtered) : [];
-      console.log("resResult..........................", resResult);
 
       const fetchedProducts = await handleDrop(
         resResult?.map((item) => ({
           objectId: item?.objectId,
           objectType: item?.objectType,
-        }))
+        })),
       );
 
       return fetchedProducts as IProductInfo[];
     },
   });
-
-  // const results = mutation.data ? processResults(mutation.data) : [];
-  // const resultCount = mutation.data?.infos.nresults || 0;
-
-  // Existing handlers remain the same, just update the state management
 
   const splitTerms = (text: string) =>
     text
@@ -318,32 +322,140 @@ export const useAdvancedSearch = () => {
   //   });
   // };
 
-  const handleInputChange = async () => {
-    if (inputValue) {
-      const terms = splitTerms(inputValue);
-      // const newOnes = terms?.filter((v) => v && !chips.includes(v));
+  const existingObjectIds = useAppSelector((state) =>
+    state.jdiBom.objectIds.map((obj) => obj.objectId),
+  );
 
-      // if (newOnes.length > 0) {
-      if (terms.length > 0) {
-        setChips(terms);
-        // setChips((prev) => [...prev, ...newOnes]);
-        // setInputValue("");
+  const { fetchPrevRev, checkEngRelease } = useJdiBom();
 
-        return (await mutation.mutateAsync(terms)) as IProductInfo[];
+  const handleInputChange = async (
+    setFormState: Dispatch<SetStateAction<IFormState>>,
+  ) => {
+    setIsUnreleased(false);
+    setUnreleasedItems([]);
+
+    if (!inputValue) return null;
+
+    const terms = splitTerms(inputValue);
+
+    if (terms.length < 0) return null;
+
+    setChips(terms);
+
+    const updateMaturityState = (id: string) => {
+      setFormState((prev) => {
+        const updatedParts = [...prev.parentParts];
+
+        const index = updatedParts.findIndex(
+          (item) => item["Dropped Revision ID"] === id,
+        );
+
+        if (index !== -1) {
+          updatedParts[index] = {
+            ...updatedParts[index],
+            "Maturity State": "frozen",
+          };
+        }
+
+        return {
+          ...prev,
+          parentParts: updatedParts,
+        };
+      });
+    };
+
+    const removeStateProduct = (released: EngItemVersion, itemId: string) => {
+      const releasedId = released?.id;
+      const alreadyExists = existingObjectIds?.includes(releasedId);
+
+      if (!alreadyExists) {
+        setFormState((prev) => {
+          const droppedRevisionId = itemId;
+
+          const updates = {
+            "Dropped Revision ID": released?.id,
+            "Latest Released Revision ID": released?.id,
+            "Maturity State": released?.maturityState,
+            relativePath: released?.relativePath,
+            "Dropped Revision": released?.revision,
+          };
+
+          const updatedObjectDetails = [...(prev.parentParts ?? [])];
+
+          const index = updatedObjectDetails.findIndex(
+            (item) => item["Dropped Revision ID"] === droppedRevisionId,
+          );
+
+          if (index !== -1) {
+            updatedObjectDetails[index] = {
+              ...updatedObjectDetails[index],
+              ...updates,
+            };
+          }
+
+          return {
+            ...prev,
+            parentParts: updatedObjectDetails,
+          };
+        });
+
+        dispatch(
+          updateObjectId({
+            objectId: itemId,
+            updates: { objectId: releasedId },
+          }),
+        );
+      } else {
+        setFormState((prev) => ({
+          ...prev,
+          parentParts: prev.parentParts.filter(
+            (item) => item["Dropped Revision ID"] !== releasedId,
+          ),
+        }));
+
+        dispatch(removeSingleObject(releasedId));
+        return Promise.resolve(null);
       }
+    };
 
-      // setInputValue("");
+    const res = (await mutation.mutateAsync(terms)) as IProductInfo[];
+
+    console.log("res/////////////////", res);
+
+    const prevr = await fetchPrevRev(res!);
+
+    console.log("prevr/////////////////", prevr);
+
+    if (!!!prevr?.length) {
+      const filtered = res?.filter((item) => {
+        return item["Maturity State"]?.toLowerCase() !== "released";
+      });
+
+      setUnreleasedItems(filtered);
+      setIsUnreleased(true);
     }
 
-    return null;
-  };
+    const unreleasedIds = await checkEngRelease(
+      prevr!,
+      removeStateProduct,
+      updateMaturityState,
+    );
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
+    if (unreleasedIds?.length > 0) {
+      const unreleased = res.filter((product) =>
+        unreleasedIds.includes(product["Dropped Revision ID"]),
+      );
 
-      handleInputChange();
+      setUnreleasedItems(unreleased);
+      setIsUnreleased(true);
     }
+
+    const releasedParts =
+      res?.filter(
+        (item) => item["Maturity State"]?.toLowerCase() === "released",
+      ) ?? [];
+
+    return { products: releasedParts, prevr };
   };
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
@@ -371,14 +483,16 @@ export const useAdvancedSearch = () => {
     setChips,
     inputValue,
     setInputValue,
-    handleKeyDown,
     handlePaste,
     mutation,
     splitTerms,
-    // results,
     handleDeleteChip,
     handleInputChange,
     isFetching,
+    isUnreleased,
+    setIsUnreleased,
+    unreleasedItems,
+    setUnreleasedItems,
   };
 };
 

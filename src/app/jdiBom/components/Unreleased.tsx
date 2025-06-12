@@ -26,12 +26,32 @@ export function Unreleased() {
   const showDialog =
     unreleasedItems.length > 0 && dismissedSignature !== unreleasedSignature;
 
+  const onCancel = () => setDismissedSignature(unreleasedSignature);
+
+  return (
+    <UnreleasedItems
+      onOpen={showDialog}
+      onCancel={onCancel}
+      unreleasedItems={unreleasedItems}
+    />
+  );
+}
+
+export const UnreleasedItems = ({
+  onOpen,
+  onCancel,
+  unreleasedItems,
+}: {
+  onOpen: boolean;
+  onCancel: () => void;
+  unreleasedItems: IProductInfo[];
+}) => {
   return (
     <Dialog
-      isOpen={showDialog}
+      isOpen={onOpen}
       title="Unreleased Parts"
       cancelText="Okay"
-      onCancel={() => setDismissedSignature(unreleasedSignature)}
+      onCancel={onCancel}
       disabled={false}
     >
       <Alert
@@ -60,10 +80,10 @@ export function Unreleased() {
           marginY: 1,
         }}
       >
-        {unreleasedItems.map((item, i) => (
+        {unreleasedItems?.map((item, i) => (
           <Chip
             key={i}
-            label={item.Title}
+            label={item?.Title}
             color="error"
             sx={{ fontSize: 13 }}
           />
@@ -71,4 +91,4 @@ export function Unreleased() {
       </Box>
     </Dialog>
   );
-}
+};

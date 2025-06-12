@@ -145,6 +145,7 @@ export const useJdiBom = () => {
   });
 
   const fetchPrevRev = async (objectDetails: IProductInfo[]) => {
+    console.log("objectIds,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", objectIds);
     const inWorkIds = objectIds?.filter(({ objectId }) => {
       const detail = objectDetails?.find(
         (obj) => obj["Dropped Revision ID"] === objectId,
@@ -186,7 +187,7 @@ export const useJdiBom = () => {
   const prevRev = useQuery({
     queryKey: ["prevRev", objectIds, isDropped],
     queryFn: () => fetchPrevRev(objectDetails),
-    enabled: !!headers?.data && isDropped,
+    enabled: !!headers?.data && isDropped && !!objectDetails?.length,
   });
 
   const removeStateProduct = (released: EngItemVersion, itemId: string) => {
@@ -234,7 +235,7 @@ export const useJdiBom = () => {
     prevRev: EngItemResult[],
     removeStateProduct: (released: EngItemVersion, itemId: string) => void,
     updateMaturityState: (id: string) => void,
-  ) => {
+  ): Promise<string[]> => {
     const responses = await Promise.allSettled(
       (prevRev ?? []).map((item) => {
         const released = item?.versions?.find(
@@ -255,6 +256,8 @@ export const useJdiBom = () => {
       res.status === "fulfilled" ? res.value : null,
     ) as ClassifiedItemResponse[];
 
+    const unreleasedIds: string[] = [];
+
     classifRes?.forEach((product) => {
       const classificationMembers =
         product?.member?.[0]?.ClassificationAttributes?.member ?? [];
@@ -271,11 +274,12 @@ export const useJdiBom = () => {
 
         if (droppedRevisionId) {
           updateMaturityState(droppedRevisionId);
+          unreleasedIds.push(droppedRevisionId);
         }
       }
     });
 
-    return classifRes;
+    return unreleasedIds;
   };
 
   const engRelease = useQuery({
