@@ -1,14 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
-import {
-  ISelectedItem,
-  MutationData,
-  SearchResult,
-} from "../components/AdvancedSearch";
+// import {
+//   ISelectedItem,
+//   MutationData,
+//   SearchResult,
+// } from "../components/AdvancedSearch";
 import { useFetchWithAuth } from "./useFetchWithAuth";
 // import { useHandleDrop } from "./useHandleDrop";
 import { env } from "../env";
 import { ClipboardEvent, KeyboardEvent, useState } from "react";
 import { useHandleDrop } from "./useHandleDrop";
+import dayjs from "dayjs";
 
 export const useAdvancedSearch = () => {
   const [chips, setChips] = useState<string[]>([]);
@@ -18,12 +19,18 @@ export const useAdvancedSearch = () => {
   const { handleDrop, isFetching } = useHandleDrop();
 
   const extractAttribute = (result: SearchResult, attrName: string): string => {
-    const attr = result?.attributes?.find((a) => a.name === attrName);
-    return attr ? (Array.isArray(attr.value) ? attr.value[0] : attr.value) : "";
+    const attr = result.attributes.find((a) => a.name === attrName);
+    if (!attr) return "";
+    if (Array.isArray(attr.value)) {
+      return attr.value[0]?.toString() ?? "";
+    }
+    return typeof attr.value === "boolean"
+      ? attr?.value?.toString()
+      : attr.value;
   };
 
-  const processResults = (data: MutationData): ISelectedItem[] => {
-    return data?.results?.map((result) => ({
+  const processResults = (data: MutationData["results"]): ISelectedItem[] => {
+    return data?.map((result) => ({
       label: extractAttribute(result, "ds6w:label"),
       objectId: extractAttribute(result, "resourceid"),
       objectType: extractAttribute(result, "ds6w:what/ds6w:type"),
@@ -31,7 +38,7 @@ export const useAdvancedSearch = () => {
       revision: extractAttribute(result, "ds6wg:revision"),
       status: extractAttribute(result, "ds6w:what/ds6w:status"),
       identifier: extractAttribute(result, "ds6w:identifier"),
-      created: extractAttribute(result, "ds6w:when/ds6w:created"), //ds6w:who/ds6w:responsible
+      created: extractAttribute(result, "ds6w:when/ds6w:created"),
     }));
   };
 
@@ -39,85 +46,252 @@ export const useAdvancedSearch = () => {
     mutationFn: async (chips: string[]) => {
       const url = env.ADVANCED_SEARCH!;
 
-      const partNumberQuery = chips
-        ?.map((pn) => `[ds6wg:EnterpriseExtension.V_PartNumber]:"${pn}"`)
-        .join(" OR ");
+      // const partNumberQuery = chips
+      //   ?.map((pn) => `[ds6wg:EnterpriseExtension.V_PartNumber]:"${pn}"`)
+      //   .join(" OR ");
 
-      const fullQuery = `flattenedtaxonomies:"types/VPMReference" AND flattenedtaxonomies:"interfaces/EnterpriseExtension" AND ( ${partNumberQuery} )`;
+      const fullQuery = `(${chips?.join(" OR ")}) AND flattenedtaxonomies:"types/VPMReference" OR flattenedtaxonomies:"types/Raw_Material" OR flattenedtaxonomies:"types/Document"`;
+
+      // const bodymult = {
+      //   specific_source_parameter: {
+      //     drive: {
+      //       additional_query:
+      //         ' AND NOT ([flattenedtaxonomies]:"types/DriveNode" AND ( [current]:"Trashed" OR [policy]:"Drive File Iteration") )',
+      //     },
+      //   },
+      //   with_indexing_date: true,
+      //   with_synthesis: true,
+      //   with_nls: false,
+      //   label: "3DSearch-e1331143-InContextSearch-1749710770673",
+      //   locale: "en",
+      //   select_predicate: [
+      //     "ds6w:label",
+      //     "ds6w:type",
+      //     "ds6w:description",
+      //     "ds6w:identifier",
+      //     "ds6w:modified",
+      //     "ds6w:created",
+      //     "ds6wg:revision",
+      //     "ds6w:status",
+      //     "ds6w:responsible",
+      //     "owner",
+      //     "ds6w:responsibleUid",
+      //     "ds6wg:filesize",
+      //     "ds6w:i3dx",
+      //     "ds6w:project",
+      //     "ds6w:dataSource",
+      //     "ds6w:community",
+      //     "ds6w:originator",
+      //     "dsgeo:referential",
+      //     "ds6w:lastModifiedBy",
+      //     "ds6w:repository",
+      //     "dcterms:title",
+      //     "dcterms:description",
+      //     "ds6w:containerUid",
+      //   ],
+      //   with_synthesis_hierarchical: true,
+      //   select_file: ["icon", "thumbnail_2d"],
+      //   query:
+      //     '(ISV-9847P1 OR P-98460) AND flattenedtaxonomies:"types/VPMReference" OR flattenedtaxonomies:"types/Raw_Material" OR flattenedtaxonomies:"types/Document"',
+      //   select_exclude_synthesis: ["ds6w:what/ds6w:topic"],
+      //   order_by: "desc",
+      //   order_field: "relevance",
+      //   select_snippets: [
+      //     "ds6w:snippet",
+      //     "ds6w:label:snippet",
+      //     "ds6w:responsible:snippet",
+      //     "ds6w:community:snippet",
+      //     "swym:message_text:snippet",
+      //   ],
+      //   nresults: 40,
+      //   start: "0",
+      //   source: [
+      //     "swym",
+      //     "3dspace",
+      //     "drive",
+      //     "usersgroup",
+      //     "3dplan",
+      //     "dashboard",
+      //     "sourcing",
+      //     "3dmessaging",
+      //   ],
+      //   tenant: "OI000186152",
+      //   login: {
+      //     "3dspace": {
+      //       SecurityContext: "VPLMProjectLeader.Company Name.ACT-Gas Motors",
+      //     },
+      //   },
+      // };
+
+      // const bvody = {
+      //   specific_source_parameter: {
+      //     "3dspace": {
+      //       additional_query:
+      //         "AND (NOT [ds6wg:PLMReference.V_fromExternalID]: ISV-9847P1*)",
+      //     },
+      //     drive: {
+      //       additional_query:
+      //         ' AND NOT ([flattenedtaxonomies]:"types/DriveNode" AND ( [current]:"Trashed" OR [policy]:"Drive File Iteration") )',
+      //     },
+      //   },
+      //   with_indexing_date: true,
+      //   with_synthesis: true,
+      //   with_nls: false,
+      //   label: "3DSearch-e1331143-InContextSearch-1749709721366",
+      //   locale: "en",
+      //   select_predicate: [
+      //     "ds6w:label",
+      //     "ds6w:type",
+      //     "ds6w:description",
+      //     "ds6w:identifier",
+      //     "ds6w:modified",
+      //     "ds6w:created",
+      //     "ds6wg:revision",
+      //     "ds6w:status",
+      //     "ds6w:responsible",
+      //     "owner",
+      //     "ds6w:responsibleUid",
+      //     "ds6wg:filesize",
+      //     "ds6w:i3dx",
+      //     "ds6w:project",
+      //     "ds6w:dataSource",
+      //     "ds6w:community",
+      //     "ds6w:originator",
+      //     "dsgeo:referential",
+      //     "ds6w:lastModifiedBy",
+      //     "ds6w:repository",
+      //     "dcterms:title",
+      //     "dcterms:description",
+      //     "ds6w:containerUid",
+      //   ],
+      //   with_synthesis_hierarchical: true,
+      //   select_file: ["icon", "thumbnail_2d"],
+      //   query:
+      //     'ISV-9847P1 AND flattenedtaxonomies:"types/VPMReference" OR flattenedtaxonomies:"types/Raw_Material" OR flattenedtaxonomies:"types/Document"',
+      //   select_exclude_synthesis: ["ds6w:what/ds6w:topic"],
+      //   order_by: "desc",
+      //   order_field: "relevance",
+      //   select_snippets: [
+      //     "ds6w:snippet",
+      //     "ds6w:label:snippet",
+      //     "ds6w:responsible:snippet",
+      //     "ds6w:community:snippet",
+      //     "swym:message_text:snippet",
+      //   ],
+      //   nresults: 40,
+      //   start: "0",
+      //   source: [
+      //     "swym",
+      //     "3dspace",
+      //     "drive",
+      //     "usersgroup",
+      //     "3dplan",
+      //     "dashboard",
+      //     "sourcing",
+      //     "3dmessaging",
+      //   ],
+      //   tenant: "OI000186152",
+      //   login: {
+      //     "3dspace": {
+      //       SecurityContext: "VPLMProjectLeader.Company Name.ACT-Gas Motors",
+      //     },
+      //   },
+      // };
+
+      const body = {
+        specific_source_parameter: {
+          drive: {
+            additional_query:
+              ' AND NOT ([flattenedtaxonomies]:"types/DriveNode" AND ( [current]:"Trashed" OR [policy]:"Drive File Iteration") )',
+          },
+        },
+        with_indexing_date: true,
+        with_synthesis: true,
+        with_nls: false,
+        label: `3DSearch-e1331143-InContextSearch-${dayjs().valueOf()}`,
+        locale: "en",
+        select_predicate: [
+          "ds6w:label",
+          "ds6w:type",
+          "ds6w:description",
+          "ds6w:identifier",
+          "ds6w:modified",
+          "ds6w:created",
+          "ds6wg:revision",
+          "ds6w:status",
+          "ds6w:responsible",
+          "owner",
+          "ds6w:responsibleUid",
+          "ds6wg:filesize",
+          "ds6w:i3dx",
+          "ds6w:project",
+          "ds6w:dataSource",
+          "ds6w:community",
+          "ds6w:originator",
+          "dsgeo:referential",
+          "ds6w:lastModifiedBy",
+          "ds6w:repository",
+          "dcterms:title",
+          "dcterms:description",
+          "ds6w:containerUid",
+        ],
+        with_synthesis_hierarchical: true,
+        select_file: ["icon", "thumbnail_2d"],
+        query: fullQuery,
+        select_exclude_synthesis: ["ds6w:what/ds6w:topic"],
+        order_by: "desc",
+        order_field: "relevance",
+        select_snippets: [
+          "ds6w:snippet",
+          "ds6w:label:snippet",
+          "ds6w:responsible:snippet",
+          "ds6w:community:snippet",
+          "swym:message_text:snippet",
+        ],
+        nresults: 40,
+        start: "0",
+        source: [
+          "swym",
+          "3dspace",
+          "drive",
+          "usersgroup",
+          "3dplan",
+          "dashboard",
+          "sourcing",
+          "3dmessaging",
+        ],
+        tenant: "OI000186152",
+        login: {
+          "3dspace": {
+            SecurityContext: "VPLMProjectLeader.Company Name.ACT-Gas Motors",
+          },
+        },
+      };
 
       const res = (await fetchWithAuth({
         customUrl: url,
         method: "POST",
         headers: {},
-        body: {
-          specific_source_parameter: {
-            "3dspace": {
-              additional_query:
-                ' AND NOT (owner:"ENOVIA_CLOUD" OR owner:"Service Creator" OR owner:"Corporate" OR owner:"User Agent" OR owner:"SLMInstallerAdmin" OR owner:"Creator" OR owner:"VPLMAdminUser")',
-            },
-          },
-          with_indexing_date: true,
-          with_synthesis: true,
-          with_nls: false,
-          label: "3DSearch-e1331143-AdvancedSearch-1747843671676",
-          locale: "en",
-          select_predicate: [
-            "ds6w:label",
-            "ds6w:type",
-            "ds6w:description",
-            "ds6w:identifier",
-            "ds6w:modified",
-            "ds6w:created",
-            "ds6wg:revision",
-            "ds6w:status",
-            "ds6w:responsible",
-            "owner",
-            "ds6w:responsibleUid",
-            "ds6wg:filesize",
-            "ds6w:i3dx",
-            "ds6w:project",
-            "ds6w:dataSource",
-            "ds6w:community",
-            "ds6w:originator",
-            "dsgeo:referential",
-            "ds6w:lastModifiedBy",
-            "ds6w:repository",
-            "dcterms:title",
-            "dcterms:description",
-          ],
-          with_synthesis_hierarchical: true,
-          select_file: ["icon", "thumbnail_2d"],
-          query: fullQuery, // use dynamic query here
-          refine: {},
-          select_exclude_synthesis: ["ds6w:what/ds6w:topic"],
-          order_by: "desc",
-          order_field: "relevance",
-          select_snippets: [
-            "ds6w:snippet",
-            "ds6w:label:snippet",
-            "ds6w:responsible:snippet",
-            "ds6w:community:snippet",
-            "swym:message_text:snippet",
-          ],
-          nresults: 40,
-          start: "0",
-          source: ["3dspace"],
-          tenant: "OI000186152",
-          login: {
-            "3dspace": {
-              SecurityContext: "VPLMProjectLeader.Company Name.Common Space",
-            },
-          },
-        },
+        body,
       })) as MutationData;
 
-      const resResult = res ? processResults(res) : [];
+      const filtered = res?.results?.filter((entry) =>
+        entry.attributes.some(
+          (attr) =>
+            attr.name === "ds6w:label" && chips?.includes(attr?.value as string)
+        )
+      );
+
+      console.log("filtered..........................", filtered);
+
+      const resResult = filtered ? processResults(filtered) : [];
+      console.log("resResult..........................", resResult);
 
       const fetchedProducts = await handleDrop(
         resResult?.map((item) => ({
           objectId: item?.objectId,
           objectType: item?.objectType,
-        })),
+        }))
       );
 
       return fetchedProducts as IProductInfo[];
@@ -207,3 +381,30 @@ export const useAdvancedSearch = () => {
     isFetching,
   };
 };
+
+export interface SearchResult {
+  attributes: Array<{
+    name: string;
+    value: string | string[] | boolean;
+    type?: string;
+    format?: string;
+  }>;
+}
+
+export interface MutationData {
+  results: SearchResult[];
+  infos: {
+    nresults: number;
+  };
+}
+
+export interface ISelectedItem {
+  label: string;
+  objectId: string;
+  objectType: string;
+  description: string;
+  revision: string;
+  status: string;
+  identifier: string;
+  created: string;
+}
