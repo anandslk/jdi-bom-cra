@@ -1,4 +1,3 @@
-import { LoginCallback } from "@okta/okta-react";
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { withDroppable } from "src/app/jdiBom/hoc/withDroppable";
@@ -20,35 +19,14 @@ export const router = createBrowserRouter(
       element: <DroppableLayout />,
 
       children: [
-        {
-          index: true,
-          element: <Home />,
-        },
-
-        {
-          path: route.rdo,
-          element: <RDOList />,
-        },
-
-        {
-          path: route.status,
-          element: <Status />,
-        },
-        {
-          path: route.statusItem,
-          element: <StatusItem />,
-        },
-        {
-          path: route.callback,
-          element: <LoginCallback />,
-        },
+        { index: true, element: <Home /> },
+        { path: route.rdo, element: <RDOList /> },
+        { path: route.status, element: <Status /> },
+        { path: route.statusItem, element: <StatusItem /> },
       ],
     },
 
-    {
-      path: route[404],
-      element: <>Page Not Found</>,
-    },
+    { path: route[404], element: <>Page Not Found</> },
   ],
 
   { basename: env.WIDGET_ENTRY ? BASENAME : route.index },
