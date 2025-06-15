@@ -29,27 +29,34 @@ export function Unreleased() {
   const onCancel = () => setDismissedSignature(unreleasedSignature);
 
   return (
-    <UnreleasedItems
+    <ItemsDialog
+      title="Unreleased Parts"
+      description="Some parts are not in Released state and cannot be selected for BOM
+        commoning."
       onOpen={showDialog}
       onCancel={onCancel}
-      unreleasedItems={unreleasedItems}
+      items={unreleasedItems?.map((item) => item?.Title)}
     />
   );
 }
 
-export const UnreleasedItems = ({
+export const ItemsDialog = ({
+  title,
+  description,
   onOpen,
   onCancel,
-  unreleasedItems,
+  items,
 }: {
+  title: string;
+  description: string;
   onOpen: boolean;
   onCancel: () => void;
-  unreleasedItems: IProductInfo[];
+  items: string[];
 }) => {
   return (
     <Dialog
       isOpen={onOpen}
-      title="Unreleased Parts"
+      title={title}
       cancelText="Okay"
       onCancel={onCancel}
       disabled={false}
@@ -67,8 +74,7 @@ export const UnreleasedItems = ({
           borderRadius: 2,
         }}
       >
-        Some parts are not in Released state and cannot be selected for BOM
-        commoning.
+        {description}
       </Alert>
 
       <Box
@@ -80,13 +86,8 @@ export const UnreleasedItems = ({
           marginY: 1,
         }}
       >
-        {unreleasedItems?.map((item, i) => (
-          <Chip
-            key={i}
-            label={item?.Title}
-            color="error"
-            sx={{ fontSize: 13 }}
-          />
+        {items?.map((item, i) => (
+          <Chip key={i} label={item} color="error" sx={{ fontSize: 13 }} />
         ))}
       </Box>
     </Dialog>

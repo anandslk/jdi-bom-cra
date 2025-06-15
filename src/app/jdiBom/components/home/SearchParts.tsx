@@ -1,9 +1,8 @@
 import { TextField } from "@mui/material";
 import { Dispatch, SetStateAction, useEffect } from "react";
-import Loader from "src/components/Loader/Loader";
 import { useAdvancedSearch } from "../../hooks/useAdvancedSearch";
 import { IFormErrors, IFormState } from "../../pages";
-import { UnreleasedItems } from "../Unreleased";
+import { ItemsDialog } from "../Unreleased";
 
 export const SearchParts = ({
   onSearchParts,
@@ -13,34 +12,54 @@ export const SearchParts = ({
   const {
     inputValue,
     setInputValue,
-    handleInputChange,
-    isFetching,
+    handleSearchParts,
     isUnreleased,
     setIsUnreleased,
-    unreleasedItems,
-    setUnreleasedItems,
+
+    items,
+    setItems,
+
+    isNotFound,
+    setIsNotFound,
+
+    isObsolete,
+    setIsObsolete,
   } = useAdvancedSearch();
 
   useEffect(() => {
     if (onSearchParts) {
-      onSearchParts({ handleInputChange, inputValue });
+      onSearchParts({ handleSearchParts, inputValue });
     }
-  }, [onSearchParts, handleInputChange, inputValue]);
-
-  console.log("isUnreleased...........................", isUnreleased);
-  console.log("unreleasedItems...........................", unreleasedItems);
+  }, [onSearchParts, handleSearchParts, inputValue]);
 
   return (
     <>
-      {isFetching && <Loader />}
-
-      <UnreleasedItems
+      <ItemsDialog
+        title="Unreleased Parts"
+        description="Some parts are not in Released state and cannot be selected for BOM
+        commoning."
         onOpen={isUnreleased}
         onCancel={() => {
           setIsUnreleased(false);
-          setUnreleasedItems([]);
+          setItems([]);
         }}
-        unreleasedItems={unreleasedItems}
+        items={items}
+      />
+
+      <ItemsDialog
+        title="Obsolete Parts"
+        description="The part you selected is in obsolete state. Please search and select a valid part to continue."
+        onOpen={isObsolete}
+        onCancel={() => setIsObsolete(false)}
+        items={["ISV-PARENT", "P-98418"]}
+      />
+
+      <ItemsDialog
+        title="Part not found"
+        description="The part you selected is either incorrect or does not exist. Please search and select a valid part to continue."
+        onOpen={isNotFound}
+        onCancel={() => setIsNotFound(false)}
+        items={items}
       />
 
       <TextField
@@ -85,15 +104,14 @@ export const SearchParts = ({
 };
 
 export type SearchPartsHandlers = {
-  handleInputChange: (
-    setFormState: Dispatch<SetStateAction<IFormState>>,
-  ) => Promise<{ products: IProductInfo[]; prevr: EngItemResult[] } | null>;
+  handleSearchParts: () => Promise<IProductInfo[] | null>;
   inputValue: string;
 };
 
 type SearchPartsProps = {
   onSearchParts?: (handlers: SearchPartsHandlers) => void;
-  formState: any;
+  formState: IFormState;
+  setFormState: Dispatch<SetStateAction<IFormState>>;
   setErrors: Dispatch<SetStateAction<IFormErrors>>;
   requiredError: string;
 };

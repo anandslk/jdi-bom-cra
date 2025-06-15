@@ -34,7 +34,7 @@ import {
   setIsDropped,
 } from "src/app/jdiBom/slices/reducers/jdiBom.reducer";
 import { useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
-import { rdoList } from "src/app/jdiBom/utils";
+import { availOrgsList, RDO_ORGS, rdoList } from "src/app/jdiBom/utils";
 import Loader from "src/components/Loader/Loader";
 
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
@@ -95,8 +95,17 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const [jdiList, setJdiList] = useState<string[]>([]);
   const [availOrgs, setAvailOrgs] = useState<string[]>([]);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [isOpen1, setIsOpen1] = useState(false);
+  const [isConfirm, setIsConfirm] = useState(false);
+
+  const initialGenerated = {
+    open: false,
+    data: {
+      id: "",
+      status: "",
+      submittedBy: "",
+    },
+  };
+  const [generated, setGenerated] = useState(initialGenerated);
 
   useHandleDrop();
 
@@ -104,13 +113,14 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   const mutateParts = useMutation({
     mutationFn: async () => {
-      const res =
-        await searchPartsRef.current?.handleInputChange?.(setFormState);
+      const res = await searchPartsRef.current?.handleSearchParts?.();
 
-      setFormState((prev) => ({ ...prev, parentParts: res?.products! }));
+      setFormState((prev) => ({ ...prev, parentParts: res! }));
 
-      return { products: res };
+      return res;
     },
+
+    onSuccess: () => setIsConfirm(true),
   });
 
   // console.log("formState.................", formState);
@@ -223,10 +233,9 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       (val) => !!val,
     );
 
-    if (hasErrors) {
-      !!!objectDetails?.length && (await mutateParts.mutateAsync());
-
-      setIsOpen(true);
+    if (!hasErrors) {
+      if (!!!objectDetails?.length) mutateParts.mutate();
+      else setIsConfirm(true);
     }
   };
 
@@ -243,7 +252,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       targetOrgs: formState.plants,
     };
 
-    setIsOpen(false);
+    setIsConfirm(false);
 
     const { error, data } = await createBom({
       ...payload,
@@ -253,9 +262,16 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     if (error) return toast.error(getErrorMessage(error));
 
-    toast.success((data as any).message);
+    toast.success(data.message);
 
-    setTimeout(() => navigate(route.status), 500);
+    setGenerated({
+      open: true,
+      data: {
+        id: data?.data?.id,
+        status: data?.data?.status,
+        submittedBy: data?.data?.userEmail,
+      },
+    });
   };
 
   const handleChangePI = (
@@ -290,6 +306,49 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   return (
     <>
+      <>
+        <Dialog
+          isOpen={isConfirm}
+          title="Confirm Your Submission"
+          onSubmit={handleConfirmationSubmit}
+          onCancel={() => setIsConfirm(false)}
+          disabled={false}
+        >
+          <ConfirmationScreen
+            parentParts={formState.parentParts?.map((item) => item.Title)}
+            sourceOrg={formState.sourceOrg}
+            selectedItems={formState.parentParts?.map((item) => item.Title)}
+          />
+        </Dialog>
+
+        <Dialog
+          isOpen={generated.open}
+          title="Request ID Generated"
+          cancelText="Go Back"
+          submitText="Check Statuses"
+          onCancel={() => {
+            setGenerated(initialGenerated);
+          }}
+          onSubmit={() => {
+            setGenerated(initialGenerated);
+            navigate(route.status);
+          }}
+        >
+          <Typography variant="body1">
+            <strong>Request ID:</strong> {"REQ-91899497"}
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            <strong>Status:</strong> {"Initiated"}
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            <strong>Submitted By:</strong> {"anand.kumar@emerson.com"}
+          </Typography>
+        </Dialog>
+
+        {isProcessed && <Loader />}
+        {!isProcessed && <Unreleased />}
+      </>
+
       <Box
         sx={{
           height: "calc(100vh - 8px)",
@@ -298,39 +357,6 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
         }}
       >
         <Container maxWidth="lg" sx={{ padding: { sm: 0 } }}>
-          <Dialog
-            isOpen={isOpen}
-            title="Confirm Your Submission"
-            onSubmit={handleConfirmationSubmit}
-            onCancel={() => setIsOpen(false)}
-            disabled={false}
-          >
-            <ConfirmationScreen
-              parentParts={formState.parentParts?.map((item) => item.Title)}
-              sourceOrg={formState.sourceOrg}
-              selectedItems={formState.parentParts?.map((item) => item.Title)}
-            />
-          </Dialog>
-
-          <Dialog
-            isOpen={isOpen1}
-            title="Request ID Generated"
-            onSubmit={handleConfirmationSubmit}
-            cancelText="Okay"
-            onCancel={() => setIsOpen1(false)}
-            disabled={false}
-          >
-            <Typography variant="body1">
-              <strong>Request ID:</strong> {"REQ-91899497	"}
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1 }}>
-              <strong>Submitted By:</strong> {"anand.kumar@emerson.com"}
-            </Typography>
-          </Dialog>
-
-          {isProcessed && <Loader />}
-          {!isProcessed && <Unreleased />}
-
           <Box
             sx={{
               padding: 4,
@@ -503,47 +529,9 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                         formState={formState}
                         requiredError={errors?.parentParts!}
                         setErrors={setErrors}
+                        setFormState={setFormState}
                       />
                     )}
-                  </>
-
-                  <>
-                    <InputLabel sx={{ fontWeight: "bold", fontSize: 16 }}>
-                      Source Orgs
-                    </InputLabel>
-                    <Autocomplete
-                      options={plants?.data ?? []}
-                      value={formState.sourceOrg}
-                      onChange={(_, value) =>
-                        handleChange("sourceOrg", value || "")
-                      }
-                      // clearOnEscape
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          required
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Source Orgs"
-                          error={!!errors.sourceOrg}
-                          helperText={errors.sourceOrg}
-                          slotProps={{
-                            formHelperText: { sx: { fontSize: 14 } },
-                          }}
-                          sx={{ ".MuiInputBase-input": { fontSize: 16 } }}
-                        />
-                      )}
-                      sx={{ marginTop: "5px !important" }}
-                      slotProps={{
-                        paper: {
-                          sx: {
-                            "& .MuiAutocomplete-option": {
-                              fontSize: 16,
-                            },
-                          },
-                        },
-                      }}
-                    />
                   </>
 
                   <>
@@ -566,9 +554,12 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                         <Box sx={{ flexShrink: 0, width: 150 }}>
                           <MultiSelectList
                             title="JDI RDO List"
-                            items={Object.keys(data?.data ?? {})?.filter(
-                              (item) => item !== "availOrgs",
-                            )}
+                            // items={Object.keys(data?.data ?? {})?.filter(
+                            //   (item) => item !== "availOrgs"
+                            // )}
+                            items={Object.keys(
+                              data?.data ?? { ...RDO_ORGS },
+                            )?.filter((item) => item !== "availOrgs")}
                             selected={formState.rdo}
                             onChange={(newVal) =>
                               handleChange("rdo", newVal.target.value!)
@@ -618,7 +609,8 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                           <MultiSelectList
                             multiSelect
                             title="Available Orgs"
-                            items={data?.data.availOrgs ?? []}
+                            // items={data?.data.availOrgs ?? []}
+                            items={data?.data.availOrgs ?? [...availOrgsList]}
                             selected={availOrgs}
                             onChange={setAvailOrgs}
                           />
@@ -644,6 +636,51 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                         {errors.plants}
                       </Alert>
                     )}
+                  </>
+
+                  <>
+                    <InputLabel
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        marginTop: `0 !important`,
+                      }}
+                    >
+                      Source Orgs
+                    </InputLabel>
+                    <Autocomplete
+                      options={plants?.data ?? []}
+                      value={formState.sourceOrg}
+                      onChange={(_, value) =>
+                        handleChange("sourceOrg", value || "")
+                      }
+                      // clearOnEscape
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          required
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Source Orgs"
+                          error={!!errors.sourceOrg}
+                          helperText={errors.sourceOrg}
+                          slotProps={{
+                            formHelperText: { sx: { fontSize: 14 } },
+                          }}
+                          sx={{ ".MuiInputBase-input": { fontSize: 16 } }}
+                        />
+                      )}
+                      sx={{ marginTop: "5px !important" }}
+                      slotProps={{
+                        paper: {
+                          sx: {
+                            "& .MuiAutocomplete-option": {
+                              fontSize: 16,
+                            },
+                          },
+                        },
+                      }}
+                    />
                   </>
 
                   <Stack direction="row" spacing={2} justifyContent="flex-end">
@@ -678,7 +715,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                 parentParts={formState.parentParts?.map((item) => item.Title)}
                 sourceOrg={formState.sourceOrg}
                 selectedItems={formState.plants}
-                onBack={() => setIsOpen(false)}
+                onBack={() => setIsConfirm(false)}
               />
             )}
           </Box>

@@ -25,7 +25,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenProps> = ({
           variant="body1"
           sx={{ marginBottom: 2, whiteSpace: "pre-line" }}
         >
-          {parentParts.length > 0 ? (
+          {parentParts?.length > 0 ? (
             <Box
               sx={{
                 maxHeight: 129,
@@ -39,7 +39,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenProps> = ({
                 marginTop: 1,
               }}
             >
-              {parentParts.map((item) => (
+              {parentParts?.map((item) => (
                 <Chip
                   key={item}
                   label={item}
@@ -75,7 +75,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenProps> = ({
         >
           Items to be Processed:
         </Typography>
-        {selectedItems.length > 0 ? (
+        {selectedItems?.length > 0 ? (
           <Box
             sx={{
               maxHeight: 170,
@@ -89,7 +89,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenProps> = ({
               marginTop: 1,
             }}
           >
-            {selectedItems.map((item) => (
+            {selectedItems?.map((item) => (
               <Chip
                 key={item}
                 label={item}

@@ -37,7 +37,10 @@ export const jdiBomApiSlice = createApi({
       providesTags: ["JdiBom"],
     }),
 
-    createJdiBom: builder.mutation<{}, CreateJdiBomItem>({
+    createJdiBom: builder.mutation<
+      { message: string; data: BomItem },
+      CreateJdiBomItem
+    >({
       ...createMutationQuery("/jdiBom"),
       invalidatesTags: ["JdiBom"],
     }),

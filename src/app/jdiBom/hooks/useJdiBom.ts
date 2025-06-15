@@ -144,10 +144,15 @@ export const useJdiBom = () => {
     enabled: !!collabSpaceId?.data && isDropped,
   });
 
-  const fetchPrevRev = async (objectDetails: IProductInfo[]) => {
+  const fetchPrevRev = async (productDetails: IProductInfo[]) => {
     console.log("objectIds,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", objectIds);
+
+    // const rp = productDetails?.filter(
+    //   (item) => item?.["Maturity State"]?.toLowerCase() == "released"
+    // );
+
     const inWorkIds = objectIds?.filter(({ objectId }) => {
-      const detail = objectDetails?.find(
+      const detail = productDetails?.find(
         (obj) => obj["Dropped Revision ID"] === objectId,
       );
 
@@ -157,7 +162,7 @@ export const useJdiBom = () => {
     if (inWorkIds.length === 0) return [];
 
     const products = inWorkIds?.map(({ objectId, objectType }) => {
-      const detail = objectDetails?.find(
+      const detail = productDetails?.find(
         (obj) => obj?.["Dropped Revision ID"] === objectId,
       );
 
@@ -233,18 +238,23 @@ export const useJdiBom = () => {
 
   const checkEngRelease = async (
     prevRev: EngItemResult[],
-    removeStateProduct: (released: EngItemVersion, itemId: string) => void,
-    updateMaturityState: (id: string) => void,
+    removeStateProduct?: (released: EngItemVersion, itemId: string) => void,
+    updateMaturityState?: (id: string) => void,
   ): Promise<string[]> => {
+    const unreleasedIds = new Set<string>();
+
     const responses = await Promise.allSettled(
       (prevRev ?? []).map((item) => {
         const released = item?.versions?.find(
           (v) => v?.maturityState === "RELEASED",
         );
 
-        if (!released) return Promise.resolve(null);
+        if (!released) {
+          if (item?.id) unreleasedIds.add(item?.id);
+          return Promise.resolve(null);
+        }
 
-        removeStateProduct(released, item?.id);
+        if (removeStateProduct) removeStateProduct(released, item?.id);
 
         return fetchWithAuth({
           url: `/modeler/dslib/dslib:ClassifiedItem/${released?.id}?$mask=dslib:ClassificationAttributesMask`,
@@ -255,8 +265,6 @@ export const useJdiBom = () => {
     const classifRes = responses?.map((res) =>
       res.status === "fulfilled" ? res.value : null,
     ) as ClassifiedItemResponse[];
-
-    const unreleasedIds: string[] = [];
 
     classifRes?.forEach((product) => {
       const classificationMembers =
@@ -273,13 +281,13 @@ export const useJdiBom = () => {
         const droppedRevisionId = product?.member?.[0]?.id;
 
         if (droppedRevisionId) {
-          updateMaturityState(droppedRevisionId);
-          unreleasedIds.push(droppedRevisionId);
+          if (updateMaturityState) updateMaturityState(droppedRevisionId);
+          unreleasedIds.add(droppedRevisionId);
         }
       }
     });
 
-    return unreleasedIds;
+    return Array.from(unreleasedIds);
   };
 
   const engRelease = useQuery({

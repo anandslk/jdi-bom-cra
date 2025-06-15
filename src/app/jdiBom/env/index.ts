@@ -9,13 +9,6 @@ export const env = Object.freeze({
 
   NODE_ENV: process.env.NODE_ENV,
   WIDGET_ENTRY: process.env.NODE_ENV !== "development",
-
-  OKTA_CLIENT_ID: process.env.OKTA_CLIENT_ID,
-  OKTA_ISSUER: process.env.OKTA_DOMAIN,
-  OKTA_DOMAIN: process.env.OKTA_DOMAIN,
-  OKTA_CLIENT_SECRET: process.env.OKTA_CLIENT_SECRET,
-  OKTA_APP_BASE_URL: process.env.OKTA_APP_BASE_URL,
-  OKTA_REDIRECT_URI: process.env.OKTA_REDIRECT_URI,
 } as const);
 
 const missingVars = Object.entries(env)

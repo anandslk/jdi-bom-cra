@@ -1,30 +1,24 @@
 import { useMutation } from "@tanstack/react-query";
-// import {
-//   ISelectedItem,
-//   MutationData,
-//   SearchResult,
-// } from "../components/AdvancedSearch";
-import { useFetchWithAuth } from "./useFetchWithAuth";
-import { env } from "../env";
-import { ClipboardEvent, Dispatch, SetStateAction, useState } from "react";
-import { useHandleDrop } from "./useHandleDrop";
 import dayjs from "dayjs";
-import { useJdiBom } from "./useJdiBom";
-import { IFormState } from "../pages";
-import { useAppDispatch, useAppSelector } from "../store";
+import { ClipboardEvent, useState } from "react";
 import {
-  removeSingleObject,
-  updateObjectId,
-} from "../slices/reducers/jdiBom.reducer";
+  ISelectedItem,
+  MutationData,
+  SearchResult,
+} from "../components/AdvancedSearch";
+import { env } from "../env";
+import { useFetchWithAuth } from "./useFetchWithAuth";
+import { useHandleDrop } from "./useHandleDrop";
+import { useJdiBom } from "./useJdiBom";
 
 export const useAdvancedSearch = () => {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
 
-  const [unreleasedItems, setUnreleasedItems] = useState<IProductInfo[]>([]);
+  const [items, setItems] = useState<string[]>([]);
   const [isUnreleased, setIsUnreleased] = useState(false);
-
-  const dispatch = useAppDispatch();
+  const [isObsolete, setIsObsolete] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
 
   const { fetchWithAuth } = useFetchWithAuth();
   const { handleDrop, isFetching } = useHandleDrop();
@@ -35,9 +29,7 @@ export const useAdvancedSearch = () => {
     if (Array.isArray(attr.value)) {
       return attr.value[0]?.toString() ?? "";
     }
-    return typeof attr.value === "boolean"
-      ? attr?.value?.toString()
-      : attr.value;
+    return typeof attr.value === "boolean" ? String(attr?.value) : attr.value;
   };
 
   const processResults = (data: MutationData["results"]): ISelectedItem[] => {
@@ -53,161 +45,38 @@ export const useAdvancedSearch = () => {
     }));
   };
 
-  const mutation = useMutation({
+  const { checkEngRelease } = useJdiBom();
+
+  const fetchPrevRev = async (productDetails: IProductInfo[]) => {
+    const products = productDetails?.map((item) => {
+      const baseURL = new URL(item?.imageURL!);
+      const source = `${baseURL?.protocol}//${baseURL?.hostname}/enovia`;
+
+      return {
+        id: item?.["Dropped Revision ID"],
+        identifier: item?.["Dropped Revision ID"],
+        type: item?.Type,
+        source,
+        relativePath: item?.relativePath,
+      };
+    });
+
+    if (products.length === 0) return [];
+
+    const response = (await fetchWithAuth({
+      url: "/modeler/dslc/version/getGraph",
+      method: "POST",
+      body: { data: products },
+    })) as EngItemResponse;
+
+    return (response?.results as EngItemResult[]) || [];
+  };
+
+  const searchParts = useMutation({
     mutationFn: async (chips: string[]) => {
       const url = env.ADVANCED_SEARCH!;
 
-      // const partNumberQuery = chips
-      //   ?.map((pn) => `[ds6wg:EnterpriseExtension.V_PartNumber]:"${pn}"`)
-      //   .join(" OR ");
-
       const fullQuery = `(${chips?.join(" OR ")}) AND flattenedtaxonomies:"types/VPMReference" OR flattenedtaxonomies:"types/Raw_Material" OR flattenedtaxonomies:"types/Document"`;
-
-      // const bodymult = {
-      //   specific_source_parameter: {
-      //     drive: {
-      //       additional_query:
-      //         ' AND NOT ([flattenedtaxonomies]:"types/DriveNode" AND ( [current]:"Trashed" OR [policy]:"Drive File Iteration") )',
-      //     },
-      //   },
-      //   with_indexing_date: true,
-      //   with_synthesis: true,
-      //   with_nls: false,
-      //   label: "3DSearch-e1331143-InContextSearch-1749710770673",
-      //   locale: "en",
-      //   select_predicate: [
-      //     "ds6w:label",
-      //     "ds6w:type",
-      //     "ds6w:description",
-      //     "ds6w:identifier",
-      //     "ds6w:modified",
-      //     "ds6w:created",
-      //     "ds6wg:revision",
-      //     "ds6w:status",
-      //     "ds6w:responsible",
-      //     "owner",
-      //     "ds6w:responsibleUid",
-      //     "ds6wg:filesize",
-      //     "ds6w:i3dx",
-      //     "ds6w:project",
-      //     "ds6w:dataSource",
-      //     "ds6w:community",
-      //     "ds6w:originator",
-      //     "dsgeo:referential",
-      //     "ds6w:lastModifiedBy",
-      //     "ds6w:repository",
-      //     "dcterms:title",
-      //     "dcterms:description",
-      //     "ds6w:containerUid",
-      //   ],
-      //   with_synthesis_hierarchical: true,
-      //   select_file: ["icon", "thumbnail_2d"],
-      //   query:
-      //     '(ISV-9847P1 OR P-98460) AND flattenedtaxonomies:"types/VPMReference" OR flattenedtaxonomies:"types/Raw_Material" OR flattenedtaxonomies:"types/Document"',
-      //   select_exclude_synthesis: ["ds6w:what/ds6w:topic"],
-      //   order_by: "desc",
-      //   order_field: "relevance",
-      //   select_snippets: [
-      //     "ds6w:snippet",
-      //     "ds6w:label:snippet",
-      //     "ds6w:responsible:snippet",
-      //     "ds6w:community:snippet",
-      //     "swym:message_text:snippet",
-      //   ],
-      //   nresults: 40,
-      //   start: "0",
-      //   source: [
-      //     "swym",
-      //     "3dspace",
-      //     "drive",
-      //     "usersgroup",
-      //     "3dplan",
-      //     "dashboard",
-      //     "sourcing",
-      //     "3dmessaging",
-      //   ],
-      //   tenant: "OI000186152",
-      //   login: {
-      //     "3dspace": {
-      //       SecurityContext: "VPLMProjectLeader.Company Name.ACT-Gas Motors",
-      //     },
-      //   },
-      // };
-
-      // const bvody = {
-      //   specific_source_parameter: {
-      //     "3dspace": {
-      //       additional_query:
-      //         "AND (NOT [ds6wg:PLMReference.V_fromExternalID]: ISV-9847P1*)",
-      //     },
-      //     drive: {
-      //       additional_query:
-      //         ' AND NOT ([flattenedtaxonomies]:"types/DriveNode" AND ( [current]:"Trashed" OR [policy]:"Drive File Iteration") )',
-      //     },
-      //   },
-      //   with_indexing_date: true,
-      //   with_synthesis: true,
-      //   with_nls: false,
-      //   label: "3DSearch-e1331143-InContextSearch-1749709721366",
-      //   locale: "en",
-      //   select_predicate: [
-      //     "ds6w:label",
-      //     "ds6w:type",
-      //     "ds6w:description",
-      //     "ds6w:identifier",
-      //     "ds6w:modified",
-      //     "ds6w:created",
-      //     "ds6wg:revision",
-      //     "ds6w:status",
-      //     "ds6w:responsible",
-      //     "owner",
-      //     "ds6w:responsibleUid",
-      //     "ds6wg:filesize",
-      //     "ds6w:i3dx",
-      //     "ds6w:project",
-      //     "ds6w:dataSource",
-      //     "ds6w:community",
-      //     "ds6w:originator",
-      //     "dsgeo:referential",
-      //     "ds6w:lastModifiedBy",
-      //     "ds6w:repository",
-      //     "dcterms:title",
-      //     "dcterms:description",
-      //     "ds6w:containerUid",
-      //   ],
-      //   with_synthesis_hierarchical: true,
-      //   select_file: ["icon", "thumbnail_2d"],
-      //   query:
-      //     'ISV-9847P1 AND flattenedtaxonomies:"types/VPMReference" OR flattenedtaxonomies:"types/Raw_Material" OR flattenedtaxonomies:"types/Document"',
-      //   select_exclude_synthesis: ["ds6w:what/ds6w:topic"],
-      //   order_by: "desc",
-      //   order_field: "relevance",
-      //   select_snippets: [
-      //     "ds6w:snippet",
-      //     "ds6w:label:snippet",
-      //     "ds6w:responsible:snippet",
-      //     "ds6w:community:snippet",
-      //     "swym:message_text:snippet",
-      //   ],
-      //   nresults: 40,
-      //   start: "0",
-      //   source: [
-      //     "swym",
-      //     "3dspace",
-      //     "drive",
-      //     "usersgroup",
-      //     "3dplan",
-      //     "dashboard",
-      //     "sourcing",
-      //     "3dmessaging",
-      //   ],
-      //   tenant: "OI000186152",
-      //   login: {
-      //     "3dspace": {
-      //       SecurityContext: "VPLMProjectLeader.Company Name.ACT-Gas Motors",
-      //     },
-      //   },
-      // };
 
       const body = {
         specific_source_parameter: {
@@ -296,6 +165,21 @@ export const useAdvancedSearch = () => {
 
       const resResult = filtered ? processResults(filtered) : [];
 
+      if (!!!resResult?.length) {
+        setItems(chips);
+        setIsNotFound(true);
+        return;
+      }
+
+      const notFoundChips = chips.filter(
+        (chip) => !resResult.some((item) => item.label === chip),
+      );
+
+      if (!!notFoundChips.length) {
+        setItems(notFoundChips);
+        setIsNotFound(true);
+      }
+
       const fetchedProducts = await handleDrop(
         resResult?.map((item) => ({
           objectId: item?.objectId,
@@ -303,7 +187,27 @@ export const useAdvancedSearch = () => {
         })),
       );
 
-      return fetchedProducts as IProductInfo[];
+      const prevr = await fetchPrevRev(fetchedProducts!);
+
+      const unreleasedIds = await checkEngRelease(prevr!);
+
+      if (unreleasedIds?.length > 0) {
+        const unreleased = fetchedProducts
+          .filter((product) =>
+            unreleasedIds.includes(product["Dropped Revision ID"]),
+          )
+          ?.map((item) => item?.Title);
+
+        setItems(unreleased);
+        setIsUnreleased(true);
+      }
+
+      const releasedParts =
+        fetchedProducts?.filter(
+          (item) => item["Maturity State"]?.toLowerCase() === "released",
+        ) ?? [];
+
+      return releasedParts as IProductInfo[];
     },
   });
 
@@ -316,24 +220,11 @@ export const useAdvancedSearch = () => {
   // const addChips = (values: string[]) => {
   //   setChips((prev) => {
   //     const newOnes = values?.filter((v) => v && !prev.includes(v));
-
-  //     console.log("newOnes.................", newOnes);
   //     return [...prev, ...newOnes];
   //   });
   // };
 
-  const existingObjectIds = useAppSelector((state) =>
-    state.jdiBom.objectIds.map((obj) => obj.objectId),
-  );
-
-  const { fetchPrevRev, checkEngRelease } = useJdiBom();
-
-  const handleInputChange = async (
-    setFormState: Dispatch<SetStateAction<IFormState>>,
-  ) => {
-    setIsUnreleased(false);
-    setUnreleasedItems([]);
-
+  const handleSearchParts = async () => {
     if (!inputValue) return null;
 
     const terms = splitTerms(inputValue);
@@ -342,120 +233,85 @@ export const useAdvancedSearch = () => {
 
     setChips(terms);
 
-    const updateMaturityState = (id: string) => {
-      setFormState((prev) => {
-        const updatedParts = [...prev.parentParts];
+    // const updateMaturityState = (id: string) => {
+    //   setFormState((prev) => {
+    //     const updatedParts = [...prev.parentParts];
 
-        const index = updatedParts.findIndex(
-          (item) => item["Dropped Revision ID"] === id,
-        );
+    //     const index = updatedParts.findIndex(
+    //       (item) => item["Dropped Revision ID"] === id
+    //     );
 
-        if (index !== -1) {
-          updatedParts[index] = {
-            ...updatedParts[index],
-            "Maturity State": "frozen",
-          };
-        }
+    //     if (index !== -1) {
+    //       updatedParts[index] = {
+    //         ...updatedParts[index],
+    //         "Maturity State": "frozen",
+    //       };
+    //     }
 
-        return {
-          ...prev,
-          parentParts: updatedParts,
-        };
-      });
-    };
+    //     return {
+    //       ...prev,
+    //       parentParts: updatedParts,
+    //     };
+    //   });
+    // };
 
-    const removeStateProduct = (released: EngItemVersion, itemId: string) => {
-      const releasedId = released?.id;
-      const alreadyExists = existingObjectIds?.includes(releasedId);
+    // const removeStateProduct = (released: EngItemVersion, itemId: string) => {
+    //   const releasedId = released?.id;
+    //   const alreadyExists = existingObjectIds?.includes(releasedId);
 
-      if (!alreadyExists) {
-        setFormState((prev) => {
-          const droppedRevisionId = itemId;
+    //   if (!alreadyExists) {
+    //     setFormState((prev) => {
+    //       const droppedRevisionId = itemId;
 
-          const updates = {
-            "Dropped Revision ID": released?.id,
-            "Latest Released Revision ID": released?.id,
-            "Maturity State": released?.maturityState,
-            relativePath: released?.relativePath,
-            "Dropped Revision": released?.revision,
-          };
+    //       const updates = {
+    //         "Dropped Revision ID": released?.id,
+    //         "Latest Released Revision ID": released?.id,
+    //         "Maturity State": released?.maturityState,
+    //         relativePath: released?.relativePath,
+    //         "Dropped Revision": released?.revision,
+    //       };
 
-          const updatedObjectDetails = [...(prev.parentParts ?? [])];
+    //       const updatedObjectDetails = [...(prev.parentParts ?? [])];
 
-          const index = updatedObjectDetails.findIndex(
-            (item) => item["Dropped Revision ID"] === droppedRevisionId,
-          );
+    //       const index = updatedObjectDetails.findIndex(
+    //         (item) => item["Dropped Revision ID"] === droppedRevisionId
+    //       );
 
-          if (index !== -1) {
-            updatedObjectDetails[index] = {
-              ...updatedObjectDetails[index],
-              ...updates,
-            };
-          }
+    //       if (index !== -1) {
+    //         updatedObjectDetails[index] = {
+    //           ...updatedObjectDetails[index],
+    //           ...updates,
+    //         };
+    //       }
 
-          return {
-            ...prev,
-            parentParts: updatedObjectDetails,
-          };
-        });
+    //       return {
+    //         ...prev,
+    //         parentParts: updatedObjectDetails,
+    //       };
+    //     });
 
-        dispatch(
-          updateObjectId({
-            objectId: itemId,
-            updates: { objectId: releasedId },
-          }),
-        );
-      } else {
-        setFormState((prev) => ({
-          ...prev,
-          parentParts: prev.parentParts.filter(
-            (item) => item["Dropped Revision ID"] !== releasedId,
-          ),
-        }));
+    //     dispatch(
+    //       updateObjectId({
+    //         objectId: itemId,
+    //         updates: { objectId: releasedId },
+    //       })
+    //     );
+    //   } else {
+    //     setFormState((prev) => ({
+    //       ...prev,
+    //       parentParts: prev.parentParts.filter(
+    //         (item) => item["Dropped Revision ID"] !== releasedId
+    //       ),
+    //     }));
 
-        dispatch(removeSingleObject(releasedId));
-        return Promise.resolve(null);
-      }
-    };
+    //     dispatch(removeSingleObject(releasedId));
+    //     return Promise.resolve(null);
+    //   }
+    // };
 
-    const res = (await mutation.mutateAsync(terms)) as IProductInfo[];
+    const products = (await searchParts.mutateAsync(terms)) as IProductInfo[];
 
-    console.log("res/////////////////", res);
-
-    const prevr = await fetchPrevRev(res!);
-
-    console.log("prevr/////////////////", prevr);
-
-    if (!!!prevr?.length) {
-      const filtered = res?.filter((item) => {
-        return item["Maturity State"]?.toLowerCase() !== "released";
-      });
-
-      setUnreleasedItems(filtered);
-      setIsUnreleased(true);
-    }
-
-    const unreleasedIds = await checkEngRelease(
-      prevr!,
-      removeStateProduct,
-      updateMaturityState,
-    );
-
-    if (unreleasedIds?.length > 0) {
-      const unreleased = res.filter((product) =>
-        unreleasedIds.includes(product["Dropped Revision ID"]),
-      );
-
-      setUnreleasedItems(unreleased);
-      setIsUnreleased(true);
-    }
-
-    const releasedParts =
-      res?.filter(
-        (item) => item["Maturity State"]?.toLowerCase() === "released",
-      ) ?? [];
-
-    return { products: releasedParts, prevr };
+    return products;
   };
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
@@ -466,7 +322,7 @@ export const useAdvancedSearch = () => {
 
     if (newOnes.length > 0) {
       setChips((prev) => [...prev, ...newOnes]);
-      mutation.mutate(newOnes);
+      searchParts.mutate(newOnes);
 
       return newOnes;
     }
@@ -484,41 +340,21 @@ export const useAdvancedSearch = () => {
     inputValue,
     setInputValue,
     handlePaste,
-    mutation,
     splitTerms,
     handleDeleteChip,
-    handleInputChange,
+    handleSearchParts,
     isFetching,
+
     isUnreleased,
     setIsUnreleased,
-    unreleasedItems,
-    setUnreleasedItems,
+
+    items,
+    setItems,
+
+    isNotFound,
+    setIsNotFound,
+
+    isObsolete,
+    setIsObsolete,
   };
 };
-
-export interface SearchResult {
-  attributes: Array<{
-    name: string;
-    value: string | string[] | boolean;
-    type?: string;
-    format?: string;
-  }>;
-}
-
-export interface MutationData {
-  results: SearchResult[];
-  infos: {
-    nresults: number;
-  };
-}
-
-export interface ISelectedItem {
-  label: string;
-  objectId: string;
-  objectType: string;
-  description: string;
-  revision: string;
-  status: string;
-  identifier: string;
-  created: string;
-}
