@@ -35,6 +35,7 @@ import {
 } from "../../utils/toastMessages";
 import { use } from "react";
 import useMEPMassUpload from "../../hooks/Mass-Upload/useMEPMassupload";
+import useRemoveDocConnection from "../../hooks/Mass-Upload/useRemoveDocConnection";
 
 const API_ENDPOINTS = {
   1: "/massUpload/uploadItems",
@@ -1123,7 +1124,9 @@ const MassUpload = () => {
             // Custom logic for MEP operation
             console.log("Sheet Data", sheetData);
             await handleMEPMassupload(sheetData);
-          } else {
+          } else if(operationChoice === "6"){
+            await handleDocDisconnectingMassupload(sheetData)
+          }else{
             if (mappedAttributes && Object.keys(mappedAttributes).length > 0) {
               const { simplifiedMappings } = generateColumnMappings(
                 headers,
@@ -1217,6 +1220,17 @@ const MassUpload = () => {
     }
   };
 
+  // ================ disconnecting Docs from Physical prodcut
+  const {
+    specificationDocument,
+    referenceDocument,
+    handleDocDisconnectingMassupload,
+    handleDocumentsDisconnect,
+    loading: isDisconnectUploading,
+  } = useRemoveDocConnection();
+  console.log(
+    "Specification Documents:", specificationDocument,referenceDocument);  
+  // ================ disconnecting Docs from Physical prodcut
   // =============== MEP MAss Upload Related ===============
   const {
     updateItems,
@@ -1233,10 +1247,14 @@ const MassUpload = () => {
   }, [updateItems, createItems]);
   const handleClick = useCallback(() => {
     if (operationChoice === "5") {
-       console.log("Update Items in Click:", updateItems);
+      console.log("Update Items in Click:", updateItems);
       console.log("Create Items in Click:", createItems);
       updateMassupload(createItems, updateItems, handleReset);
-    } else {
+    } else if (operationChoice === "6"){
+        console.log("specificationDocument", specificationDocument);
+        console.log("referenceDocument:", referenceDocument);
+        handleDocumentsDisconnect(specificationDocument,referenceDocument)
+    }else {
       setModalShow(true);
     }
   }, [
@@ -1247,11 +1265,22 @@ const MassUpload = () => {
     handleReset,
   ]);
   // =============== MEP MAss Upload Related ===============
+  
   const handleOpenSpreadsheetModal = () => {
     setShowContentErrors(false);
     setShowSpreadsheetModal(true);
   };
 
+  const getButtonText = (operationChoice) => {
+  switch (operationChoice) {
+    case "5":
+      return "Create/ Update MEP";
+      case "6":
+      return "Disconnect Documents";
+    default:
+      return "Submit";
+  }
+};
   const submitDisabled = columnHeaders.length === 0 || errors.length > 0;
   const manageSpreadsheetDisabled =
     columnHeaders.length === 0 || errors.length > 0;
@@ -1520,6 +1549,7 @@ const MassUpload = () => {
                     { value: "3", label: "Document" },
                     { value: "4", label: "Physical Product-Document" },
                     { value: "5", label: "MEP" },
+                    { value: "6", label: "Disconnect Docs" },
                   ],
                 }}
               />
@@ -1561,9 +1591,15 @@ const MassUpload = () => {
             {isValidating && <Loader />}
 
             {/* Add this where you want the loader to appear */}
-            {isSubmitting && <Loader />}
+            {/* {isSubmitting && <Loader />} */}
 
-            {isUploading && <Loader />}
+
+            {/* Loader for MEP handlings */}
+            {/* {isUploading && <Loader />}  */}
+            {/* Loading for Disconnecting Docs */}
+            {/* {isDisconnectUploading && <Loader />} */}
+            {/* Loader for submitting, uploading, or disconnecting */}
+            {(isSubmitting || isUploading || isDisconnectUploading) && <Loader />}
 
             <Stack direction="horizontal" gap={2}>
               {/* <Form.Check
@@ -1579,7 +1615,7 @@ const MassUpload = () => {
                     text={`Content Errors (${errors.length})`}
                   />
                 )}
-                {operationChoice === "5" ? null : (
+                {operationChoice === "5" || operationChoice === "6" ? null : (
                   <CustomButton
                     variant={manageSpreadsheetDisabled ? "secondary" : "info"}
                     onClick={handleOpenSpreadsheetModal}
@@ -1589,15 +1625,16 @@ const MassUpload = () => {
                 )}
 
                 <CustomButton
-                  variant={submitDisabled ? "secondary" : "primary"}
-                  disabled={submitDisabled}
-                  size="lg"
-                  onClick={handleClick}
-                  // text="Submit"
-                  text={
-                    operationChoice === "5" ? "Create/ Update MEP" : "Submit"
-                  }
-                />
+                    variant={submitDisabled ? "secondary" : "primary"}
+                    disabled={submitDisabled}
+                    size="lg"
+                    onClick={handleClick}
+                    // text="Submit"
+                    // text={
+                    //   operationChoice === "5" ? "Create/ Update MEP" : "Submit"
+                    // }
+                    text={getButtonText(operationChoice)}
+                  />
               </div>
             </Stack>
           </Stack>
@@ -1615,7 +1652,7 @@ const MassUpload = () => {
         onHide={() => setModalShow(false)}
         onConfirm={handleConfirmSubmit}
       />
-      {operationChoice === "5" ? null : (
+      {operationChoice === "5" ||operationChoice === "6" ? null : (
         <ColumnMappingModal
           show={showSpreadsheetModal}
           onHide={() => setShowSpreadsheetModal(false)}

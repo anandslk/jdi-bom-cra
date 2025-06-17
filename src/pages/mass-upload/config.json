@@ -106,6 +106,15 @@
         "Manufacturer Part Number",
         "Manufacturer"
       ]
+    },
+    "Disconnect Docs": {
+      "fileHeaders": [
+      ],
+      "mandatoryAttributes": [
+        "Item Title",
+        "Type",
+        "Item Revision"
+      ]
     }
   }
 }

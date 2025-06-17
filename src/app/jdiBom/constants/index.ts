@@ -5,7 +5,6 @@ export const route = Object.freeze({
   rdo: "/rdo",
   status: "/status",
   statusItem: "/status/:id",
-  callback: "/login/callback",
 
   404: "*",
 } as const);

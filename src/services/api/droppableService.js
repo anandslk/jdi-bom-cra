@@ -48,61 +48,53 @@ export const initializeDroppableArea = (
   dispatch,
   showErrorToast
 ) => {
-  try {
-    console.log("[initializeDroppableArea] 🚀 Running...");
-    window.require(
-      ["DS/DataDragAndDrop/DataDragAndDrop"],
-      (DataDragAndDrop) => {
-        DataDragAndDrop.droppable(droppableContainer, {
-          drop: (data) => {
-            console.log("[DragAndDrop] Drop event:", data);
-            const parsedData = JSON.parse(data);
-            const dataItems = parsedData.data.items;
-            //  Process collabspace if available
-            //  if (dataItems.length > 0 && dataItems[0].collabspace) {
-            //   // Call the processing function to update the globalCollabSpaceTitle
-            //   processCollabSpace(dataItems[0].collabspace);
-            // }
+  console.log("[initializeDroppableArea] 🚀 Running...");
+  window.require(["DS/DataDragAndDrop/DataDragAndDrop"], (DataDragAndDrop) => {
+    DataDragAndDrop.droppable(droppableContainer, {
+      drop: (data) => {
+        console.log("[DragAndDrop] Drop event:", data);
+        const parsedData = JSON.parse(data);
+        const dataItems = parsedData.data.items;
+        //  Process collabspace if available
+        //  if (dataItems.length > 0 && dataItems[0].collabspace) {
+        //   // Call the processing function to update the globalCollabSpaceTitle
+        //   processCollabSpace(dataItems[0].collabspace);
+        // }
 
-            // Check if more than one object is being dropped
-            if (dataItems.length > 1) {
-              showErrorToast(MSG_MULTIPLE_OBJECTS_DROPPED);
-              droppableContainer.classList.remove("drag-over");
-              return; // Stop further execution
-            }
-            const currentState =
-              store.getState().droppedObject.initialDraggedData;
-            const isSameData =
-              JSON.stringify(currentState) === JSON.stringify(parsedData);
-            if (!isSameData) {
-              dispatch(
-                setInitialDroppedObjectData({
-                  initialDraggedData: parsedData, // ✅ Only update if different
-                })
-              );
-            } else {
-              console.log(
-                "[initializeDroppableArea] Data unchanged. Skipping dispatch."
-              );
-            }
-            handleDrop(dataItems);
-            droppableContainer.classList.remove("drag-over");
-          },
-          enter: () => {
-            droppableContainer.classList.add("drag-over");
-          },
-          out: () => {
-            droppableContainer.classList.remove("drag-over");
-          },
-          leave: () => {
-            droppableContainer.classList.remove("drag-over");
-          },
-        });
-      }
-    );
-  } catch (error) {
-    console.error("Error initializeDroppableArea : ", error)
-  }
+        // Check if more than one object is being dropped
+        if (dataItems.length > 1) {
+          showErrorToast(MSG_MULTIPLE_OBJECTS_DROPPED);
+          droppableContainer.classList.remove("drag-over");
+          return; // Stop further execution
+        }
+        const currentState = store.getState().droppedObject.initialDraggedData;
+        const isSameData =
+          JSON.stringify(currentState) === JSON.stringify(parsedData);
+        if (!isSameData) {
+          dispatch(
+            setInitialDroppedObjectData({
+              initialDraggedData: parsedData, // ✅ Only update if different
+            })
+          );
+        } else {
+          console.log(
+            "[initializeDroppableArea] Data unchanged. Skipping dispatch."
+          );
+        }
+        handleDrop(dataItems);
+        droppableContainer.classList.remove("drag-over");
+      },
+      enter: () => {
+        droppableContainer.classList.add("drag-over");
+      },
+      out: () => {
+        droppableContainer.classList.remove("drag-over");
+      },
+      leave: () => {
+        droppableContainer.classList.remove("drag-over");
+      },
+    });
+  });
 };
 
 // export const fetchCsrfTokenAndDependencies = async ({
