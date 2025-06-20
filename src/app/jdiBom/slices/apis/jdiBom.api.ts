@@ -23,7 +23,7 @@ export const jdiBomApiSlice = createApi({
     jdiBoms: builder.query<
       BomResponse,
       {
-        userId?: string;
+        userEmail?: string;
         search: string;
         status: "All" | "In Process" | "Completed" | "Failed";
         sortOrder: "ASC" | "DESC";
@@ -122,6 +122,5 @@ export interface CreateJdiBomItem {
   sourceOrg: string;
   processedItems: IProductInfo[];
   targetOrgs: string[];
-  userId: string;
   userEmail: string;
 }
