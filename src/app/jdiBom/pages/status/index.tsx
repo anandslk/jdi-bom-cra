@@ -81,7 +81,7 @@ const renderChipsWithEllipsis = (items: string[], limit: number = 2) => {
 };
 
 export default function BomCommoningStatusTable() {
-  const userId = useAppSelector((state) => state.user?.id);
+  const userEmail = useAppSelector((state) => state.user?.email);
 
   const [searchInput, setSearchInput] = useState<string>("");
 
@@ -98,7 +98,7 @@ export default function BomCommoningStatusTable() {
   const navigate = useNavigate();
 
   const { data, isFetching } = useJdiBomsQuery({
-    userId,
+    userEmail,
     search: filters.search,
     status: filters.status,
     sortOrder: filters.sortOrder,

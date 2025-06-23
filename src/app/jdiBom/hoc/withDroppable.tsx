@@ -23,7 +23,7 @@ export const withDroppable = <P extends object, T extends unknown>(
 
     const { handleDrop, isFetching } = useHandleDrop();
 
-    console.log("data..................", data);
+    console.info("data..................", data);
 
     useEffect(() => {
       if (isDropped) return;

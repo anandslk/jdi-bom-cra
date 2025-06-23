@@ -145,8 +145,6 @@ export const useJdiBom = () => {
   });
 
   const fetchPrevRev = async (productDetails: IProductInfo[]) => {
-    console.log("objectIds,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", objectIds);
-
     // const rp = productDetails?.filter(
     //   (item) => item?.["Maturity State"]?.toLowerCase() == "released"
     // );
@@ -298,8 +296,6 @@ export const useJdiBom = () => {
 
     enabled: !!headers?.data && isDropped && !!prevRev?.data,
   });
-
-  // console.log("prevRev................", engRelease?.data);
 
   // // Fetch classified item data
   // const associatedPlants = useQuery({

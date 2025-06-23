@@ -59,6 +59,8 @@ import { useMutation } from "@tanstack/react-query";
 import { AddCircleOutline } from "@mui/icons-material";
 import { Navbar } from "../components/Navbar";
 
+const orgsData = { data: { ...RDO_ORGS, availOrgs: availOrgsList } };
+
 export const JdiBomPage: FC<JdiBomPageProps> = () => {
   const dispatch = useAppDispatch();
 
@@ -83,7 +85,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
   const initialForm = {
     parentParts: [],
-    sourceOrg: "",
+    sourceOrg: "MVO",
     plants: [],
 
     rdo: "" as RdoKey,
@@ -105,11 +107,12 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
       submittedBy: "",
     },
   };
+
   const [generated, setGenerated] = useState(initialGenerated);
 
   useHandleDrop();
 
-  const { data, isFetching: isOrgs } = useDestOrgsQuery({});
+  const { data = orgsData, isFetching: isOrgs } = useDestOrgsQuery({});
 
   const mutateParts = useMutation({
     mutationFn: async () => {
@@ -122,8 +125,6 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     onSuccess: () => setIsConfirm(true),
   });
-
-  // console.log("formState.................", formState);
 
   useEffect(() => {
     if (!data?.data) return;
@@ -256,7 +257,6 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
 
     const { error, data } = await createBom({
       ...payload,
-      userId: user.id,
       userEmail: user.email,
     });
 
@@ -562,7 +562,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                             )?.filter((item) => item !== "availOrgs")}
                             selected={formState.rdo}
                             onChange={(newVal) =>
-                              handleChange("rdo", newVal.target.value!)
+                              handleChange("rdo", newVal.target.value)
                             }
                           />
                         </Box>
@@ -610,7 +610,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                             multiSelect
                             title="Available Orgs"
                             // items={data?.data.availOrgs ?? []}
-                            items={data?.data.availOrgs ?? [...availOrgsList]}
+                            items={data?.data.availOrgs ?? []}
                             selected={availOrgs}
                             onChange={setAvailOrgs}
                           />
@@ -652,7 +652,7 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
                       options={plants?.data ?? []}
                       value={formState.sourceOrg}
                       onChange={(_, value) =>
-                        handleChange("sourceOrg", value || "")
+                        handleChange("sourceOrg", value ?? "")
                       }
                       // clearOnEscape
                       renderInput={(params) => (
@@ -708,7 +708,6 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
             </Paper>
 
             {/* <LoadingScreen message="Assigning items and commoning required parts..." /> */}
-
             {/* Results Screen */}
             {false && (
               <ResultsScreen
@@ -721,7 +720,6 @@ export const JdiBomPage: FC<JdiBomPageProps> = () => {
           </Box>
         </Container>
       </Box>
-      {/* </SecureRoute> */}
     </>
   );
 };

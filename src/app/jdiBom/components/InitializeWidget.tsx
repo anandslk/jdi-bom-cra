@@ -61,7 +61,7 @@ function injectRefreshListener() {
     let injectedScript = window.parent.document.createElement("script");
     injectedScript.textContent = scriptContent;
     window.parent.document.body.appendChild(injectedScript);
-    // console.log("✅ [index.js] Script successfully injected and executed in parent!");
+    // console.info("✅ [index.js] Script successfully injected and executed in parent!");
   } else {
     console.warn(
       "⚠️ [index.js] Unable to inject script—parent window not accessible.",

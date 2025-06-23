@@ -229,7 +229,7 @@ export const useAdvancedSearch = () => {
 
     const terms = splitTerms(inputValue);
 
-    if (terms.length < 0) return null;
+    if (!!!terms.length) return null;
 
     setChips(terms);
 
