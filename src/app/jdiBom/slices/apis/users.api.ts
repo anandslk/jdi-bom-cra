@@ -1,11 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { createGetWithParamsQuery, headers } from "./config";
+import { env } from "../../env";
 
 export const usersApiSlice = createApi({
   reducerPath: "usersApi",
 
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:8080",
+    baseUrl: env.API_URL,
     prepareHeaders: headers,
   }),
 
