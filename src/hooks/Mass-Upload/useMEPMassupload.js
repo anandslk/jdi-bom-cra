@@ -50,18 +50,7 @@ const useMEPMassUpload = () => {
               (item) => item?.title === row?.Title
             );
             if (match) {
-              console.log("==================", match)
-              let checkMepResponse = await ValidateMep(ENOVIA_BASE_URL, match?.title, headers);
-              console.log("New APi Check Validation",checkMepResponse)
-              if(checkMepResponse.status && checkMepResponse?.output?.member?.length > 0){
-                 let memberData= checkMepResponse?.output?.member[0];
-                 console.log("memberData =======", memberData)
-                  if(memberData?.manufacturer){
-                    searchedItems.push({ ...match, row });
-                  }else{
-                    showErrorToast("It's not a Manufacturing Equalent Item")
-                  }
-              }
+              searchedItems.push({ ...match, row });
             }
           } else if (response?.output?.member?.length === 0) {
             console.log("No match found for row", row);
@@ -100,6 +89,12 @@ const useMEPMassUpload = () => {
         SecurityContext: "VPLMProjectLeader.Company Name.Micro Motion",
         ENO_CSRF_TOKEN: ENO_CSRF_TOKEN,
       };
+
+      console.log("useMEPMassUpload Headers", headers);
+      console.log("useMEPMassUpload cHANGED Headers", newHeaders);
+      console.log("useMEPMassUpload in createItems", createItems);
+      console.log("useMEPMassUpload in updateItems", updateItems);
+      console.log("ENOVIA_BASE_URL", ENOVIA_BASE_URL);
       let createFailed = false;
       let updateFailed = false;
       if (!updateItems || updateItems.length === 0) {
@@ -255,14 +250,3 @@ const useMEPMassUpload = () => {
 };
 
 export default useMEPMassUpload;
-
-async function ValidateMep(ENOVIA_BASE_URL, searchStr, headers){
-  // https://oi000186152-us1-space.3dexperience.3ds.com/enovia/resources/v1/modeler/dseng/dseng:EngItem/search?$searchStr=SS_Rev02&$mask=dssrc:ManufacturerEquivalentItems.Basic
-  const response = await callEnoviaWebService(
-    "GET",
-    `${ENOVIA_BASE_URL}/resources/v1/modeler/dseng/dseng:EngItem/search?$searchStr=${searchStr}&$mask=dssrc:ManufacturerEquivalentItems.Basic`,
-    "",
-    headers
-  );
-  return response;
-}

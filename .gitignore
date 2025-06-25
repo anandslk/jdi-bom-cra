@@ -44,3 +44,4 @@ build/
 .eslintcache
 
 .vercel
+bun.lock

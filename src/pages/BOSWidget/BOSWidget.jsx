@@ -215,6 +215,14 @@ const BOSWidget = () => {
     }
   }, [isDropped, initializeDroppableArea]);
   useEffect(() => {
+    if (isDropped) {
+      setScreenLoader(true); // Show loader when a product is dropped
+      setTimeout(() => {
+        setScreenLoader(false); // Hide loader after processing is complete
+      }, 1000); // Adjust the delay as needed
+    }
+  }, [isDropped]);
+  useEffect(() => {
     setIsTableLoading(loadingParentDetails);
   }, [loadingParentDetails]);
 

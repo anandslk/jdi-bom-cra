@@ -23,10 +23,6 @@ export const downloadTemplate = (showErrorToast) => (operationChoice) => {
       url =
         "https://theWhiteChamaleon.github.io/mep_massupload/mep-template.xlsx";
       break;
-    case "6": // Disconnecting Docs from Physical Product
-      url =
-        "https://theWhiteChamaleon.github.io/mep_massupload/remove-doc-connection-template.xlsx";
-      break;
     default:
       showErrorToast(MSG_DROPDOWN_NOT_SELECTED);
       return;

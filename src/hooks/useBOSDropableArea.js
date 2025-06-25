@@ -78,27 +78,25 @@ const useBOSDropableArea = () => {
     [dispatch, handleBOSWidget]
   );
 
-  const handleDrop = useCallback(
-    async (dataItems) => {
-      setLoading(true); // Start loading state
-      console.log("[handleDrop] handleDrop called with dataItems:", dataItems);
-      try {
-        if (dataItems && dataItems.length > 0) {
-          await fetchObjectDetails(dataItems);
-        } else {
-          console.warn("[handleDrop] No data items to process.");
-        }
-      } catch (error) {
-        setLoading(false);
-        console.error("[Drop] Error in handleDrop:", error);
-        console.log(
-          "[handleDrop] Error in handleDrop, setting loading to false"
-        );
-        showErrorToast(MSG_UNEXPECTED_ERROR);
+ const handleDrop = useCallback(
+  async (dataItems) => {
+    dispatch(setLoading(true)); // Start loading state
+    console.log("[handleDrop] handleDrop called with dataItems:", dataItems);
+    try {
+      if (dataItems && dataItems.length > 0) {
+        await fetchObjectDetails(dataItems);
+      } else {
+        console.warn("[handleDrop] No data items to process.");
       }
-    },
-    [fetchObjectDetails, showErrorToast]
-  );
+    } catch (error) {
+      console.error("[Drop] Error in handleDrop:", error);
+      showErrorToast(MSG_UNEXPECTED_ERROR);
+    } finally {
+      dispatch(setLoading(false)); // End loading state
+    }
+  },
+  [fetchObjectDetails, showErrorToast, dispatch]
+);
   // Initialize droppable area
   const initializeDroppableArea = useCallback(() => {
     if (!isDropped) {
@@ -120,7 +118,7 @@ const useBOSDropableArea = () => {
     }, 100); // Check every 100ms
  
     return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [handleDrop, dispatch]);
+  }, [handleDrop, dispatch, isDropped]);
 
   return {
     initializeDroppableArea,
