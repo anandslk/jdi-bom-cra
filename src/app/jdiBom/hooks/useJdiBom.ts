@@ -264,6 +264,8 @@ export const useJdiBom = () => {
       res.status === "fulfilled" ? res.value : null,
     ) as ClassifiedItemResponse[];
 
+    console.log("classifRes......................", classifRes);
+
     classifRes?.forEach((product) => {
       const classificationMembers =
         product?.member?.[0]?.ClassificationAttributes?.member ?? [];

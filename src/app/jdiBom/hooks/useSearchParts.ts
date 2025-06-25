@@ -11,7 +11,7 @@ import { useFetchWithAuth } from "./useFetchWithAuth";
 import { useHandleDrop } from "./useHandleDrop";
 import { useJdiBom } from "./useJdiBom";
 
-export const useAdvancedSearch = () => {
+export const useSearchParts = () => {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
 
@@ -188,6 +188,8 @@ export const useAdvancedSearch = () => {
       );
 
       const prevr = await fetchPrevRev(fetchedProducts!);
+
+      console.log("prevr..........", prevr);
 
       const unreleasedIds = await checkEngRelease(prevr!);
 

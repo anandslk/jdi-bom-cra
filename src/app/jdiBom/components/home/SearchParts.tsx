@@ -1,6 +1,6 @@
 import { TextField } from "@mui/material";
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { useAdvancedSearch } from "../../hooks/useAdvancedSearch";
+import { useSearchParts } from "../../hooks/useSearchParts";
 import { IFormErrors, IFormState } from "../../pages";
 import { ItemsDialog } from "../Unreleased";
 
@@ -24,7 +24,7 @@ export const SearchParts = ({
 
     isObsolete,
     setIsObsolete,
-  } = useAdvancedSearch();
+  } = useSearchParts();
 
   useEffect(() => {
     if (onSearchParts) {
