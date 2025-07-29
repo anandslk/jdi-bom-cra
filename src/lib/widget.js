@@ -1,4 +1,3 @@
-
 const Widget = function () {
   const events = {};
   let title = "";
@@ -25,7 +24,7 @@ const Widget = function () {
     localStorage.setItem("_prefs_4_Widget_", JSON.stringify(prefs));
   };
 
-//   this.uwaUrl = "./";
+  //   this.uwaUrl = "./";
 
   this.addEvent = (event, callback) => {
     events[event] = callback;
@@ -99,7 +98,6 @@ const initRequireModules = function () {
   });
 };
 
-
 export function initWidget(cbOk, cbError) {
   // console.log("[initWidget] Called.");
   const waitFor = function (whatToWait, maxTry, then) {
@@ -110,7 +108,9 @@ export function initWidget(cbOk, cbError) {
     } else if (maxTry === 0) {
       document.body.innerHTML =
         "Error while trying to load widget. See console for details";
-        console.error(`[initWidget] ${whatToWait} didn't load after maximum tries.`);
+      console.error(
+        `[initWidget] ${whatToWait} didn't load after maximum tries.`,
+      );
       throw new Error(`${whatToWait} didn't load`);
     } else {
       setTimeout(waitFor, 200, whatToWait, --maxTry, then);
@@ -134,7 +134,10 @@ export function initWidget(cbOk, cbError) {
         oReq.send();
         // console.log("[initWidget] XMLHttpRequest sent for require.js");
       } catch (err) {
-        console.error("[initWidget] Error sending XMLHttpRequest for require.js", err);
+        console.error(
+          "[initWidget] Error sending XMLHttpRequest for require.js",
+          err,
+        );
         reject(err);
       }
     });
@@ -142,7 +145,7 @@ export function initWidget(cbOk, cbError) {
   const updatePublicPath = () => {
     __webpack_public_path__ = widget.uwaUrl.substring(
       0,
-      widget.uwaUrl.lastIndexOf("/") + 1
+      widget.uwaUrl.lastIndexOf("/") + 1,
     );
   };
 
@@ -175,7 +178,7 @@ export function initWidget(cbOk, cbError) {
           updatePublicPath();
           // console.log("[initWidget] Widget found after waiting. Calling cbOk.");
           cbOk(widget);
-        }
+        },
       );
     } catch (error) {
       console.error(error);

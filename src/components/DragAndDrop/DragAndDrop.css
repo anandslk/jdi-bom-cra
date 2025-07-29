@@ -1,4 +1,4 @@
- #root {
+#root {
   height: 100%;
 }
 .droppable-container {
@@ -16,9 +16,10 @@
   height: calc(100% - 2rem);
 }
 
-.dropped-active ,.drag-over{
+.dropped-active,
+.drag-over {
   border-color: #018308;
-  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
 .drag-and-drop-image {
@@ -45,7 +46,6 @@
 .divider-text {
   margin: 0 10px;
   color: black;
-
 }
 
 .search-content-container {
@@ -69,4 +69,3 @@
   border-radius: 5px;
   text-align: left;
 }
-

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchCsrfToken } from "src/services/api/PlantAssignment/fetchCsrfService";
+import { fetchCsrfToken } from "src/services/fetchCsrfService";
 import { env } from "src/app/jdiBom/env";
 import { loadWAFData } from "src/utils/helpers";
 

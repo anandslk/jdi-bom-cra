@@ -1,4 +1,4 @@
-import { loadWAFData } from "../../../utils/helpers";
+import { loadWAFData } from "src/utils/helpers";
 
 export const fetchCsrfToken = async () => {
   try {

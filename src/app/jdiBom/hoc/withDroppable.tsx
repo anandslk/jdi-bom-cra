@@ -2,8 +2,6 @@ import { ComponentType, useEffect } from "react";
 import Loader from "src/components/Loader/Loader";
 import { toast } from "react-toastify";
 
-import useToast from "src/hooks/useToast";
-import { MSG_REFRESH_SUCCESS } from "src/utils/toastMessages";
 import { DragAndDropComponent } from "../components/DragAndDrop";
 import { store, useAppDispatch, useAppSelector } from "src/app/jdiBom/store";
 import { useGetUserQuery } from "../slices/apis/users.api";
@@ -13,7 +11,6 @@ export const withDroppable = <P extends object, T extends unknown>(
   WrappedComponent: ComponentType<P & InjectedDroppableProps<T>>,
 ) => {
   const ComponentWithDroppableLogic = (props: P) => {
-    const { showErrorToast } = useToast();
     const dispatch = useAppDispatch();
     const { isDropped } = useAppSelector((state) => state.jdiBom);
 
@@ -73,7 +70,7 @@ export const withDroppable = <P extends object, T extends unknown>(
         clearInterval(interval);
         cleanup?.();
       };
-    }, [isDropped, handleDrop, dispatch, showErrorToast]);
+    }, [isDropped, handleDrop, dispatch]);
 
     useEffect(() => {
       if (!window.widget) return;
@@ -101,7 +98,7 @@ export const withDroppable = <P extends object, T extends unknown>(
         if (!!!latestDraggedData?.length) return;
 
         await handleDrop(latestDraggedData);
-        toast.success(MSG_REFRESH_SUCCESS);
+        toast.success("Widget data refreshed successfully!");
       };
 
       window.widget.addEvent("onRefresh", onRefresh);

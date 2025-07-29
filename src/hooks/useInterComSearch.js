@@ -14,7 +14,7 @@ const useInterComSearch = () => {
       } catch (error) {
         console.error(
           "[useInterComSearch] Error initializing InterCom:",
-          error
+          error,
         );
       }
     };
@@ -49,7 +49,7 @@ const useInterComSearch = () => {
       console.log(
         "[useInterComSearch] performSearch called with:",
         searchText,
-        searchOpts
+        searchOpts,
       );
 
       const widgetId = window.widget?.id;
@@ -65,7 +65,7 @@ const useInterComSearch = () => {
       // Register the search context (if needed)
       console.log(
         "[useInterComSearch] Dispatching RegisterContext event with:",
-        finalSearchOpts
+        finalSearchOpts,
       );
       newSocket.dispatchEvent("RegisterContext", finalSearchOpts);
 
@@ -85,11 +85,11 @@ const useInterComSearch = () => {
       };
 
       console.log(
-        "[useInterComSearch] Adding listener for Selected_Objects_search"
+        "[useInterComSearch] Adding listener for Selected_Objects_search",
       );
       newSocket.addListener("Selected_Objects_search", handleSearchResults);
     },
-    [InterCom]
+    [InterCom],
   );
 
   return {

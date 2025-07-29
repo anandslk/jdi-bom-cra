@@ -1,6 +1,5 @@
 import { useCallback, useEffect } from "react";
 import { toast } from "react-toastify";
-import { MSG_INVALID_OBJECT_TYPE } from "src/utils/toastMessages";
 import { ISelectedItem } from "../hoc/withDroppable";
 import { useLazyGetObjectDetailsQuery } from "../slices/apis/dropped.api";
 import { getErrorMessage } from "../slices/apis/types";
@@ -56,6 +55,9 @@ export const useHandleDrop = () => {
       const validDataItems = newItems.filter((item) =>
         validTypes.includes(item.objectType),
       );
+
+      const MSG_INVALID_OBJECT_TYPE =
+        "Please select a Physical Product, Document or Raw Material";
 
       if (validDataItems.length === 0) {
         toast.error(MSG_INVALID_OBJECT_TYPE);
